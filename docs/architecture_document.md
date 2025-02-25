@@ -19,11 +19,11 @@
 
 Professores:
 
-**Hugo Bastos**
+**Hugo Bastos de Paula**
 
-**Cristiano Macedo**
+**Cristiano de Macêdo Neto**
 
-**Cleiton Tavares**
+**Cleiton Silva Tavares**
 
 ---
 
@@ -40,11 +40,11 @@ mostrar algum resultado relevante do trabalho (até 10 linhas)._
 
 ## Histórico de Revisões
 
-| **Data** | **Autor** | **Descrição** | **Versão** |
-| --- | --- | --- | --- |
-| **[dd/mm/aaaa]** | [Nome do autor] | [Descrever as principais alterações realizadas no documento, evidenciando as seções ou capítulos alterados] | [X] |
-|24/02/2025 | Renato Matos | Seção 3 preliminar e nome alunos/professores | |
-| | | | |
+| **Data**         | **Autor**               | **Descrição**                                                                                               | **Versão** |
+| ---------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------- | ---------- |
+| **[dd/mm/aaaa]** | [Nome do autor]         | [Descrever as principais alterações realizadas no documento, evidenciando as seções ou capítulos alterados] | [X]        |
+| 24/02/2025       | Renato Matos            | Seção 3 preliminar e nome alunos/professores                                                                | v0.1       |
+| 25/02/2025       | José Victor Mendes Dias | Adicionando seção 1                                                                                         | v0.2       |
 
 ## SUMÁRIO
 
@@ -86,20 +86,39 @@ mostrar algum resultado relevante do trabalho (até 10 linhas)._
 <a name="apresentacao"></a>
 # 1. Apresentação
 
-_Faça uma introdução ao projeto, apresentando o contexto onde o projeto se situa. É importante deixar claro para o leitor os aspectos que configuram o problema que será apresentado na sequência. Apresente, se possível, números reais que demonstram a relevância do problema apresentado._
+O projeto _*Carona?*_ é uma solução tecnológica voltada para estudantes da Pontifícia Universidade Católica de Minas Gerais (PUC Minas) que frequentam os campi de Belo Horizonte.
 
+A plataforma foi desenvolvida para conectar motoristas e passageiros, permitindo a organização de caronas entre os alunos. Seu foco é proporcionar uma alternativa prática de mobilidade dentro da comunidade acadêmica.
 
 ## 1.1. Problema
 
-_Nesse momento você deve apresentar o problema que a sua aplicação deve resolver. No entanto, não é a hora de comentar sobre a aplicação._
+A dificuldade de mobilidade dos estudantes nos horários noturnos representa um problema significativo. O transporte público é ineficiente, havendo poucas ou nenhuma opção de deslocamento após as aulas da noite. O que leva muitos alunos a buscar alternativas individuais para retornar às suas residências.
+
+Além disso, o uso de aplicativos de transporte como Uber e 99 pode apresentar desafios. Dependendo do horário, os custos dessas opções podem ser elevados, os tempos de espera aumentam consideravelmente e algumas corridas podem ser recusadas, especialmente para regiões periféricas da cidade e da região metropolitana.
+
+A ausência de uma infraestrutura de transporte adequada nesse período pode resultar em custos adicionais e deslocamentos menos organizados. O compartilhamento de veículos entre estudantes é uma prática comum, mas ocorre de maneira informal, sem um meio estruturado para facilitar e organizar essas interações.
 
 ## 1.2. Objetivos do trabalho
 
-_Aqui você deve descrever os objetivos do trabalho indicando que o objetivo geral é apresentar a descrição do projeto arquitetural da aplicação escolhida. Apresente também os objetivos específicos do projeto, descrevendo onde você vai concentrar sua atenção na descrição arquitetural, ou seja, os pontos onde você vai aprofundar no seu trabalho._
+O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas estruturado para estudantes da PUC Minas, proporcionando uma alternativa viável de deslocamento entre a universidade e suas residências.
+
+### Os objetivos específicos incluem:
+
+- Desenvolver um sistema de cadastro para motoristas e passageiros, permitindo a criação e a busca de caronas.
+
+- Criar um sistema de notificações para alertar usuários sobre novas caronas e mudanças nas viagens confirmadas.
+
+- Criar um sistema de avaliação de motoristas e passageiros.
+
+- Fornecer uma interface administrativa para que gestores possam monitorar e intervir em situações de denúncias e mau uso da plataforma.
 
 ## 1.3. Definições e Abreviaturas
 
-Coloque aqui as definições, siglas e abreviaturas utilizadas no trabalho._
+*PUC Minas*: Pontifícia Universidade Católica de Minas Gerais.
+
+*Carona?*: Nome do projeto que visa conectar motoristas e passageiros para compartilhamento de trajetos de forma segura e eficiente.
+
+*Gestor*: Responsável por gerenciar usuários e manter a integridade do sistema.
 
 <a name="produto"></a>
 # 2. Nosso Produto
