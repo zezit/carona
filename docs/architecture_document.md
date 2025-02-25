@@ -13,7 +13,7 @@
 
 **Renato Cazzoletti, renato.cazzoletti7@gmail.com**
 
-**José Victor,  jose.dias.1433596@sga.pucminas.br**
+**José Victor Mendes Dias,  jose.dias.1433596@sga.pucminas.br**
 
 ---
 
