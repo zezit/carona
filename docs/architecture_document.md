@@ -5,7 +5,7 @@
 
 **Felipe Freitas Picinin, picinin.felipe2@gmail.com**
 
-**Gabriel Pongelupe De Carvalho, ponge2004@gmail.com**
+**Gabriel Pongelupe De Carvalho, gabrielpongelupee@gmail.com**
 
 **Gabriel Ferreira, gabriel.afa@outlook.com**
 
