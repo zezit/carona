@@ -85,6 +85,7 @@ Monitoramento em Tempo Real – Não haverá rastreamento ao vivo da viagem dent
 **3.1 Prazo previsto (horas):** 9999
 
 **3.2 Data prevista de início:** 05/02/2025
+
 **3.3 Data prevista de término:** 18/06/2025 
 
 ## 4. ESTIMATIVA DE CUSTO
