@@ -1,20 +1,29 @@
 # TITULO DO PROJETO
 
 
-**Nome completo do Aluno 1, email do aluno 1**
+**Renato Matos Alves Penna, renatomapbusiness@gmail.com**
 
-**Nome completo do Aluno 2, email do aluno 2**
+**Felipe Freitas Picinin, picinin.felipe2@gmail.com**
 
-**Nome completo do Aluno 3, email do aluno 3**
+**Gabriel Pongelupe De Carvalho, ponge2004@gmail.com**
+
+**Gabriel Ferreira, gabriel.afa@outlook.com**
+
+**Pedro Araújo, pedrofr1313@gmail.com**
+
+**Renato Cazzoletti, renato.cazzoletti7@gmail.com**
+
+**José Victor,  jose.dias.1433596@sga.pucminas.br**
 
 ---
 
 Professores:
 
-**Prof. Nome do Prof 1**
+**Hugo Bastos**
 
-**Prof. Nome do Prof 2**
+**Cristiano Macedo**
 
+**Cleiton Tavares**
 
 ---
 
@@ -34,7 +43,7 @@ mostrar algum resultado relevante do trabalho (até 10 linhas)._
 | **Data** | **Autor** | **Descrição** | **Versão** |
 | --- | --- | --- | --- |
 | **[dd/mm/aaaa]** | [Nome do autor] | [Descrever as principais alterações realizadas no documento, evidenciando as seções ou capítulos alterados] | [X] |
-| | | | |
+|24/02/2025 | Renato Matos | Seção 3 preliminar e nome alunos/professores | |
 | | | | |
 
 ## SUMÁRIO
@@ -132,13 +141,30 @@ _Esta seção descreve os requisitos comtemplados nesta descrição arquitetural
 
 _Enumere os requisitos funcionais previstos para a sua aplicação. Concentre-se nos requisitos funcionais que sejam críticos para a definição arquitetural. Lembre-se de listar todos os requisitos que são necessários para garantir cobertura arquitetural. Esta seção deve conter uma lista de requisitos ainda sem modelagem. Na coluna Prioridade utilize uma escala (do mais prioritário para o menos): Essencial, Desejável, Opcional._
 
-| **ID** | **Descrição** | **Prioridade** | **Plataforma** | **Sprint** | **Status** |
+| **ID** | **Descrição** | **Prioridade** | **Complexidade** | **Plataforma** | **Sprint** |
 | --- | --- | --- | --- | --- | --- |
-| RF001 | | | _web_ | Sprint 1 | ✅ |
-| RF002 | | | _mobile_ | Sprint 1 | ❌ |
-| RF003 | | | _web e mobile_ | Sprint 1 |  |
-| | | | | | |
-| | | | | | |
+| R01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
+| R02 | Passageiro realiza cadastro | Alta | Baixa | Mobile |  |
+| R03 | Passageiro se registra em carona existente | Alta | Média | Mobile |  |
+| R04 | Passageiro vê caronas existentes próximas | Média | Alta | Mobile |  |
+| R05 | Passageiro cancela registro de carona | Média | Baixa | Mobile |  |
+| R06 | Passageiro ativa notificações | Baixa | Média | Mobile |  |
+| R07 | Passageiro avalia motorista | Média | Baixa | Mobile |  |
+| R08 | Passageiro visualiza histórico de viagens | Média | Baixa | Mobile |  |
+| R09 | Motorista gerencia viagens | Alta | Média | Mobile |  |
+| R10 | Motorista gerencia passageiros da viagem | Alta | Baixa | Mobile |  |
+| R11 | Motorista realiza cadastro | Alta | Baixa | Mobile |  |
+| R12 | Motorista realiza login | Alta | Baixa | Mobile |  |
+| R13 | Motorista gerencia perfil | Alta | Média | Mobile |  |
+| R14 | Motorista visualiza mapa | Média | Média | Mobile |  |
+| R15 | Motorista vê histórico de viagem | Baixa | Baixa | Mobile |  |
+| R16 | Motorista avalia passageiro | Média | Baixa | Mobile |  |
+| R17 | Usuário denuncia outro usuário | Média | Baixa | Mobile |  |
+| R18 | Administrador aprova novos usuários | Média | Baixa | Web |  |
+| R19 | Administrador gerencia universidade | Alta | Média | Web |  |
+| R20 | Administrador visualiza todas as viagens | Alta | Média | Web |  |
+| R21 | Administrador gerencia usuários | Alta | Baixa | Web |  |
+| R22 | Administrador gerencia denúncias | Média | Baixa | Web |  |
 
 Obs: acrescente mais linhas, se necessário.
 
@@ -148,22 +174,19 @@ _Enumere os requisitos não-funcionais previstos para a sua aplicação. Entre o
 
 | **ID** | **Descrição** |
 | --- | --- |
-| RNF001 | |
-| RNF002 | |
-| | |
-| | |
-| | |
+| RNF01 | Os requisitos não-funcionais devem ser testáveis e descritos de forma mensurável |
+| RNF02 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
+| RNF03 | O sistema deve funcionar em dispositivos Android 14 e 15 |
+| RNF04 | O serviço deve estar em conformidade com as leis de proteção de dados (LGPD) |
 
-Obs: acrescente mais linhas, se necessário.
 
 ## 3.3. Restrições Arquiteturais
 
 _Enumere as restrições arquiteturais. Lembre-se de que as restrições arquiteturais geralmente não são consideradas requisitos uma vez que limitam a solução candidata. Os requisitos não impõem restrição, mas precisam ser satisfeitos._
 
-As restrições impostas ao projeto que afetam sua arquitetura são (por exemplo):
-
-- O software deverá ser desenvolvido em Python/Django;
+- O software deverá ser desenvolvido em Java Spring e React Native.
 - A comunicação da API deve seguir o padrão RESTful.
+- O software deve usar banco de dados relacional.
 
 ## 3.4. Mecanismos Arquiteturais
 
@@ -172,10 +195,10 @@ _Visão geral dos mecanismos que compõem a arquitetura do sosftware baseando-se
 
 | **Análise** | **Design** | **Implementação** |
 | --- | --- | --- |
-| Persistência | | |
-| Front end | | |
-| Back end | | |
-| Integração | | |
+| Persistência | Banco de dados relacional | PostgreSQL |
+| Front end | Framework de UI | React Native |
+| Back end | API RESTful | Java Spring Boot |
+| Integração | API de mapas | Google Maps API |
 | Log do sistema | | |
 | Teste de Software | | |
 | Deploy | | |
