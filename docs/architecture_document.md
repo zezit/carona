@@ -144,10 +144,28 @@ _Estão seçaõ explora um pouco mais o produto a ser desenvolvido_
       <strong>Nome:</strong> Lucas Lutti <br>
       <strong>Idade:</strong> 22 <br>
       <strong>Hobby:</strong> Pilotar Drones <br>
-      <strong>Trabalho:</strong> Engenheiro Mecanico <br>
+      <strong>Trabalho:</strong> Estagiario de Engenheria Mecanica <br>
       <strong>Personalidade:</strong> Comunicativo, incisivo  e determinado <br>
       <strong>Sonho:</strong> Ficar rico ainda jovem <br>
       <strong>Dores:</strong> Mora longe da faculdade perde muito tempo no translado <br>
+    </td>
+  </tr>
+</table>
+
+<h2>Persona 2</h2>
+<table>
+  <tr>
+    <td style="vertical-align: top; width: 150px;">
+      <img src="imagens/persona.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
+    </td>
+    <td style="vertical-align: top; padding-left: 10px;">
+      <strong>Nome:</strong> Daniela Sofia <br>
+      <strong>Idade:</strong> 25 <br>
+      <strong>Hobby:</strong> Estudar linguas <br>
+      <strong>Trabalho:</strong> Estagiaria TI <br>
+      <strong>Personalidade:</strong> Alegre, inteligente e amigavel <br>
+      <strong>Sonho:</strong> Viajar o mundo <br>
+      <strong>Dores:</strong> Quer companhia no trajeto da faculdade <br>
     </td>
   </tr>
 </table>
