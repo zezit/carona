@@ -68,14 +68,20 @@ Sistema de Pontuação/Recompensas – Não será implementado um sistema de gam
 Monitoramento em Tempo Real – Não haverá rastreamento ao vivo da viagem dentro do sistema.
 
 **2.3 Resultados / serviços / produtos a serem entregues**
+**Resultados:**
 
-| **1.** | Facilitação do transporte entre estudantes da PUC Minas
+Facilitação do transporte entre estudantes da PUC Minas
 Plataforma confiável e segura para conexão entre motoristas e passageiros 
 Administração eficiente dos usuários e monitoramento do sistema.  
-| --- | --- |
-| **2.** |Intermediação entre motoristas e passageiros para organização de caronas.
+
+**Serviços oferecidos:**
+
+Intermediação entre motoristas e passageiros para organização de caronas.
 Sistema de registro e autenticação para garantir segurança e confiabilidade. 
-| **3.** | |
+
+**Produtos a serem entregues:**
+Plataforma de intermediação entre motoristas e passageiros para organização de caronas para PUC Minas.
+
 
 **2.4 Condições para início do projeto** 
 
