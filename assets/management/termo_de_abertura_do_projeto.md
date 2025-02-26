@@ -76,15 +76,15 @@ Monitoramento em Tempo Real – Não haverá rastreamento ao vivo da viagem dent
 
 **2.4 Condições para início do projeto** 
 
-**Infraestrutura Inicial**
+**Infraestrutura Inicial:**
 Acesso às ferramentas e plataformas de desenvolvimento.
 Configuração do ambiente de desenvolvimento local para os integrantes.
 
-**Levantamento Inicial de Requisitos**
+**Levantamento Inicial de Requisitos:**
 Mapeamento das principais funcionalidades e premissas do sistema.
 Validação inicial dos requisitos com os professores/orientadores.
 
-**Plano de Trabalho e Cronograma**
+**Plano de Trabalho e Cronograma:**
 Definição das primeiras entregas do projeto.
 Aprovação de toda documentação pelos responsáveis.
 
