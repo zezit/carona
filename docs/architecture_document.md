@@ -126,10 +126,12 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas es
 _Estão seçaõ explora um pouco mais o produto a ser desenvolvido_
 
 ## 2.1 Visão do Produto
-![Exemplo de Visão do Produto](imagens/VisaoProduto.png)
+![image](https://github.com/user-attachments/assets/ef627964-ce68-4c44-8ce7-f30e4e6ed356)
+
 
 ## 2.2 Nosso Produto
-![Exemplo de Nosso Produto](imagens/NossoProduto.png)
+![image](https://github.com/user-attachments/assets/60cd6c98-d79f-4303-9fc9-f90108ff8878)
+
 
 ## 2.3 Personas
 <h2>Persona 1</h2>
@@ -139,13 +141,31 @@ _Estão seçaõ explora um pouco mais o produto a ser desenvolvido_
       <img src="imagens/persona.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
     </td>
     <td style="vertical-align: top; padding-left: 10px;">
-      <strong>Nome:</strong> Ana Souza <br>
-      <strong>Idade:</strong> 32 anos <br>
-      <strong>Hobby:</strong> Ler livros de ficção científica <br>
-      <strong>Trabalho:</strong> Desenvolvedora de software <br>
-      <strong>Personalidade:</strong> Analítica, criativa e determinada <br>
-      <strong>Sonho:</strong> Criar uma startup de tecnologia <br>
-      <strong>Dores:</strong> Falta de tempo para equilibrar trabalho e vida pessoal <br>
+      <strong>Nome:</strong> Lucas Lutti <br>
+      <strong>Idade:</strong> 22 <br>
+      <strong>Hobby:</strong> Pilotar Drones <br>
+      <strong>Trabalho:</strong> Estagiario de Engenheria Mecanica <br>
+      <strong>Personalidade:</strong> Comunicativo, incisivo  e determinado <br>
+      <strong>Sonho:</strong> Ficar rico ainda jovem <br>
+      <strong>Dores:</strong> Mora longe da faculdade perde muito tempo no translado <br>
+    </td>
+  </tr>
+</table>
+
+<h2>Persona 2</h2>
+<table>
+  <tr>
+    <td style="vertical-align: top; width: 150px;">
+      <img src="imagens/persona.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
+    </td>
+    <td style="vertical-align: top; padding-left: 10px;">
+      <strong>Nome:</strong> Daniela Sofia <br>
+      <strong>Idade:</strong> 25 <br>
+      <strong>Hobby:</strong> Estudar linguas <br>
+      <strong>Trabalho:</strong> Estagiaria TI <br>
+      <strong>Personalidade:</strong> Alegre, inteligente e amigavel <br>
+      <strong>Sonho:</strong> Viajar o mundo <br>
+      <strong>Dores:</strong> Quer companhia no trajeto da faculdade <br>
     </td>
   </tr>
 </table>
