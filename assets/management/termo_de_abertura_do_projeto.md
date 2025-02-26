@@ -69,9 +69,12 @@ Monitoramento em Tempo Real – Não haverá rastreamento ao vivo da viagem dent
 
 **2.3 Resultados / serviços / produtos a serem entregues**
 
-| **1.** |   |
+| **1.** | Facilitação do transporte entre estudantes da PUC Minas|
+Plataforma confiável e segura para conexão entre motoristas e passageiros| 
+Administração eficiente dos usuários e monitoramento do sistema.  |
 | --- | --- |
-| **2.** | |
+| **2.** |Intermediação entre motoristas e passageiros para organização de caronas.|
+Sistema de registro e autenticação para garantir segurança e confiabilidade. |
 | **3.** | |
 
 **2.4 Condições para início do projeto** 
