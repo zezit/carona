@@ -105,7 +105,7 @@ Aprovação de toda documentação pelos responsáveis.
 ## 3. ESTIMATIVA DE PRAZO
 
 
-**3.1 Prazo previsto (horas):** 9999
+**3.1 Prazo previsto (horas):** 1596
 
 **3.2 Data prevista de início:** 05/02/2025
 
