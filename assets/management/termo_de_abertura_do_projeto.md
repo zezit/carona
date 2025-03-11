@@ -115,12 +115,12 @@ Aprovação de toda documentação pelos responsáveis.
 
 | Item de custo | Qtd. horas | Valor / hora  | Valor total |
 | --- | --- | --- | --- |
-| **4.1 Recursos Humanos** **(especifique):** |  |  |  |
-| **4.2 Hardware (especifique):** |  |  |  |
-| **4.3 Rede e serviços de hospedagem:** |  |  |  |
-| **4.4 Software de terceiros:** |  |  |  |
-| **4.5 Serviços e treinamento:** |  |  |  |
-| **4.6 Total Geral:** |  |  |  |
+| **4.1 Recursos Humanos** **(especifique):** | 150 | 50 | 7500 |
+| **4.2 Hardware (especifique):** | 486 | 50 | 24300 |
+| **4.3 Rede e serviços de hospedagem:** | 540 | 50 | 27000 |
+| **4.4 Software de terceiros:** | 270 | 50 | 13500 |
+| **4.5 Serviços e treinamento:** | 150 | 50 | 7500 |
+| **4.6 Total Geral:** | 1596 | * | 93100 |
 
 ## 5. PARTES INTERESSADAS
 
