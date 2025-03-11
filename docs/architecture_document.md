@@ -209,9 +209,8 @@ Obs: acrescente mais linhas, se necessário.
 
 | **ID** | **Descrição** |
 | --- | --- |
-| RNF01 | Os requisitos não-funcionais devem ser testáveis e descritos de forma mensurável |
-| RNF02 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
-| RNF03 | O sistema deve funcionar em dispositivos Android 14 e 15 |
+| RNF01 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
+| RNF02 | O sistema deve funcionar em dispositivos Android 14 e 15 |
 
 
 ## 3.3. Restrições Arquiteturais
@@ -224,7 +223,7 @@ Obs: acrescente mais linhas, se necessário.
 
 | **Análise** | **Design** | **Implementação** |
 | --- | --- | --- |
-| Persistência | Banco de dados relacional | PostgreSQL |
+| Persistência | Banco de dados relacional | MySQL |
 | Front end | Framework de UI | React Native |
 | Back end | API RESTful | Java Spring Boot |
 | Integração | API de mapas | Google Maps API |
