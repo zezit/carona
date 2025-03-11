@@ -100,7 +100,7 @@ A ausência de uma infraestrutura de transporte adequada nesse período pode res
 
 ## 1.2. Objetivos do trabalho
 
-O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas estruturado para estudantes da PUC Minas, proporcionando uma alternativa viável de deslocamento entre a universidade e suas residências.
+O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas para estudantes da PUC Minas, proporcionando uma alternativa de deslocamento entre a universidade e suas residências.
 
 ### Os objetivos específicos incluem:
 
@@ -116,7 +116,7 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas es
 
 *PUC Minas*: Pontifícia Universidade Católica de Minas Gerais.
 
-*Carona?*: Nome do projeto que visa conectar motoristas e passageiros para compartilhamento de trajetos de forma segura e eficiente.
+*Carona?*: Nome do projeto que visa conectar motoristas e passageiros para compartilhamento de trajetos.
 
 *Gestor*: Responsável por gerenciar usuários e manter a integridade do sistema.
 
