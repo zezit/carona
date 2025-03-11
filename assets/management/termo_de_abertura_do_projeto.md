@@ -57,6 +57,10 @@ _Instituto de Informática e Ciências Exatas – Pontifícia Universidade de Mi
 **1.6 Benefícios que justificam o projeto:** Conexões facilitadas entre usuários, facilidade de locomoção para a faculdade, Garantir Segurança e Confiabilidade e Alternativa Mais Econômica e Sustentável.
 
 **1.7 Qualidade esperada do produto final (requisitos de qualidade):** 
+* O sistema deve estar disponível para uso pelo menos 99% do tempo
+durante os horários de pico (06h-10h e 16h-22h).
+* A interface do usuário deve permitir que motoristas e passageiros
+realizem cadastros e solicitem caronas em menos de 3 minutos
 
 ## **2. ESCOPO PRELIMINAR E PREMISSAS** |
 
@@ -87,20 +91,7 @@ Plataforma de intermediação entre motoristas e passageiros para organização 
 
 **2.4 Condições para início do projeto** 
 
-**Infraestrutura Inicial:**
-Acesso às ferramentas e plataformas de desenvolvimento.
-Configuração do ambiente de desenvolvimento local para os integrantes.
-
-**Levantamento Inicial de Requisitos:**
-Mapeamento das principais funcionalidades e premissas do sistema.
-Validação inicial dos requisitos com os professores/orientadores.
-
-**Plano de Trabalho e Cronograma:**
-Definição das primeiras entregas do projeto.
-Aprovação de toda documentação pelos responsáveis.
-
-
-
+Requisitos elencados.
 
 ## 3. ESTIMATIVA DE PRAZO
 
@@ -129,7 +120,7 @@ Aprovação de toda documentação pelos responsáveis.
 | Felipe Picinin    | Desenvolvedor |     |
 | Gabriel Ferreira | Desenvolvedor | |
 | Gabriel Pongelupe de Carvalho    | Desenvolvedor |     |
-| Jos  | Desenvolvedor |     |=
+| Renato Matos | Desenvolvedor |     |=
 | Pedro Araújo | Desenvolvedor |     |
 | José Victor Mendes Dias | Desenvolvedor |     |
 | Hugo Bastos | Cliente |     |
