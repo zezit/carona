@@ -176,8 +176,6 @@ _Esta seção descreve os requisitos comtemplados nesta descrição arquitetural
 
 ## 3.1. Requisitos Funcionais
 
-_Enumere os requisitos funcionais previstos para a sua aplicação. Concentre-se nos requisitos funcionais que sejam críticos para a definição arquitetural. Lembre-se de listar todos os requisitos que são necessários para garantir cobertura arquitetural. Esta seção deve conter uma lista de requisitos ainda sem modelagem. Na coluna Prioridade utilize uma escala (do mais prioritário para o menos): Essencial, Desejável, Opcional._
-
 | **ID** | **Descrição** | **Prioridade** | **Complexidade** | **Plataforma** | **Sprint** |
 | --- | --- | --- | --- | --- | --- |
 | R01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
@@ -207,37 +205,27 @@ Obs: acrescente mais linhas, se necessário.
 
 ## 3.2. Requisitos Não-Funcionais
 
-_Enumere os requisitos não-funcionais previstos para a sua aplicação. Entre os requisitos não funcionais, inclua todos os requisitos que julgar importante do ponto de vista arquitetural ou seja os requisitos que terão impacto na definição da arquitetura. Os requisitos devem ser descritos de forma completa e preferencialmente quantitativa._
-
 | **ID** | **Descrição** |
 | --- | --- |
-| RNF01 | Os requisitos não-funcionais devem ser testáveis e descritos de forma mensurável |
-| RNF02 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
-| RNF03 | O sistema deve funcionar em dispositivos Android 14 e 15 |
-| RNF04 | O serviço deve estar em conformidade com as leis de proteção de dados (LGPD) |
+| RNF01 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
+| RNF02 | O sistema deve funcionar em dispositivos Android 14 e 15 |
 
 
 ## 3.3. Restrições Arquiteturais
 
-_Enumere as restrições arquiteturais. Lembre-se de que as restrições arquiteturais geralmente não são consideradas requisitos uma vez que limitam a solução candidata. Os requisitos não impõem restrição, mas precisam ser satisfeitos._
-
-- O software deverá ser desenvolvido em Java Spring e React Native.
+- O software deverá ser desenvolvido em Java Spring, React e React Native.
 - A comunicação da API deve seguir o padrão RESTful.
 - O software deve usar banco de dados relacional.
 
 ## 3.4. Mecanismos Arquiteturais
 
-_Visão geral dos mecanismos que compõem a arquitetura do sosftware baseando-se em três estados: (1) análise, (2) design e (3) implementação. Em termos de Análise devem ser listados os aspectos gerais que compõem a arquitetura do software como: persistência, integração com sistemas legados, geração de logs do sistema, ambiente de front end, tratamento de exceções, formato dos testes, formato de distribuição/implantação (deploy), entre outros. Em Design deve-se identificar o padrão tecnológico a seguir para cada mecanismo identificado na análise. Em Implementação, deve-se identificar o produto a ser utilizado na solução.
- Ex: Análise (Persistência), Design (ORM), Implementação (Hibernate)._
-
 | **Análise** | **Design** | **Implementação** |
 | --- | --- | --- |
-| Persistência | Banco de dados relacional | PostgreSQL |
+| Persistência | Banco de dados relacional | MySQL |
 | Front end | Framework de UI | React Native |
 | Back end | API RESTful | Java Spring Boot |
 | Integração | API de mapas | Google Maps API |
-| Log do sistema | | |
-| Teste de Software | | |
+| Mensageria | Sistema de mensagens assíncronas | RabbitMQ |
 | Deploy | | |
 
 <a name="modelagem"></a>
