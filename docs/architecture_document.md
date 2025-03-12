@@ -123,8 +123,6 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
 <a name="produto"></a>
 # 2. Nosso Produto
 
-_Estão seçaõ explora um pouco mais o produto a ser desenvolvido_
-
 ## 2.1 Visão do Produto
 ![image](https://github.com/user-attachments/assets/ef627964-ce68-4c44-8ce7-f30e4e6ed356)
 
