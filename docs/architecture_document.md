@@ -1,4 +1,4 @@
-# TITULO DO PROJETO
+# Documento Arquitetura do Carona?
 
 
 **Renato Matos Alves Penna, renatomapbusiness@gmail.com**
@@ -45,6 +45,7 @@ mostrar algum resultado relevante do trabalho (até 10 linhas)._
 | **[dd/mm/aaaa]** | [Nome do autor]         | [Descrever as principais alterações realizadas no documento, evidenciando as seções ou capítulos alterados] | [X]        |
 | 24/02/2025       | Renato Matos            | Seção 3 preliminar e nome alunos/professores                                                                | v0.1       |
 | 25/02/2025       | José Victor Mendes Dias | Adicionando seção 1                                                                                         | v0.2       |
+| 14/02/2025       | Renato Matos            | Adicionando diagrama arquitetural seção 4                                                                                         | v0.3       |
 
 ## SUMÁRIO
 
@@ -231,13 +232,9 @@ Obs: acrescente mais linhas, se necessário.
 <a name="modelagem"></a>
 # 4. Modelagem e Projeto Arquitetural
 
-_Apresente uma visão geral da solução proposta para o projeto e explique brevemente esse diagrama de visão geral, de forma textual. Esse diagrama não precisa seguir os padrões da UML, e deve ser completo e tão simples quanto possível, apresentando a macroarquitetura da solução._
 
-![Visão Geral da Solução](imagens/visao.png "Visão Geral da Solução")
+![Visão Geral da Solução](/docs/imagens/diagramaArquitetural.png "Visão Geral da Solução")
 
-**Figura 1 - Visão Geral da Solução (fonte: https://medium.com)**
-
-Obs: substitua esta imagem por outra, adequada ao seu projeto (cada arquitetura é única).
 
 ## 4.1. Visão de Negócio (Funcionalidades)
 
@@ -289,15 +286,19 @@ Obs: Acrescente uma breve descrição sobre o diagrama apresentado na Figura 3.
 
 _Apresente o diagrama de componentes da aplicação, indicando, os elementos da arquitetura e as interfaces entre eles. Liste os estilos/padrões arquiteturais utilizados e faça uma descrição sucinta dos componentes indicando o papel de cada um deles dentro da arquitetura/estilo/padrão arquitetural. Indique também quais componentes serão reutilizados (navegadores, SGBDs, middlewares, etc), quais componentes serão adquiridos por serem proprietários e quais componentes precisam ser desenvolvidos._
 
-![Diagrama de componentes](imagens/componentes.png "Diagrama de componentes")
+![Diagrama de componentes](imagens/diagramaComponentes.png "Diagrama de componentes")
 
 **Figura 3 – Diagrama de Componentes (exemplo). Fonte: o próprio autor.**
 
 _Apresente uma descrição detalhada dos artefatos que constituem o diagrama de implantação._
 
 Ex: conforme diagrama apresentado na Figura X, as entidades participantes da solução são:
+ PACOTES
+- **Mobile** - Cliente da aplicação, responsável por interagir com o aplicativo.
+- **Navegador web** - Cliente da aplicação, responsável por interagir com a aplicação via web.
+- **Servidor de Aplicação** - Responsável por processar as requisições do cliente e interagir com o banco de dados.
+- **MySQL** - Responsável por armazenar os dados da aplicação.
 
-- **Componente 1** - Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras nunc magna, accumsan eget porta a, tincidunt sed mauris. Suspendisse orci nulla, sagittis a lorem laoreet, tincidunt imperdiet ipsum. Morbi malesuada pretium suscipit.
 - **Componente 2** - Praesent nec nisi hendrerit, ullamcorper tortor non, rutrum sem. In non lectus tortor. Nulla vel tincidunt eros.
 
 ## 4.3. Modelo de dados (opcional)
