@@ -120,6 +120,8 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
 
 *Gestor*: Responsável por gerenciar usuários e manter a integridade do sistema.
 
+*Carpool*: Termo em inglês que significa compartilhamento de veículos.
+
 <a name="produto"></a>
 # 2. Nosso Produto
 
