@@ -251,20 +251,26 @@ Obs: a quantidade e o escopo das funcionalidades deve ser negociado com os profe
 
 ### Histórias de Usuário
 
-_Nesta seção, você deve descrever estórias de usuários seguindo os métodos ágeis. Lembre-se das características de qualidade das estórias de usuários, ou seja, o que é preciso para descrever boas histórias de usuários._
+- Como passageiro, quero buscar caronas disponíveis para encontrar uma opção que atenda à minha necessidade de deslocamento.
 
-Exemplos de Histórias de Usuário:
+- Como passageiro, quero me registrar em uma carona existente para garantir meu lugar no veículo.
 
-- Como Fulano eu quero poder convidar meus amigos para que a gente possa se reunir...
+- Como passageiro, quero cancelar minha participação em uma carona para caso meus planos mudem.
 
-- Como Cicrano eu quero poder organizar minhas tarefas diárias, para que...
+- Como motorista, quero me cadastrar na plataforma para oferecer caronas.
 
-- Como gerente eu quero conseguir entender o progresso do trabalho do meu time, para que eu possa ter relatórios periódicos dos nossos acertos e falhas.
+- Como motorista, quero criar e gerenciar minhas viagens para oferecer caronas aos estudantes.
 
-|EU COMO... `PERSONA`| QUERO/PRECISO ... `FUNCIONALIDADE` |PARA ... `MOTIVO/VALOR`                 |
-|--------------------|------------------------------------|----------------------------------------|
-|Usuário do sistema  | Registrar minhas tarefas           | Não esquecer de fazê-las               |
-|Administrador       | Alterar permissões                 | Permitir que possam administrar contas |
+- Como motorista, quero avaliar passageiros para manter a qualidade da experiência.
+
+|EU COMO... `PERSONA`| QUERO/PRECISO ... `FUNCIONALIDADE`   |PARA ... `MOTIVO/VALOR`                                            |
+|--------------------|--------------------------------------|-------------------------------------------------------------------|
+|Passageiro          | Buscar caronas disponíveis           | encontrar uma opção que atenda à minha necessidade de deslocamento|
+|Passageiro          | me registrar em uma carona existente | garantir meu lugar no veículo                                     |
+|Passageiro          | quero cancelar minha participação em uma carona     | caso meus planos mudem|
+|Motorista           | quero me cadastrar na plataforma         | oferecer caronas|
+|Motorista           | quero criar e gerenciar minhas viagens        |  oferecer caronas aos estudantes|
+|Motorista           | quero avaliar passageiros        | manter a qualidade da experiência|
 
 ## 4.2. Visão Lógica
 
