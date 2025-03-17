@@ -1,0 +1,174 @@
+@startuml Diagrama_de_Classes
+left to right direction
+
+' ============ Enumeradores ============
+enum TipoUsuario {
+    ADMINISTRADOR
+    ESTUDANTE
+}
+
+enum TipoEstudante {
+    PASSAGEIRO
+    AMBOS /' Passageiro e Motorista '/
+}
+
+enum StatusCarona {
+    AGENDADA
+    EM_ANDAMENTO
+    FINALIZADA
+    CANCELADA
+}
+
+enum StatusDenuncia {
+    PENDENTE
+    RESOLVIDA
+}
+
+enum StatusRecorrencia {
+    CONFIRMADA
+    CANCELADA
+    AGUARDANDO
+}
+
+enum StatusSolicitacao {
+    PENDENTE
+    ACEITA
+    RECUSADA
+    CANCELADA
+}
+
+enum StatusCadastro {
+    PENDENTE
+    APROVADO
+    REJEITADO
+}
+
+' ============ Entidades ============
+abstract class Usuario {
+    - nome: string
+    - email: string
+    - senha: string
+    - tipo: TipoUsuario
+}
+
+class Estudante {
+    - dataDeNascimento: LocalDate
+    - matricula: string
+    - tipoEstudante: TipoEstudante
+    - avaliacaoMedia: float
+    - avaliacoes: List<Avaliacao>
+    - caronasRecorrentes: List<PassageiroRecorrencia>
+    - denucias: List<Denuncia>
+}
+
+class Administrador {
+    /' Não possui atributos específicos ainda '/
+    - denunciasSolucionadas: List<Denuncia>
+}
+
+class Motorista {
+    - veiculo: Carro
+    - cnh: string
+    - whatsapp: string
+    - mostrarWhatsapp: boolean
+    - caronas: List<Carona>
+}
+
+class Carro {
+    - modelo: string
+    - placa: string
+    - cor: string /' HEX '/
+    - capacidadePassageiros: long
+}
+
+class Carona {
+    - origem: string
+    - destino: string
+    - recorrente: boolean
+    - horaAgendamento: DateTime
+    - horarioDePartida: DateTime
+    - horaDeChegada: DateTime
+    - status: StatusCarona
+    - motorista: Motorista
+    - solicitacoes: List<SolicitacaoCarona>
+    - paradas: List<Parada>
+    - passageirosRecorrentes: List<PassageiroRecorrencia>
+}
+
+class SolicitacaoCarona {
+    - status: StatusSolicitacao
+    - dataSolicitacao: DateTime
+    - estudante: Estudante
+}
+
+class Parada {
+    - endereco: string
+    - orderm: int
+    - horarioChegada: DateTime
+    - horarioSaida: DateTime
+}
+
+class PassageiroRecorrencia {
+    - estudante: Estudante
+    - carona: Carona
+    - status: StatusRecorrencia
+}
+
+class Avaliacao {
+    - nota: int /' 1 a 5 '/
+    - comentario: string
+    - data: DateTime
+}
+
+class Denuncia {
+    - descricao: string
+    - data: DateTime
+    - status: StatusDenuncia
+    - solucionador: Administrador
+    - denunciante: Estudante
+    - denunciado: Estudante
+}
+
+class Notificacao {
+    - mensagem: string
+    - horarioDeEnvio: DateTime
+    - resposta: boolean
+    - usuario: Usuario
+}
+
+' ============ Relacionamentos ============
+' Hierarquia de Usuários
+Usuario <|-- Estudante
+Usuario <|-- Administrador
+Estudante <|-- Motorista
+
+' Motorista e Carro
+Motorista -- Carro : possui
+
+' Carona conduzida pelo Motorista
+Carona -- Motorista : conduz
+
+' Solicitação de Carona: Estudante solicita e Carona recebe
+Estudante -- SolicitacaoCarona : solicita
+Carona -- SolicitacaoCarona : recebe
+
+' Carona e suas Paradas
+Carona -d- Parada : possui
+
+' Participação Recorrente: Estudante e Carona vinculam PassageiroRecorrencia
+Estudante -d- PassageiroRecorrencia : participa
+Carona -d- PassageiroRecorrencia : vincula
+
+' Avaliações realizadas pelo Estudante
+Estudante -- Avaliacao : realiza
+Avaliacao -u- Estudante : avaliador
+Avaliacao -d- Estudante : avaliado
+
+' Denúncias realizadas pelo Estudante e analisadas pelo Administrador
+Estudante -d- Denuncia : faz
+Denuncia -- Administrador : solucionador
+
+' Notificações enviadas a partir do Usuario
+Usuario -u- Notificacao : recebe
+
+@enduml
