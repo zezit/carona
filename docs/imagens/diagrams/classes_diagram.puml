@@ -1,4 +1,4 @@
-@startuml Diagrama_de_Classes
+@startuml classes_diagram
 left to right direction
 
 ' ============ Enumeradores ============
