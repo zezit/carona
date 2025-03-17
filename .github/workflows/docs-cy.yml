@@ -1,0 +1,53 @@
+name: Gerar diagramas PlantUML
+on:
+  push:
+    paths:
+      - "**-ci.yml"
+      - "**-ci.yaml"
+      - "**.puml"
+
+jobs:
+  plantuml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install graphviz
+          sudo mkdir -p /opt/plantuml
+          cd /opt/plantuml
+          UML=https://github.com/tide-foundation/devopsDL/raw/main/download/plantuml-1.2022.6.jar
+          sudo curl -JLO ${UML}
+          UML=https://github.com/tide-foundation/devopsDL/raw/main/download/batik-all-1.7.jar
+          sudo curl -JLO ${UML}
+          UML=https://github.com/tide-foundation/devopsDL/raw/main/download/jlatexmath-minimal-1.0.3.jar
+          sudo curl -JLO ${UML}
+          UML=https://github.com/tide-foundation/devopsDL/raw/main/download/jlm_cyrillic.jar
+          sudo curl -JLO ${UML}
+          UML=https://github.com/tide-foundation/devopsDL/raw/main/download/jlm_greek.jar
+          sudo curl -JLO ${UML}
+
+      - name: Checkout Source
+        uses: actions/checkout@v2
+
+      - name: Get changed UML files
+        id: getfile
+        run: |
+          if [ $(git rev-list --count HEAD) -gt 1 ]; then 
+            files=$(git diff --name-only HEAD^ HEAD -- | grep .puml | xargs);
+          else 
+            files=$(git ls-files '*.puml' | xargs); 
+          fi
+          echo "files=$files" >> $GITHUB_OUTPUT
+
+      - name: Process Diagrams
+        run: |
+          for file in ${{ steps.getfile.outputs.files }}; do
+            dir=$(dirname "$file");
+            java -jar /opt/plantuml/plantuml-1.2022.6.jar -v -tsvg -r -o "." "$file";
+          done
+
+      - name: Push Local Changes
+        uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        with:
+          commit_message: "[ci auto] Gerando diagramas PlantUML"
+          branch: ${{ github.head_ref }}
