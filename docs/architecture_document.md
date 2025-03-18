@@ -41,11 +41,12 @@ _**Resumo**. O projeto Carona? é uma solução para facilitar a mobilidade dos 
 
 ## Histórico de Revisões
 
-| **Data**         | **Autor**               | **Descrição**                                                                                               | **Versão** |
-| ---------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------- | ---------- |
-| 24/02/2025       | Renato Matos            | Seção 3 preliminar e nome alunos/professores                                                                | v0.1       |
-| 25/02/2025       | José Victor Mendes Dias | Adicionando seção 1                                                                                         | v0.2       |
-| 14/02/2025       | Renato Matos            | Adicionando diagrama arquitetural seção 4                                                                                         | v0.3       |
+| **Data**   | **Autor**               | **Descrição**                                | **Versão** |
+| ---------- | ----------------------- | -------------------------------------------- | ---------- |
+| 24/02/2025 | Renato Matos            | Seção 3 preliminar e nome alunos/professores | v0.1       |
+| 25/02/2025 | José Victor Mendes Dias | Adicionando seção 1                          | v0.2       |
+| 14/03/2025 | Renato Matos            | Adicionando diagrama arquitetural seção 4    | v0.3       |
+| 18/03/2025 | José Victor Mendes Dias | Pequenos ajustes estruturais de documentação | v0.4       |
 
 ## SUMÁRIO
 
