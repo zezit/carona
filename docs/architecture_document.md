@@ -179,30 +179,28 @@ _Esta seção descreve os requisitos comtemplados nesta descrição arquitetural
 
 | **ID** | **Descrição** | **Prioridade** | **Complexidade** | **Plataforma** | **Sprint** |
 | --- | --- | --- | --- | --- | --- |
-| R01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
-| R02 | Passageiro realiza cadastro | Alta | Baixa | Mobile |  |
-| R03 | Passageiro se registra em carona existente | Alta | Média | Mobile |  |
-| R04 | Passageiro vê caronas existentes próximas | Média | Alta | Mobile |  |
-| R05 | Passageiro cancela registro de carona | Média | Baixa | Mobile |  |
-| R06 | Passageiro ativa notificações | Baixa | Média | Mobile |  |
-| R07 | Passageiro avalia motorista | Média | Baixa | Mobile |  |
-| R08 | Passageiro visualiza histórico de viagens | Média | Baixa | Mobile |  |
-| R09 | Motorista gerencia viagens | Alta | Média | Mobile |  |
-| R10 | Motorista gerencia passageiros da viagem | Alta | Baixa | Mobile |  |
-| R11 | Motorista realiza cadastro | Alta | Baixa | Mobile |  |
-| R12 | Motorista realiza login | Alta | Baixa | Mobile |  |
-| R13 | Motorista gerencia perfil | Alta | Média | Mobile |  |
-| R14 | Motorista visualiza mapa | Média | Média | Mobile |  |
-| R15 | Motorista vê histórico de viagem | Baixa | Baixa | Mobile |  |
-| R16 | Motorista avalia passageiro | Média | Baixa | Mobile |  |
-| R17 | Usuário denuncia outro usuário | Média | Baixa | Mobile |  |
-| R18 | Administrador aprova novos usuários | Média | Baixa | Web |  |
-| R19 | Administrador gerencia universidade | Alta | Média | Web |  |
-| R20 | Administrador visualiza todas as viagens | Alta | Média | Web |  |
-| R21 | Administrador gerencia usuários | Alta | Baixa | Web |  |
-| R22 | Administrador gerencia denúncias | Média | Baixa | Web |  |
-
-Obs: acrescente mais linhas, se necessário.
+| RF01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
+| RF02 | Passageiro realiza cadastro | Alta | Baixa | Mobile |  |
+| RF03 | Passageiro se registra em carona existente | Alta | Média | Mobile |  |
+| RF04 | Passageiro vê caronas existentes próximas | Média | Alta | Mobile |  |
+| RF05 | Passageiro cancela registro de carona | Média | Baixa | Mobile |  |
+| RF06 | Passageiro ativa notificações | Baixa | Média | Mobile |  |
+| RF07 | Passageiro avalia motorista | Média | Baixa | Mobile |  |
+| RF08 | Passageiro visualiza histórico de viagens | Média | Baixa | Mobile |  |
+| RF09 | Motorista gerencia viagens | Alta | Média | Mobile |  |
+| RF10 | Motorista gerencia passageiros da viagem | Alta | Baixa | Mobile |  |
+| RF11 | Motorista realiza cadastro | Alta | Baixa | Mobile |  |
+| RF12 | Motorista realiza login | Alta | Baixa | Mobile |  |
+| RF13 | Motorista gerencia perfil | Alta | Média | Mobile |  |
+| RF14 | Motorista visualiza mapa | Média | Média | Mobile |  |
+| RF15 | Motorista vê histórico de viagem | Baixa | Baixa | Mobile |  |
+| RF16 | Motorista avalia passageiro | Média | Baixa | Mobile |  |
+| RF17 | Usuário denuncia outro usuário | Média | Baixa | Mobile |  |
+| RF18 | Administrador aprova novos usuários | Média | Baixa | Web |  |
+| RF19 | Administrador gerencia universidade | Alta | Média | Web |  |
+| RF20 | Administrador visualiza todas as viagens | Alta | Média | Web |  |
+| RF21 | Administrador gerencia usuários | Alta | Baixa | Web |  |
+| RF22 | Administrador gerencia denúncias | Média | Baixa | Web |  |
 
 ## 3.2. Requisitos Não-Funcionais
 
