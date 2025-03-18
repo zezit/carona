@@ -115,17 +115,17 @@ Requisitos elencados.
 
 ## 5. PARTES INTERESSADAS
 
-| Nome | Papel no projeto | Assinatura |
-| --- | --- | --- |
-| Felipe Picinin    | Desenvolvedor |     |
-| Gabriel Ferreira | Desenvolvedor | |
-| Gabriel Pongelupe de Carvalho    | Desenvolvedor |     |
-| Renato Matos | Desenvolvedor |     |=
-| Pedro Araújo | Desenvolvedor |     |
-| José Victor Mendes Dias | Desenvolvedor |     |
-| Hugo Bastos | Cliente |     |
-| Cristiano Macedo | Cliente |     |
-| Cleiton Tavares | Cliente |     |
+| Nome | Papel no projeto | 
+| --- | --- |
+| Felipe Picinin    | Desenvolvedor |
+| Gabriel Ferreira | Desenvolvedor | 
+| Gabriel Pongelupe de Carvalho    | Desenvolvedor |
+| Renato Matos | Desenvolvedor |   
+| Pedro Araújo | Desenvolvedor |     
+| José Victor Mendes Dias | Desenvolvedor |     
+| Hugo Bastos | Cliente |     
+| Cristiano Macedo | Cliente |     
+| Cleiton Tavares | Cliente |     
 
 **Observações:**
 
