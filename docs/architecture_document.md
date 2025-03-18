@@ -181,30 +181,30 @@ _Esta seção descreve os requisitos comtemplados nesta descrição arquitetural
 
 ## 3.1. Requisitos Funcionais
 
-| **ID** | **Descrição** | **Prioridade** | **Complexidade** | **Plataforma** | **Sprint** |
-| --- | --- | --- | --- | --- | --- |
-| RF01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
-| RF02 | Passageiro realiza cadastro | Alta | Baixa | Mobile |  |
-| RF03 | Passageiro se registra em carona existente | Alta | Média | Mobile |  |
-| RF04 | Passageiro vê caronas existentes próximas | Média | Alta | Mobile |  |
-| RF05 | Passageiro cancela registro de carona | Média | Baixa | Mobile |  |
-| RF06 | Passageiro ativa notificações | Baixa | Média | Mobile |  |
-| RF07 | Passageiro avalia motorista | Média | Baixa | Mobile |  |
-| RF08 | Passageiro visualiza histórico de viagens | Média | Baixa | Mobile |  |
-| RF09 | Motorista gerencia viagens | Alta | Média | Mobile |  |
-| RF10 | Motorista gerencia passageiros da viagem | Alta | Baixa | Mobile |  |
-| RF11 | Motorista realiza cadastro | Alta | Baixa | Mobile |  |
-| RF12 | Motorista realiza login | Alta | Baixa | Mobile |  |
-| RF13 | Motorista gerencia perfil | Alta | Média | Mobile |  |
-| RF14 | Motorista visualiza mapa | Média | Média | Mobile |  |
-| RF15 | Motorista vê histórico de viagem | Baixa | Baixa | Mobile |  |
-| RF16 | Motorista avalia passageiro | Média | Baixa | Mobile |  |
-| RF17 | Usuário denuncia outro usuário | Média | Baixa | Mobile |  |
-| RF18 | Administrador aprova novos usuários | Média | Baixa | Web |  |
-| RF19 | Administrador gerencia universidade | Alta | Média | Web |  |
-| RF20 | Administrador visualiza todas as viagens | Alta | Média | Web |  |
-| RF21 | Administrador gerencia usuários | Alta | Baixa | Web |  |
-| RF22 | Administrador gerencia denúncias | Média | Baixa | Web |  |
+| **ID** | **Descrição** | **Prioridade** | **Complexidade** | **Plataforma** | 
+| --- | --- | --- | --- | --- | 
+| RF01 | Passageiro realiza login | Alta | Baixa | Mobile |  
+| RF02 | Passageiro realiza cadastro | Alta | Baixa | Mobile |  
+| RF03 | Passageiro se registra em carona existente | Alta | Média | Mobile |  
+| RF04 | Passageiro vê caronas existentes próximas | Média | Alta | Mobile |  
+| RF05 | Passageiro cancela registro de carona | Média | Baixa | Mobile |  
+| RF06 | Passageiro ativa notificações | Baixa | Média | Mobile |  
+| RF07 | Passageiro avalia motorista | Média | Baixa | Mobile |  
+| RF08 | Passageiro visualiza histórico de viagens | Média | Baixa | Mobile |  
+| RF09 | Motorista gerencia viagens | Alta | Média | Mobile |  
+| RF10 | Motorista gerencia passageiros da viagem | Alta | Baixa | Mobile |  
+| RF11 | Motorista realiza cadastro | Alta | Baixa | Mobile |  
+| RF12 | Motorista realiza login | Alta | Baixa | Mobile |  
+| RF13 | Motorista gerencia perfil | Alta | Média | Mobile |  
+| RF14 | Motorista visualiza mapa | Média | Média | Mobile |  
+| RF15 | Motorista vê histórico de viagem | Baixa | Baixa | Mobile |  
+| RF16 | Motorista avalia passageiro | Média | Baixa | Mobile |  
+| RF17 | Usuário denuncia outro usuário | Média | Baixa | Mobile |  
+| RF18 | Administrador aprova novos usuários | Média | Baixa | Web |  
+| RF19 | Administrador gerencia universidade | Alta | Média | Web |  
+| RF20 | Administrador visualiza todas as viagens | Alta | Média | Web |  
+| RF21 | Administrador gerencia usuários | Alta | Baixa | Web |  
+| RF22 | Administrador gerencia denúncias | Média | Baixa | Web |  
 
 ## 3.2. Requisitos Não-Funcionais
 
@@ -214,8 +214,6 @@ _Esta seção descreve os requisitos comtemplados nesta descrição arquitetural
 | RNF02 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
 | RNF03 | O sistema deve funcionar em dispositivos Android 14 e 15 |
 | RNF04 | O sistema deve ser capaz de processar e exibir os resultados de uma busca por caronas em menos de 2 segundos, considerando até 1.000 usuários simultâneos realizando buscas durante horários de pico." |
-| RNF05 | O sistema deve calcular a distância entre o ponto de partida e o destino com uma margem de erro máxima de 5% em relação à distância real, considerando variações devido a mapas e condições de tráfego.
-
 
 
 ## 3.3. Restrições Arquiteturais
