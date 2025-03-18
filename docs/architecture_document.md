@@ -1,4 +1,4 @@
-# TITULO DO PROJETO
+# CARONA?
 
 
 **Renato Matos Alves Penna, renatomapbusiness@gmail.com**
@@ -138,7 +138,7 @@ _Estão seçaõ explora um pouco mais o produto a ser desenvolvido_
 <table>
   <tr>
     <td style="vertical-align: top; width: 150px;">
-      <img src="imagens/persona.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
+      <img src="imagens/lucas.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px; height:100px;">
     </td>
     <td style="vertical-align: top; padding-left: 10px;">
       <strong>Nome:</strong> Lucas Lutti <br>
@@ -156,7 +156,7 @@ _Estão seçaõ explora um pouco mais o produto a ser desenvolvido_
 <table>
   <tr>
     <td style="vertical-align: top; width: 150px;">
-      <img src="imagens/persona.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
+      <img src="imagens/juliana.jpeg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
     </td>
     <td style="vertical-align: top; padding-left: 10px;">
       <strong>Nome:</strong> Daniela Sofia <br>
@@ -182,28 +182,28 @@ _Enumere os requisitos funcionais previstos para a sua aplicação. Concentre-se
 
 | **ID** | **Descrição** | **Prioridade** | **Complexidade** | **Plataforma** | **Sprint** |
 | --- | --- | --- | --- | --- | --- |
-| R01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
-| R02 | Passageiro realiza cadastro | Alta | Baixa | Mobile |  |
-| R03 | Passageiro se registra em carona existente | Alta | Média | Mobile |  |
-| R04 | Passageiro vê caronas existentes próximas | Média | Alta | Mobile |  |
-| R05 | Passageiro cancela registro de carona | Média | Baixa | Mobile |  |
-| R06 | Passageiro ativa notificações | Baixa | Média | Mobile |  |
-| R07 | Passageiro avalia motorista | Média | Baixa | Mobile |  |
-| R08 | Passageiro visualiza histórico de viagens | Média | Baixa | Mobile |  |
-| R09 | Motorista gerencia viagens | Alta | Média | Mobile |  |
-| R10 | Motorista gerencia passageiros da viagem | Alta | Baixa | Mobile |  |
-| R11 | Motorista realiza cadastro | Alta | Baixa | Mobile |  |
-| R12 | Motorista realiza login | Alta | Baixa | Mobile |  |
-| R13 | Motorista gerencia perfil | Alta | Média | Mobile |  |
-| R14 | Motorista visualiza mapa | Média | Média | Mobile |  |
-| R15 | Motorista vê histórico de viagem | Baixa | Baixa | Mobile |  |
-| R16 | Motorista avalia passageiro | Média | Baixa | Mobile |  |
-| R17 | Usuário denuncia outro usuário | Média | Baixa | Mobile |  |
-| R18 | Administrador aprova novos usuários | Média | Baixa | Web |  |
-| R19 | Administrador gerencia universidade | Alta | Média | Web |  |
-| R20 | Administrador visualiza todas as viagens | Alta | Média | Web |  |
-| R21 | Administrador gerencia usuários | Alta | Baixa | Web |  |
-| R22 | Administrador gerencia denúncias | Média | Baixa | Web |  |
+| RF01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
+| RF02 | Passageiro realiza cadastro | Alta | Baixa | Mobile |  |
+| RF03 | Passageiro se registra em carona existente | Alta | Média | Mobile |  |
+| RF04 | Passageiro vê caronas existentes próximas | Média | Alta | Mobile |  |
+| RF05 | Passageiro cancela registro de carona | Média | Baixa | Mobile |  |
+| RF06 | Passageiro ativa notificações | Baixa | Média | Mobile |  |
+| RF07 | Passageiro avalia motorista | Média | Baixa | Mobile |  |
+| RF08 | Passageiro visualiza histórico de viagens | Média | Baixa | Mobile |  |
+| RF09 | Motorista gerencia viagens | Alta | Média | Mobile |  |
+| RF10 | Motorista gerencia passageiros da viagem | Alta | Baixa | Mobile |  |
+| RF11 | Motorista realiza cadastro | Alta | Baixa | Mobile |  |
+| RF12 | Motorista realiza login | Alta | Baixa | Mobile |  |
+| RF13 | Motorista gerencia perfil | Alta | Média | Mobile |  |
+| RF14 | Motorista visualiza mapa | Média | Média | Mobile |  |
+| RF15 | Motorista vê histórico de viagem | Baixa | Baixa | Mobile |  |
+| RF16 | Motorista avalia passageiro | Média | Baixa | Mobile |  |
+| RF17 | Usuário denuncia outro usuário | Média | Baixa | Mobile |  |
+| RF18 | Administrador aprova novos usuários | Média | Baixa | Web |  |
+| RF19 | Administrador gerencia universidade | Alta | Média | Web |  |
+| RF20 | Administrador visualiza todas as viagens | Alta | Média | Web |  |
+| RF21 | Administrador gerencia usuários | Alta | Baixa | Web |  |
+| RF22 | Administrador gerencia denúncias | Média | Baixa | Web |  |
 
 Obs: acrescente mais linhas, se necessário.
 
@@ -213,10 +213,11 @@ _Enumere os requisitos não-funcionais previstos para a sua aplicação. Entre o
 
 | **ID** | **Descrição** |
 | --- | --- |
-| RNF01 | Os requisitos não-funcionais devem ser testáveis e descritos de forma mensurável |
+| RNF01 | O token de autenticação deve expirar automaticamente após 7 dias de inatividade do usuário. Caso o usuário faça login novamente antes do vencimento, um novo token será gerado. A expiração deve ser validada no momento de cada requisição ao sistema. |
 | RNF02 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
 | RNF03 | O sistema deve funcionar em dispositivos Android 14 e 15 |
-| RNF04 | O serviço deve estar em conformidade com as leis de proteção de dados (LGPD) |
+| RNF04 | O sistema deve ser capaz de processar e exibir os resultados de uma busca por caronas em menos de 2 segundos, considerando até 1.000 usuários simultâneos realizando buscas durante horários de pico." |
+| RNF05 | O sistema deve calcular a distância entre o ponto de partida e o destino com uma margem de erro máxima de 5% em relação à distância real, considerando variações devido a mapas e condições de tráfego.
 
 
 ## 3.3. Restrições Arquiteturais
