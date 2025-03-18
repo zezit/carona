@@ -1,3 +1,5 @@
+
+
 # Documento Arquitetura do Carona?
 
 
@@ -137,7 +139,7 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
 <table>
   <tr>
     <td style="vertical-align: top; width: 150px;">
-      <img src="imagens/persona.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
+      <img src="imagens/lucas.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px; height:100px;">
     </td>
     <td style="vertical-align: top; padding-left: 10px;">
       <strong>Nome:</strong> Lucas Lutti <br>
@@ -155,7 +157,7 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
 <table>
   <tr>
     <td style="vertical-align: top; width: 150px;">
-      <img src="imagens/persona.jpg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
+      <img src="imagens/juliana.jpeg" alt="Imagem da Persona"  style="width: 100px; height: auto; border-radius: 10px;">
     </td>
     <td style="vertical-align: top; padding-left: 10px;">
       <strong>Nome:</strong> Daniela Sofia <br>
@@ -206,8 +208,12 @@ _Esta seção descreve os requisitos comtemplados nesta descrição arquitetural
 
 | **ID** | **Descrição** |
 | --- | --- |
-| RNF01 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
-| RNF02 | O sistema deve funcionar em dispositivos Android 14 e 15 |
+| RNF01 | O token de autenticação deve expirar automaticamente após 7 dias de inatividade do usuário. Caso o usuário faça login novamente antes do vencimento, um novo token será gerado. A expiração deve ser validada no momento de cada requisição ao sistema. |
+| RNF02 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
+| RNF03 | O sistema deve funcionar em dispositivos Android 14 e 15 |
+| RNF04 | O sistema deve ser capaz de processar e exibir os resultados de uma busca por caronas em menos de 2 segundos, considerando até 1.000 usuários simultâneos realizando buscas durante horários de pico." |
+| RNF05 | O sistema deve calcular a distância entre o ponto de partida e o destino com uma margem de erro máxima de 5% em relação à distância real, considerando variações devido a mapas e condições de tráfego.
+
 
 
 ## 3.3. Restrições Arquiteturais
