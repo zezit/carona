@@ -1,4 +1,6 @@
-# CARONA?
+
+
+# Documento Arquitetura do Carona?
 
 
 **Renato Matos Alves Penna, renatomapbusiness@gmail.com**
@@ -45,6 +47,7 @@ mostrar algum resultado relevante do trabalho (até 10 linhas)._
 | **[dd/mm/aaaa]** | [Nome do autor]         | [Descrever as principais alterações realizadas no documento, evidenciando as seções ou capítulos alterados] | [X]        |
 | 24/02/2025       | Renato Matos            | Seção 3 preliminar e nome alunos/professores                                                                | v0.1       |
 | 25/02/2025       | José Victor Mendes Dias | Adicionando seção 1                                                                                         | v0.2       |
+| 14/02/2025       | Renato Matos            | Adicionando diagrama arquitetural seção 4                                                                                         | v0.3       |
 
 ## SUMÁRIO
 
@@ -100,7 +103,7 @@ A ausência de uma infraestrutura de transporte adequada nesse período pode res
 
 ## 1.2. Objetivos do trabalho
 
-O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas estruturado para estudantes da PUC Minas, proporcionando uma alternativa viável de deslocamento entre a universidade e suas residências.
+O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas para estudantes da PUC Minas, proporcionando uma alternativa de deslocamento entre a universidade e suas residências.
 
 ### Os objetivos específicos incluem:
 
@@ -116,14 +119,12 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas es
 
 *PUC Minas*: Pontifícia Universidade Católica de Minas Gerais.
 
-*Carona?*: Nome do projeto que visa conectar motoristas e passageiros para compartilhamento de trajetos de forma segura e eficiente.
+*Carona?*: Nome do projeto que visa conectar motoristas e passageiros para compartilhamento de trajetos.
 
 *Gestor*: Responsável por gerenciar usuários e manter a integridade do sistema.
 
 <a name="produto"></a>
 # 2. Nosso Produto
-
-_Estão seçaõ explora um pouco mais o produto a ser desenvolvido_
 
 ## 2.1 Visão do Produto
 ![image](https://github.com/user-attachments/assets/ef627964-ce68-4c44-8ce7-f30e4e6ed356)
@@ -178,8 +179,6 @@ _Esta seção descreve os requisitos comtemplados nesta descrição arquitetural
 
 ## 3.1. Requisitos Funcionais
 
-_Enumere os requisitos funcionais previstos para a sua aplicação. Concentre-se nos requisitos funcionais que sejam críticos para a definição arquitetural. Lembre-se de listar todos os requisitos que são necessários para garantir cobertura arquitetural. Esta seção deve conter uma lista de requisitos ainda sem modelagem. Na coluna Prioridade utilize uma escala (do mais prioritário para o menos): Essencial, Desejável, Opcional._
-
 | **ID** | **Descrição** | **Prioridade** | **Complexidade** | **Plataforma** | **Sprint** |
 | --- | --- | --- | --- | --- | --- |
 | RF01 | Passageiro realiza login | Alta | Baixa | Mobile |  |
@@ -205,11 +204,7 @@ _Enumere os requisitos funcionais previstos para a sua aplicação. Concentre-se
 | RF21 | Administrador gerencia usuários | Alta | Baixa | Web |  |
 | RF22 | Administrador gerencia denúncias | Média | Baixa | Web |  |
 
-Obs: acrescente mais linhas, se necessário.
-
 ## 3.2. Requisitos Não-Funcionais
-
-_Enumere os requisitos não-funcionais previstos para a sua aplicação. Entre os requisitos não funcionais, inclua todos os requisitos que julgar importante do ponto de vista arquitetural ou seja os requisitos que terão impacto na definição da arquitetura. Os requisitos devem ser descritos de forma completa e preferencialmente quantitativa._
 
 | **ID** | **Descrição** |
 | --- | --- |
@@ -220,39 +215,30 @@ _Enumere os requisitos não-funcionais previstos para a sua aplicação. Entre o
 | RNF05 | O sistema deve calcular a distância entre o ponto de partida e o destino com uma margem de erro máxima de 5% em relação à distância real, considerando variações devido a mapas e condições de tráfego.
 
 
+
 ## 3.3. Restrições Arquiteturais
 
-_Enumere as restrições arquiteturais. Lembre-se de que as restrições arquiteturais geralmente não são consideradas requisitos uma vez que limitam a solução candidata. Os requisitos não impõem restrição, mas precisam ser satisfeitos._
-
-- O software deverá ser desenvolvido em Java Spring e React Native.
+- O software deverá ser desenvolvido em Java Spring, React e React Native.
 - A comunicação da API deve seguir o padrão RESTful.
 - O software deve usar banco de dados relacional.
 
 ## 3.4. Mecanismos Arquiteturais
 
-_Visão geral dos mecanismos que compõem a arquitetura do sosftware baseando-se em três estados: (1) análise, (2) design e (3) implementação. Em termos de Análise devem ser listados os aspectos gerais que compõem a arquitetura do software como: persistência, integração com sistemas legados, geração de logs do sistema, ambiente de front end, tratamento de exceções, formato dos testes, formato de distribuição/implantação (deploy), entre outros. Em Design deve-se identificar o padrão tecnológico a seguir para cada mecanismo identificado na análise. Em Implementação, deve-se identificar o produto a ser utilizado na solução.
- Ex: Análise (Persistência), Design (ORM), Implementação (Hibernate)._
-
 | **Análise** | **Design** | **Implementação** |
 | --- | --- | --- |
-| Persistência | Banco de dados relacional | PostgreSQL |
+| Persistência | Banco de dados relacional | MySQL |
 | Front end | Framework de UI | React Native |
 | Back end | API RESTful | Java Spring Boot |
 | Integração | API de mapas | Google Maps API |
-| Log do sistema | | |
-| Teste de Software | | |
+| Mensageria | Sistema de mensagens assíncronas | RabbitMQ |
 | Deploy | | |
 
 <a name="modelagem"></a>
 # 4. Modelagem e Projeto Arquitetural
 
-_Apresente uma visão geral da solução proposta para o projeto e explique brevemente esse diagrama de visão geral, de forma textual. Esse diagrama não precisa seguir os padrões da UML, e deve ser completo e tão simples quanto possível, apresentando a macroarquitetura da solução._
 
-![Visão Geral da Solução](imagens/visao.png "Visão Geral da Solução")
+![Visão Geral da Solução](/docs/imagens/diagramaArquitetural.png "Visão Geral da Solução")
 
-**Figura 1 - Visão Geral da Solução (fonte: https://medium.com)**
-
-Obs: substitua esta imagem por outra, adequada ao seu projeto (cada arquitetura é única).
 
 ## 4.1. Visão de Negócio (Funcionalidades)
 
@@ -266,20 +252,26 @@ Obs: a quantidade e o escopo das funcionalidades deve ser negociado com os profe
 
 ### Histórias de Usuário
 
-_Nesta seção, você deve descrever estórias de usuários seguindo os métodos ágeis. Lembre-se das características de qualidade das estórias de usuários, ou seja, o que é preciso para descrever boas histórias de usuários._
+- Como passageiro, quero buscar caronas disponíveis para encontrar uma opção que atenda à minha necessidade de deslocamento.
 
-Exemplos de Histórias de Usuário:
+- Como passageiro, quero me registrar em uma carona existente para garantir meu lugar no veículo.
 
-- Como Fulano eu quero poder convidar meus amigos para que a gente possa se reunir...
+- Como passageiro, quero cancelar minha participação em uma carona para caso meus planos mudem.
 
-- Como Cicrano eu quero poder organizar minhas tarefas diárias, para que...
+- Como motorista, quero me cadastrar na plataforma para oferecer caronas.
 
-- Como gerente eu quero conseguir entender o progresso do trabalho do meu time, para que eu possa ter relatórios periódicos dos nossos acertos e falhas.
+- Como motorista, quero criar e gerenciar minhas viagens para oferecer caronas aos estudantes.
 
-|EU COMO... `PERSONA`| QUERO/PRECISO ... `FUNCIONALIDADE` |PARA ... `MOTIVO/VALOR`                 |
-|--------------------|------------------------------------|----------------------------------------|
-|Usuário do sistema  | Registrar minhas tarefas           | Não esquecer de fazê-las               |
-|Administrador       | Alterar permissões                 | Permitir que possam administrar contas |
+- Como motorista, quero avaliar passageiros para manter a qualidade da experiência.
+
+|EU COMO... `PERSONA`| QUERO/PRECISO ... `FUNCIONALIDADE`   |PARA ... `MOTIVO/VALOR`                                            |
+|--------------------|--------------------------------------|-------------------------------------------------------------------|
+|Passageiro          | Buscar caronas disponíveis           | encontrar uma opção que atenda à minha necessidade de deslocamento|
+|Passageiro          | me registrar em uma carona existente | garantir meu lugar no veículo                                     |
+|Passageiro          | quero cancelar minha participação em uma carona     | caso meus planos mudem|
+|Motorista           | quero me cadastrar na plataforma         | oferecer caronas|
+|Motorista           | quero criar e gerenciar minhas viagens        |  oferecer caronas aos estudantes|
+|Motorista           | quero avaliar passageiros        | manter a qualidade da experiência|
 
 ## 4.2. Visão Lógica
 
@@ -298,15 +290,19 @@ Obs: Acrescente uma breve descrição sobre o diagrama apresentado na Figura 3.
 
 _Apresente o diagrama de componentes da aplicação, indicando, os elementos da arquitetura e as interfaces entre eles. Liste os estilos/padrões arquiteturais utilizados e faça uma descrição sucinta dos componentes indicando o papel de cada um deles dentro da arquitetura/estilo/padrão arquitetural. Indique também quais componentes serão reutilizados (navegadores, SGBDs, middlewares, etc), quais componentes serão adquiridos por serem proprietários e quais componentes precisam ser desenvolvidos._
 
-![Diagrama de componentes](imagens/componentes.png "Diagrama de componentes")
+![Diagrama de componentes](imagens/diagramaComponentes.png "Diagrama de componentes")
 
 **Figura 3 – Diagrama de Componentes (exemplo). Fonte: o próprio autor.**
 
 _Apresente uma descrição detalhada dos artefatos que constituem o diagrama de implantação._
 
 Ex: conforme diagrama apresentado na Figura X, as entidades participantes da solução são:
+ PACOTES
+- **Mobile** - Cliente da aplicação, responsável por interagir com o aplicativo.
+- **Navegador web** - Cliente da aplicação, responsável por interagir com a aplicação via web.
+- **Servidor de Aplicação** - Responsável por processar as requisições do cliente e interagir com o banco de dados.
+- **MySQL** - Responsável por armazenar os dados da aplicação.
 
-- **Componente 1** - Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras nunc magna, accumsan eget porta a, tincidunt sed mauris. Suspendisse orci nulla, sagittis a lorem laoreet, tincidunt imperdiet ipsum. Morbi malesuada pretium suscipit.
 - **Componente 2** - Praesent nec nisi hendrerit, ullamcorper tortor non, rutrum sem. In non lectus tortor. Nulla vel tincidunt eros.
 
 ## 4.3. Modelo de dados (opcional)
