@@ -123,6 +123,8 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
 
 *Gestor*: Responsável por gerenciar usuários e manter a integridade do sistema.
 
+*Carpool*: Termo em inglês que significa compartilhamento de veículos.
+
 <a name="produto"></a>
 # 2. Nosso Produto
 
@@ -279,7 +281,7 @@ _Apresente os artefatos que serão utilizados descrevendo em linhas gerais as mo
 
 ### Diagrama de Classes
 
-![Diagrama de classes](imagens/classes.gif "Diagrama de classes")
+![Diagrama de classes](imagens/diagrams/classes_diagram.svg "Diagrama de classes")
 
 
 **Figura 2 – Diagrama de classes (exemplo). Fonte: o próprio autor.**
