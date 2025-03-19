@@ -3,19 +3,17 @@
 # Documento Arquitetura do Carona?
 
 
-**Renato Matos Alves Penna, renatomapbusiness@gmail.com**
-
 **Felipe Freitas Picinin, picinin.felipe2@gmail.com**
-
-**Gabriel Pongelupe De Carvalho, gabrielpongelupee@gmail.com**
 
 **Gabriel Ferreira, gabriel.afa@outlook.com**
 
+**Gabriel Pongelupe De Carvalho, gabrielpongelupee@gmail.com**
+
+**José Victor Mendes Dias, jose.dias.1433596@sga.pucminas.br**
+
 **Pedro Araújo, pedrofr1313@gmail.com**
 
-**Renato Cazzoletti, renato.cazzoletti7@gmail.com**
-
-**José Victor Mendes Dias,  jose.dias.1433596@sga.pucminas.br**
+**Renato Matos Alves Penna, renatomapbusiness@gmail.com**
 
 ---
 
@@ -241,13 +239,19 @@ A seguir serão apresentados os requisitos funcionais e não funcionais que guia
 
 ## 4.1. Visão de Negócio (Funcionalidades)
 
-_Apresente uma lista simples com as funcionalidades previstas no projeto (escopo do produto)._
+_A seguir estão as principais funcionalidades previstas para o sistema Carona? com base nos requisitos funcionais:_
 
-1. O sistema deve...
-2. O sistema deve...
-3. ...
+1. O sistema deve permitir cadastro e autenticação de passageiros e motoristas
+2. O sistema deve possibilitar a criação e gerenciamento de caronas pelos motoristas
+3. O sistema deve permitir que passageiros busquem e se registrem em caronas disponíveis
+4. O sistema deve permitir cancelamento de participação em caronas
+5. O sistema deve oferecer sistema de avaliação entre usuários
+6. O sistema deve permitir denúncias de usuários
+7. O sistema deve possuir interface administrativa para gerenciamento de universidades, usuários e denúncias
+8. O sistema deve apresentar histórico de viagens para motoristas e passageiros
+9. O sistema deve oferecer notificações para os usuários
+10. O sistema deve apresentar visualização de mapa para os motoristas
 
-Obs: a quantidade e o escopo das funcionalidades deve ser negociado com os professores/orientadores do trabalho.
 
 ### Histórias de Usuário
 
@@ -282,10 +286,9 @@ O diagrama de classes abaixo representa a estrutura do sistema Carona?, detalhan
 
 ![Diagrama de classes](imagens/diagrams/classes_diagram.svg "Diagrama de classes")
 
+**Figura 2 – Diagrama de classes. Fonte: o próprio autor.**
 
-**Figura 2 – Diagrama de classes (exemplo). Fonte: o próprio autor.**
-
-Obs: Acrescente uma breve descrição sobre o diagrama apresentado na Figura 3.
+Na Figura 2, podemos visualizar o modelo de domínio do sistema Carona?, incluindo as principais entidades e seus relacionamentos. O sistema é estruturado em torno de diferentes tipos de usuários (Administrador, Estudante e Motorista), onde o Motorista é uma especialização de Estudante. A classe Carona é central ao sistema, conectando-se com Motorista, Paradas, SolicitaçãoCarona e PassageiroRecorrência. Os relacionamentos mostram como os estudantes podem solicitar caronas, avaliar outros usuários e fazer denúncias, que serão tratadas por administradores.
 
 ### Diagrama de componentes
 
@@ -293,7 +296,7 @@ O diagrama de componentes abaixo apresenta a arquitetura do sistema Carona, dest
 
 ![Diagrama de componentes](imagens/diagrams/diagramaComponentes.png "Diagrama de componentes")
 
-**Figura 3 – Diagrama de Componentes (exemplo). Fonte: o próprio autor.**
+**Figura 3 – Diagrama de Componentes. Fonte: o próprio autor.**
 
 Na Figura 3, podemos ver a estrutura do sistema Carona dividida em dois grandes blocos: o Cliente e o Sistema Carona. O Cliente representa os dispositivos usados pelos usuários, como Mobile e Navegador Web, que servem como portas de entrada para a aplicação. Já o Sistema Carona engloba toda a parte responsável pelo processamento e armazenamento das informações, incluindo o Backend, o Banco de Dados e o RabbitMQ.
 
