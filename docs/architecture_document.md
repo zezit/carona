@@ -35,19 +35,18 @@ _Instituto de Informática e Ciências Exatas – Pontifícia Universidade de Mi
 
 ---
 
-_**Resumo**. Escrever aqui o resumo. O resumo deve contextualizar rapidamente o trabalho, descrever seu objetivo e, ao final, 
-mostrar algum resultado relevante do trabalho (até 10 linhas)._
+_**Resumo**. O projeto Carona? é uma solução para facilitar a mobilidade dos estudantes da PUC Minas através de compartilhamento de caronas. O sistema aborda a dificuldade de transporte nos horários noturnos, conectando motoristas e passageiros. A plataforma inclui aplicativos mobile para usuários finais e interface web administrativa. A arquitetura baseia-se em Java Spring Boot no backend, React Native para aplicações móveis e MySQL para persistência de dados._
 
 ---
 
 ## Histórico de Revisões
 
-| **Data**         | **Autor**               | **Descrição**                                                                                               | **Versão** |
-| ---------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------- | ---------- |
-| **[dd/mm/aaaa]** | [Nome do autor]         | [Descrever as principais alterações realizadas no documento, evidenciando as seções ou capítulos alterados] | [X]        |
-| 24/02/2025       | Renato Matos            | Seção 3 preliminar e nome alunos/professores                                                                | v0.1       |
-| 25/02/2025       | José Victor Mendes Dias | Adicionando seção 1                                                                                         | v0.2       |
-| 14/02/2025       | Renato Matos            | Adicionando diagrama arquitetural seção 4                                                                                         | v0.3       |
+| **Data**   | **Autor**               | **Descrição**                                | **Versão** |
+| ---------- | ----------------------- | -------------------------------------------- | ---------- |
+| 24/02/2025 | Renato Matos            | Seção 3 preliminar e nome alunos/professores | v0.1       |
+| 25/02/2025 | José Victor Mendes Dias | Adicionando seção 1                          | v0.2       |
+| 14/03/2025 | Renato Matos            | Adicionando diagrama arquitetural seção 4    | v0.3       |
+| 18/03/2025 | José Victor Mendes Dias | Pequenos ajustes estruturais de documentação | v0.4       |
 
 ## SUMÁRIO
 
@@ -177,7 +176,7 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
 <a name="requisitos"></a>
 # 3. Requisitos
 
-_Esta seção descreve os requisitos comtemplados nesta descrição arquitetural, divididos em dois grupos: funcionais e não funcionais._
+A seguir serão apresentados os requisitos funcionais e não funcionais que guiaram o desenvolvimento da arquitetura do sistema Carona?.
 
 ## 3.1. Requisitos Funcionais
 
@@ -275,9 +274,11 @@ Obs: a quantidade e o escopo das funcionalidades deve ser negociado com os profe
 
 ## 4.2. Visão Lógica
 
-_Apresente os artefatos que serão utilizados descrevendo em linhas gerais as motivações que levaram a equipe a utilizar estes diagramas._
+A seguir serão apresenta os diagramas que descrevem a estrutura lógica do sistema, incluindo o diagrama de classes e componentes. Estes artefatos serão utilizados para documentar as relações entre as entidades do sistema e para ilustrar como os componentes da aplicação comunicam entre si.
 
 ### Diagrama de Classes
+
+O diagrama de classes abaixo representa a estrutura do sistema Carona?, detalhando as entidades, seus atributos, relacionamentos e hierarquias.
 
 ![Diagrama de classes](imagens/diagrams/classes_diagram.svg "Diagrama de classes")
 

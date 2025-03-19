@@ -1,11 +1,11 @@
 # Artefatos do Projeto
 
-Liste os artefatos produzidos, com suas localizaçãoes e descrição do conteúdo.
+Liste os artefatos produzidos, com suas localizações e descrição do conteúdo.
 
 * `/inpi`
     * ... 
 * `/management`
-	* ...
+	* [Termo de Abertura do Projeto](management/termo_de_abertura_do_projeto.md)
 * `/minute`
-	* **Ata_xx_ago_2020.docx**: Ata de reunião do dia xx de agosto de 2020.
+	* [ATA-2025-02-13.md](minute/ATA-2025-02-13.md): Ata de reunião do dia 13 de fevereiro de 2025.
 
