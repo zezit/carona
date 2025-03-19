@@ -303,8 +303,6 @@ Na Figura 3, podemos ver a estrutura do sistema Carona dividida em dois grandes 
 - **Servidor de Aplicação** - Responsável por processar as requisições do cliente e interagir com o banco de dados.
 - **MySQL** - Responsável por armazenar os dados da aplicação.
 
-- **Componente 2** - Praesent nec nisi hendrerit, ullamcorper tortor non, rutrum sem. In non lectus tortor. Nulla vel tincidunt eros.
-
 ## 4.3. Modelo de dados (opcional)
 
 _Caso julgue necessário para explicar a arquitetura, apresente o diagrama de classes ou diagrama de Entidade/Relacionamentos ou tabelas do banco de dados. Este modelo pode ser essencial caso a arquitetura utilize uma solução de banco de dados distribuídos ou um banco NoSQL._
