@@ -289,15 +289,14 @@ Obs: Acrescente uma breve descrição sobre o diagrama apresentado na Figura 3.
 
 ### Diagrama de componentes
 
-_Apresente o diagrama de componentes da aplicação, indicando, os elementos da arquitetura e as interfaces entre eles. Liste os estilos/padrões arquiteturais utilizados e faça uma descrição sucinta dos componentes indicando o papel de cada um deles dentro da arquitetura/estilo/padrão arquitetural. Indique também quais componentes serão reutilizados (navegadores, SGBDs, middlewares, etc), quais componentes serão adquiridos por serem proprietários e quais componentes precisam ser desenvolvidos._
+O diagrama de componentes abaixo apresenta a arquitetura do sistema Carona, destacando os principais módulos, suas responsabilidades e as interações entre eles.
 
 ![Diagrama de componentes](imagens/diagrams/diagramaComponentes.png "Diagrama de componentes")
 
 **Figura 3 – Diagrama de Componentes (exemplo). Fonte: o próprio autor.**
 
-_Apresente uma descrição detalhada dos artefatos que constituem o diagrama de implantação._
+Na Figura 3, podemos ver a estrutura do sistema Carona dividida em dois grandes blocos: o Cliente e o Sistema Carona. O Cliente representa os dispositivos usados pelos usuários, como Mobile e Navegador Web, que servem como portas de entrada para a aplicação. Já o Sistema Carona engloba toda a parte responsável pelo processamento e armazenamento das informações, incluindo o Backend, o Banco de Dados e o RabbitMQ.
 
-Ex: conforme diagrama apresentado na Figura X, as entidades participantes da solução são:
  PACOTES
 - **Mobile** - Cliente da aplicação, responsável por interagir com o aplicativo.
 - **Navegador web** - Cliente da aplicação, responsável por interagir com a aplicação via web.
