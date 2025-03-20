@@ -45,6 +45,7 @@ _**Resumo**. O projeto Carona? é uma solução para facilitar a mobilidade dos 
 | 25/02/2025 | José Victor Mendes Dias | Adicionando seção 1                          | v0.2       |
 | 14/03/2025 | Renato Matos            | Adicionando diagrama arquitetural seção 4    | v0.3       |
 | 18/03/2025 | José Victor Mendes Dias | Pequenos ajustes estruturais de documentação | v0.4       |
+| 20/03/2025 | Renato Matos            | Melhorando seção de abreviaturas                       | v0.5       |
 
 ## SUMÁRIO
 
@@ -121,6 +122,18 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
 *Gestor*: Responsável por gerenciar usuários e manter a integridade do sistema.
 
 *Carpool*: Termo em inglês que significa compartilhamento de veículos.
+
+*Backend*: Parte do sistema responsável por processar dados e regras de negócio.
+
+*Frontend*: Parte do sistema responsável pela interface com o usuário.
+
+*RF*: Requisito Funcional
+
+*RNF*: Requisito Não Funcional
+
+*API*: API: Interface de Programação de Aplicativos (Application Programming Interface). Conjunto de regras e definições que permitem a comunicação entre diferentes sistemas, permitindo que um software utilize funcionalidades de outro sem necessidade de implementação direta.
+
+*RESTful*: Arquitetura para desenvolvimento de APIs baseada nos princípios REST (Representational State Transfer). Uma API RESTful segue padrões como uso de métodos HTTP (GET, POST, PUT, DELETE), representação de recursos através de URIs, comunicação sem estado (stateless), suporte a múltiplos formatos de resposta (JSON, XML) e uso adequado de códigos de status HTTP.
 
 <a name="produto"></a>
 # 2. Nosso Produto
