@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage';
+import RegisterSecondPage from './pages/RegisterSecondPage'
 
 
 const Stack = createStackNavigator();
@@ -14,6 +15,7 @@ export default function App() {
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen name="Login" component={LoginPage} />
       <Stack.Screen name="Registrar" component={RegisterPage} />
+      <Stack.Screen name="Mais informações" component={RegisterSecondPage} />
     </Stack.Navigator>
   </NavigationContainer>
   );

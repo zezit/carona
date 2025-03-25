@@ -1,6 +1,22 @@
-import { StyleSheet, Text, View, TextInput, Button ,TouchableOpacity} from "react-native";
+import { StyleSheet, Text, View, TextInput, Button ,TouchableOpacity,Alert} from "react-native";
+import React, { useState } from 'react';
+export default function RegisterPage({ navigation }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  
+const  handleCadastro=()=>{
 
-export default function RegisterPage() {
+   if (email === '' || password === ''|| username==="") {
+        Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+        return;
+      }
+      else{
+        navigation.navigate('Mais informações', { username, email, password });
+        
+      }
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.primeiraView}>
@@ -8,16 +24,16 @@ export default function RegisterPage() {
       </View>
 
       <View style={styles.containerInputs}>
-        <Text style={styles.subtitulo}>Cadastre-se</Text>
-        <TextInput style={styles.textInput} placeholder="Nome" />
-        <TextInput style={styles.textInput} placeholder="email" />
-        <TextInput style={styles.textInput} placeholder="senha" secureTextEntry/>
+        <Text style={styles.subtitulo}  >Cadastre-se</Text>
+        <TextInput style={styles.textInput} value={username}  onChangeText={(text) => setUsername(text)} placeholder="Nome" />
+        <TextInput style={styles.textInput} placeholder="Email"  value={email}  onChangeText={(text) => setEmail(text)}  keyboardType="email-address"/>
+        <TextInput style={styles.textInput} value={password} placeholder="Senha"  onChangeText={(text) => setPassword(text)}   secureTextEntry/>
       </View>
 
       <View style={styles.ultimaView}>
         <View style={styles.buttonView}>
-        <TouchableOpacity style={styles.button} onPress={() => alert("Cadastrado!")}>
-          <Text style={styles.buttonText}>Cadastrar</Text>
+        <TouchableOpacity style={styles.button} onPress={ handleCadastro}>
+          <Text style={styles.buttonText}>Avançar</Text>
         </TouchableOpacity>
         </View>
         
@@ -81,7 +97,7 @@ const styles = StyleSheet.create({
     backgroundColor:"#005b96",
     color:"red",
     paddingVertical: 10,
-    paddingHorizontal: 5,
+    paddingHorizontal: 15,
   },
   buttonText: {
     color: "white",
