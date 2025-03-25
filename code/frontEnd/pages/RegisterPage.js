@@ -11,7 +11,7 @@ export default function RegisterPage() {
         <Text style={styles.subtitulo}>Cadastre-se</Text>
         <TextInput style={styles.textInput} placeholder="Nome" />
         <TextInput style={styles.textInput} placeholder="email" />
-        <TextInput style={styles.textInput} placeholder="senha" />
+        <TextInput style={styles.textInput} placeholder="senha" secureTextEntry/>
       </View>
 
       <View style={styles.ultimaView}>
@@ -52,7 +52,9 @@ const styles = StyleSheet.create({
     alignItems:"flex-end",
     flexDirection:"row",
     justifyContent:'flex-end',
-    paddingBottom:90
+    paddingBottom:90,
+    
+    
   },
   primeiraView: {
     flex: 1,
