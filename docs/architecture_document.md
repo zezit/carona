@@ -224,6 +224,9 @@ A seguir serão apresentados os requisitos funcionais e não funcionais que guia
 | RNF02 | O serviço deve estar disponível pelo menos de 6:00 às 13:00 e de 16:00 às 23:00 |
 | RNF03 | O sistema deve funcionar em dispositivos Android 14 e 15 |
 | RNF04 | O sistema deve ser capaz de processar e exibir os resultados de uma busca por caronas em menos de 2 segundos, considerando até 1.000 usuários simultâneos realizando buscas durante horários de pico." |
+| RNF05 | O software não pode apresentar a falha de segurança "quebra de controle de acesso" |
+| RNF06 | O software não pode apresentar a falha de segurança "falhas de criptografia" |
+| RNF07 | O software não pode apresentar a falha de segurança "injeção" |
 
 
 ## 3.3. Restrições Arquiteturais
