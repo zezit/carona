@@ -1,21 +1,46 @@
 import { StyleSheet, Text, View, TextInput, Button ,TouchableOpacity,Alert,Modal} from "react-native";
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import { Picker } from "@react-native-picker/picker";
+import usePost from "../hooks/usePost";
 export default function RegisterSecondPage({ route }) {
     const { username, email, password } = route.params;
     const [birthDate, setBirthDate] = useState("");
     const [registration, setRegistration] = useState("");
     const [userType, setUserType] = useState("");
     const [modalVisible, setModalVisible] = useState(false);
+    const { postResponse, postData } = usePost('http://192.168.15.16:8080/usuario/estudante');
   
     const handleCadastro = () => {
         if (birthDate === "" || registration === "" || userType === "") {
           Alert.alert("Erro", "Por favor, preencha todos os campos.");
           return;
         }
+       else{
+        const userdata ={
+          username:username,
+          email:email,
+          tipoUsuario:"ESTUDANTE",
+          password:"B5B6F79ABfd47BC90B21dCAddd293abf",
+          dataNascimento:birthDate,
+          matricula:registration
+
+        }
+        console.log('entrou')
+        postData(userdata)
+
+       }
+       
     
-        Alert.alert("Cadastro Concluído!", `Usuário: ${username}, Tipo: ${userType}`);
+        
       };
+
+      useEffect(() => {
+        if (postResponse !== null) {
+          Alert.alert("Resposta do POST:", postResponse);
+        
+          console.log(postResponse)// Atualiza a UI quando o postResponse muda
+        }
+      }, [postResponse]);
 
       return (
         <View style={styles.container}>
@@ -30,7 +55,7 @@ export default function RegisterSecondPage({ route }) {
               placeholder="Data de Nascimento (DD/MM/AAAA)"
               value={birthDate}
               onChangeText={(text) => setBirthDate(text)}
-              keyboardType="numeric"
+              
             />
             <TextInput
               style={styles.textInput}
