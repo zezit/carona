@@ -33,6 +33,7 @@ public final class MensagensResposta {
     public static final String LOGIN_INVALIDO = "login.invalido";
     public static final String TOKEN_INVALIDO = "token.invalido";
     public static final String TOKEN_EXPIRADO = "token.expirado";
+    public static final String INTERNAL_AUTH_ERROR = "internal auth error";
     
     // Mensagens relacionadas à validação
     public static final String CAMPO_OBRIGATORIO = "campo.obrigatorio";

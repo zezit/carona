@@ -4,7 +4,6 @@ import com.br.puc.carona.dto.request.LoginRequest;
 import com.br.puc.carona.dto.response.LoginResponseDTO;
 import com.br.puc.carona.infra.security.TokenService;
 import com.br.puc.carona.model.Usuario;
-import com.br.puc.carona.service.AuthorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 public class AuthenticationController {
 
-    private final AuthorizationService authService;
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
 
@@ -46,5 +44,5 @@ public class AuthenticationController {
         return ResponseEntity.ok(new LoginResponseDTO(token));
     }
 
-
+    // ROTA DE CADASTRO AQUI ???
 }
