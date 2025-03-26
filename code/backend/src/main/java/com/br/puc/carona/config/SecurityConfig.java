@@ -24,12 +24,12 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:8080}")
     private String allowedOrigins;
 
-    @Bean
-    WebSecurityCustomizer webSecurityCustomizer() {
-        // FIXME: Temporariamente desabilitando security
-        return (web) -> web.ignoring()
-            .requestMatchers(new AntPathRequestMatcher("/**"));
-    }
+//    @Bean
+//    WebSecurityCustomizer webSecurityCustomizer() {
+//        // FIXME: Temporariamente desabilitando security
+//        return (web) -> web.ignoring()
+//            .requestMatchers(new AntPathRequestMatcher("/**"));
+//    }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
