@@ -35,3 +35,8 @@ springdoc:
     path: /docs
   swagger-ui:
     path: /swagger
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:my-secret}
