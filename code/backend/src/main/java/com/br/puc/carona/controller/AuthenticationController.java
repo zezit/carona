@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,10 +19,18 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Autorização", description = "Gerenciamento de login e autorizações do sistema de caronas")
 
 public class AuthenticationController {
+
     private final AuthorizationService authService;
+    private final AuthenticationManager authenticationManager;
+
 
     @PostMapping("/login")
-    public ResponseEntity<> login(@RequestBody @Valid LoginRequest loginRequest){
+    public ResponseEntity<Void> login(@RequestBody @Valid LoginRequest loginRequest){
+        var usernamePassword = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
+        var auth = this.authenticationManager.authenticate(usernamePassword);
 
+        return ResponseEntity.ok().build();
     }
+
+
 }

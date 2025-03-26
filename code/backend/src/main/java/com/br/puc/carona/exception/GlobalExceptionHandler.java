@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -88,5 +89,16 @@ public class GlobalExceptionHandler {
                                 ex.getLocalizedMessage(),
                                 MensagensResposta.ENTIDADE_NAO_ENCONTRADA);
                 return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
+
+        @ExceptionHandler(BadCredentialsException.class)
+        @ResponseStatus(HttpStatus.FORBIDDEN)
+        public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
+                ErrorResponse errorResponse = new ErrorResponse(
+                        HttpStatus.FORBIDDEN.value(),
+                        LocalDateTime.now(),
+                        "login ou senha invalido",
+                        MensagensResposta.LOGIN_INVALIDO);
+                return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         }
 }
