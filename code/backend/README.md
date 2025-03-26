@@ -1,10 +1,7 @@
-# Carpool Application Backend
 
-This is the backend service for the Carpool application, built with Spring Boot.
+# Backend da Aplicação Carona?
 
-# Backend da Aplicação de Caronas
-
-Este é o serviço de backend para a aplicação de Caronas, desenvolvido com Spring Boot.
+Este é o serviço de backend para a aplicação Carona?, desenvolvido com Spring Boot.
 
 ## Prerequisites
 
@@ -17,22 +14,6 @@ Este é o serviço de backend para a aplicação de Caronas, desenvolvido com Sp
 - JDK 21
 - Maven
 - Docker e Docker Compose
-
-## Setup Environment
-
-1. Copy the `.env.example` file to create a new `.env` file:
-
-   **Linux/macOS:**
-   ```bash
-   cp .env.example .env
-   ```
-
-   **Windows:**
-   ```cmd
-   copy .env.example .env
-   ```
-
-2. Modify the values in the `.env` file if needed.
 
 ## Configuração do Ambiente
 
@@ -50,40 +31,24 @@ Este é o serviço de backend para a aplicação de Caronas, desenvolvido com Sp
 
 2. Modifique os valores no arquivo `.env` conforme necessário.
 
-## Run the Database
-
-To start the MySQL database using Docker:
-
-**Linux/macOS:**
-```bash
-chmod +x ./start-db.sh  # Na primeira vez, para tornar o script executável
-./start-db.sh
-```
-
-**Windows:**
-```cmd
-docker-compose up -d mysql
-```
-
-To stop the database:
-
-**Linux/macOS/Windows:**
-```bash
-docker-compose down
-```
-
 ## Executar o Banco de Dados
 
 Para iniciar o banco de dados MySQL usando Docker:
 
 **Linux/macOS:**
 ```bash
-chmod +x ./start-db.sh  # Na primeira vez, para tornar o script executável
+# Exportar variáveis de ambiente
+export $(grep -v '^#' .env | xargs)
+
+chmod +x ./start-db.sh  # Tornar o script executável na primeira vez
 ./start-db.sh
 ```
 
 **Windows:**
 ```cmd
+# Exportar variáveis de ambiente
+for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
+
 docker-compose up -d mysql
 ```
 
@@ -94,108 +59,36 @@ Para parar o banco de dados:
 docker-compose down
 ```
 
-## Run the Application
-
-### Using Maven
-
-**Linux/macOS:**
-```bash
-./mvnw spring-boot:run
-```
-
-**Windows:**
-```cmd
-mvnw.cmd spring-boot:run
-```
+## Executando a Aplicação
 
 ### Usando Maven
 
 **Linux/macOS:**
 ```bash
+# Exportar variáveis de ambiente
+export $(grep -v '^#' .env | xargs)
+
 ./mvnw spring-boot:run
 ```
 
 **Windows:**
 ```cmd
+:: Exportar variáveis de ambiente
+for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
+
 mvnw.cmd spring-boot:run
 ```
-
-### Using VS Code
-
-VS Code launch configurations are included in this project:
-
-1. **Run Carpool Application** - Starts the database and then runs the application
-2. **Debug Carpool Application** - Starts the database and runs the application in debug mode
-3. **Launch with Hot Reload** - Runs with Spring DevTools for hot reloading
-4. **Launch without Database** - Runs the application without starting the database
-
-Simply open the Debug panel in VS Code and select the appropriate launch configuration.
-
-### Usando VS Code
-
-As configurações de execução do VS Code estão incluídas neste projeto:
-
-1. **Run Carpool Application** - Inicia o banco de dados e executa a aplicação
-2. **Debug Carpool Application** - Inicia o banco de dados e executa a aplicação em modo de depuração
-3. **Launch with Hot Reload** - Executa com Spring DevTools para recarga automática
-4. **Launch without Database** - Executa a aplicação sem iniciar o banco de dados
-
-Basta abrir o painel de Debug no VS Code e selecionar a configuração de execução apropriada.
-
-## API Documentation
-
-When the application is running, you can access the API documentation at:
-
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- OpenAPI Spec: http://localhost:8080/v3/api-docs
 
 ## Documentação da API
 
 Quando a aplicação estiver em execução, você pode acessar a documentação da API em:
 
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- Especificação OpenAPI: http://localhost:8080/v3/api-docs
-
-## Authentication
-
-The API uses JWT tokens for authentication. To get a token, use the `/api/auth/signin` endpoint.
-
-## Autenticação
-
-A API usa tokens JWT para autenticação. Para obter um token, use o endpoint `/api/auth/signin`.
-
-## Environment Variables
-
-See the `.env.example` file for a list of available environment variables.
+- Swagger UI: http://localhost:8080/api/swagger
+- Especificação OpenAPI: http://localhost:8080/api/docs
 
 ## Variáveis de Ambiente
 
 Veja o arquivo `.env.example` para uma lista de variáveis de ambiente disponíveis.
-
-## Estrutura do Projeto
-
-```
-src
-├── main
-│   ├── java
-│   │   └── com
-│   │       └── br
-│   │           └── puc
-│   │               └── carona
-│   │                   ├── config       # Configurações do Spring
-│   │                   ├── controller   # Controladores REST
-│   │                   ├── dto          # Objetos de Transferência de Dados
-│   │                   ├── enums        # Enumeradores
-│   │                   ├── exception    # Tratamento de exceções
-│   │                   ├── mapper       # Mapeadores entre entidades e DTOs
-│   │                   ├── model        # Entidades do domínio
-│   │                   ├── repository   # Repositórios JPA
-│   │                   ├── service      # Lógica de negócio
-│   │                   └── util         # Classes utilitárias
-│   └── resources
-│       ├── application.yml  # Configurações da aplicação
-│       └── messages.properties # Mensagens de validação
-```
 
 ## Debug
 
@@ -204,24 +97,34 @@ Para depurar a aplicação:
 **VS Code:**
 1. Vá para a guia "Run and Debug"
 2. Selecione "Debug Carpool Application"
-3. Clique no botão de play verde
-
-**IntelliJ IDEA:**
-1. Clique com o botão direito no arquivo `CaronaApplication.java`
-2. Selecione "Debug 'CaronaApplication.main()'"
+3. Clique no botão de play
 
 ## Testes
 
-Para executar os testes:
+Para executar os testes (rodar os testes automatizados da aplicação):
+
+Antes de executar os testes, exporte as variáveis de ambiente:
 
 **Linux/macOS:**
 ```bash
-./mvnw test
+export $(grep -v '^#' .env | xargs)
 ```
 
 **Windows:**
 ```cmd
-mvnw.cmd test
+for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
+```
+
+Depois, execute os comandos abaixo:
+
+**Linux/macOS:**
+```bash
+./mvnw test  # "mvnw" é o wrapper do Maven para facilitar o uso sem instalação global
+```
+
+**Windows:**
+```cmd
+mvnw.cmd test  :: "mvnw.cmd" é o wrapper do Maven para Windows
 ```
 
 ## Arquivos Docker

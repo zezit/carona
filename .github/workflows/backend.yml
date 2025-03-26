@@ -4,12 +4,15 @@ on:
   push:
     paths:
       - 'code/backend/**'
+    branches-ignore:
+      - 'dependabot/**' #avoid duplicates: only run the PR, not the push
   pull_request:
     paths:
       - 'code/backend/**'
 
 jobs:
-  build:
+  unit_tests:
+    if: (github.event_name != 'pull_request' && ! github.event.pull_request.head.repo.fork) || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.fork || startsWith(github.head_ref, 'dependabot/')))
     runs-on: ubuntu-latest
     permissions:
       # Required for publishing the coverage report to GitHub Pages
@@ -165,14 +168,3 @@ jobs:
           name: relatorio-cobertura-codigo
           path: ./code/backend/target/site/jacoco
           retention-days: 7
-
-      - name: Configurando Pages para relatório HTML
-        if: steps.extract_coverage.outputs.report_exists == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./code/backend/target/site/jacoco
-          destination_dir: reports/coverage
-          enable_jekyll: false
-          keep_files: false
-          full_commit_message: 'Publicando relatório de cobertura de código [CI]'
