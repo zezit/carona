@@ -1,4 +1,4 @@
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=18264823&assignment_repo_type=AssignmentRepo)
+[![Testes Unitários 🧪 - Backend](https://github.com/ICEI-PUC-Minas-PPLES-TI/plf-es-2025-1-ti5-0492100-carpool/actions/workflows/backend.yml/badge.svg)](https://github.com/ICEI-PUC-Minas-PPLES-TI/plf-es-2025-1-ti5-0492100-carpool/actions/workflows/backend.yml)
 
 # 🚗 Carona?
 O sistema de carpool conecta estudantes e funcionários da PUC Minas para compartilhamento de caronas, oferecendo uma alternativa segura e acessível ao transporte público ineficiente. Ele permite que motoristas e passageiros se organizem de forma prática, sem cobrança automática ou rastreamento em tempo real.
