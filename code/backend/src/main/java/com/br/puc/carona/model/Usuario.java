@@ -1,6 +1,6 @@
 package com.br.puc.carona.model;
 
-import com.br.puc.carona.enums.StatusCadastro;
+import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.TipoUsuario;
 
 import jakarta.persistence.Column;
@@ -13,37 +13,36 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-@Getter
-@Setter
+@Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "usuarios")
 @Inheritance(strategy = InheritanceType.JOINED)
-@SequenceGenerator(name = "id_sequence", sequenceName = "usuario_seq", allocationSize = 1)
-public class Usuario extends AbstractEntity {
-    
-    @Column(name = "nome", nullable = false)
+@Table(name = "usuario")
+@SequenceGenerator(name = "seq_generator", sequenceName = "usuario_seq", allocationSize = 1)
+public class Usuario extends AbstractEntity{
+    @Column(nullable = false)
     private String nome;
     
     @Column(nullable = false, unique = true)
     private String email;
     
-    @Column(name = "senha", nullable = false)
+    @Column(nullable = false)
     private String password;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_usuario", nullable = false)
+    @Column(nullable = false)
     private TipoUsuario tipoUsuario;
-    
-    @Column(name = "status_cadastro")
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     @Builder.Default
-    private StatusCadastro status = StatusCadastro.PENDENTE;
+    private Status statusCadastro = Status.PENDENTE;
 }

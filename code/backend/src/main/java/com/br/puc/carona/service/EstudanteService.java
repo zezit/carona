@@ -1,21 +1,21 @@
 package com.br.puc.carona.service;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.br.puc.carona.constants.MensagensErro;
-import com.br.puc.carona.dto.request.CadastroEstudanteRequest;
-import com.br.puc.carona.dto.response.MessageResponse;
-import com.br.puc.carona.enums.StatusCadastro;
-import com.br.puc.carona.enums.TipoEstudante;
-import com.br.puc.carona.enums.TipoUsuario;
-import com.br.puc.carona.mapper.UserMapper;
+import com.br.puc.carona.constants.MensagensResposta;
+import com.br.puc.carona.dto.request.PerfilMotoristaRequest;
+import com.br.puc.carona.dto.request.SignupEstudanteRequest;
+import com.br.puc.carona.dto.response.PerfilMotoristaDto;
+import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.mapper.EstudanteMapper;
+import com.br.puc.carona.mapper.PerfilMotoristaMapper;
 import com.br.puc.carona.model.Estudante;
-import com.br.puc.carona.model.Motorista;
+import com.br.puc.carona.model.PerfilMotorista;
 import com.br.puc.carona.repository.EstudanteRepository;
-import com.br.puc.carona.repository.MotoristaRepository;
-import com.br.puc.carona.util.MD5Util;
+import com.br.puc.carona.repository.PerfilMotoristaRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,89 +24,61 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class EstudanteService {
-    
-    private final EstudanteRepository estudanteRepository;
-    private final MotoristaRepository motoristaRepository;
-    private final UserMapper userMapper;
-    private final MD5Util md5Util;
-    private final PasswordEncoder passwordEncoder;
-    
+
+    private final EstudanteRepository repository;
+    private final PerfilMotoristaRepository perfilMotoristaRepository;
+
+    private final EstudanteMapper mapper;
+    private final PerfilMotoristaMapper perfilMotoristaMapper;
+
+    public Estudante completeEstudanteCreation(final SignupEstudanteRequest cadastroRequest) {
+        if (repository.existsByMatricula(cadastroRequest.getMatricula())) {
+            throw new ErroDeCliente(MensagensResposta.MATRICULA_JA_CADASTRADA);
+        }
+
+        final Estudante estudante = mapper.toEntity(cadastroRequest);
+
+        repository.save(estudante);
+
+        return estudante;
+    }
+
     @Transactional
-    public MessageResponse register(CadastroEstudanteRequest cadastroRequest) {
-        log.info("Iniciando cadastro de estudante com e-mail: {}", cadastroRequest.getEmail());
-        
-        // Verificar se e-mail já existe
-        if (estudanteRepository.existsByEmail(cadastroRequest.getEmail())) {
-            log.warn("E-mail já cadastrado: {}", cadastroRequest.getEmail());
-            return new MessageResponse(MensagensErro.EMAIL_JA_CADASTRADO);
+    public PerfilMotoristaDto criarPerfilMotorista(final Long estudanteId, final PerfilMotoristaRequest request) {
+        final Estudante estudante = repository.findById(estudanteId)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId));
+
+        if (!Status.APROVADO.equals(estudante.getStatusCadastro())) {
+            throw new ErroDeCliente(MensagensResposta.CADASTRO_NAO_APROVADO);
         }
-        
-        // Verificar se matrícula já existe
-        if (estudanteRepository.existsByMatricula(cadastroRequest.getMatricula())) {
-            log.warn("Matrícula já cadastrada: {}", cadastroRequest.getMatricula());
-            return new MessageResponse(MensagensErro.MATRICULA_JA_CADASTRADA);
+
+        if (estudante.isMotorista()) {
+            throw new ErroDeCliente(MensagensResposta.ESTUDANTE_JA_E_MOTORISTA);
         }
-        
-        // Verificar se a senha está no formato MD5
-        if (!md5Util.isValidMD5Hash(cadastroRequest.getPassword())) {
-            log.warn("Senha não está no formato MD5 esperado");
-            return new MessageResponse(MensagensErro.FORMATO_SENHA_INVALIDO);
+
+        // Validar CNH
+        if (perfilMotoristaRepository.existsByCnh(request.getCnh())) {
+            throw new ErroDeCliente(MensagensResposta.CNH_JA_CADASTRADA);
         }
-        
-        // Verificar se é motorista
-        if (cadastroRequest.isMotorista()) {
-            return registerMotorista(cadastroRequest);
-        } else {
-            return registerPassageiro(cadastroRequest);
-        }
+
+        final PerfilMotorista perfilMotorista = perfilMotoristaMapper.toEntity(request);
+        perfilMotorista.setEstudante(estudante);
+        estudante.setPerfilMotorista(perfilMotorista);
+
+        repository.save(estudante);
+        log.info("Perfil de motorista criado com sucesso para estudante ID: {}", estudanteId);
+
+        return perfilMotoristaMapper.tDto(perfilMotorista);
     }
-    
-    private MessageResponse registerPassageiro(CadastroEstudanteRequest cadastroRequest) {
-        Estudante estudante = userMapper.toEstudante(cadastroRequest);
-        // Aplicar criptografia adicional sobre o hash MD5 recebido
-        estudante.setPassword(passwordEncoder.encode(cadastroRequest.getPassword()));
-        estudante.setTipoUsuario(TipoUsuario.ESTUDANTE);
-        estudante.setAvaliacaoMedia(0.0f);
-        estudante.setTipoEstudante(TipoEstudante.PASSAGEIRO);
-        estudante.setStatus(StatusCadastro.PENDENTE);
-        
-        estudanteRepository.save(estudante);
-        log.info("Estudante passageiro cadastrado com sucesso: {}", cadastroRequest.getEmail());
-        
-        return new MessageResponse(MensagensErro.CADASTRO_SUCESSO);
-    }
-    
-    private MessageResponse registerMotorista(CadastroEstudanteRequest cadastroRequest) {
-        // Validações específicas para motorista
-        if (cadastroRequest.getCnh() == null || cadastroRequest.getCnh().trim().isEmpty()) {
-            log.warn("CNH obrigatória para motorista");
-            return new MessageResponse(MensagensErro.CNH_OBRIGATORIA);
+
+    public PerfilMotoristaDto buscarPerfilMotorista(Long estudanteId) {
+        final Estudante estudante = repository.findById(estudanteId)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId));
+
+        if (!estudante.isMotorista()) {
+            throw new ErroDeCliente(MensagensResposta.ESTUDANTE_NAO_E_MOTORISTA);
         }
-        
-        if (motoristaRepository.existsByCnh(cadastroRequest.getCnh())) {
-            log.warn("CNH já cadastrada: {}", cadastroRequest.getCnh());
-            return new MessageResponse(MensagensErro.CNH_JA_CADASTRADA);
-        }
-        
-        // Verificar se informou dados do veículo
-        if (cadastroRequest.getVeiculo() == null) {
-            log.warn("Dados do veículo obrigatórios para motorista");
-            return new MessageResponse(MensagensErro.VEICULO_OBRIGATORIO);
-        }
-        
-        Motorista motorista = userMapper.toMotorista(cadastroRequest);
-        // Aplicar criptografia adicional sobre o hash MD5 recebido
-        motorista.setPassword(passwordEncoder.encode(cadastroRequest.getPassword()));
-        motorista.setTipoUsuario(TipoUsuario.ESTUDANTE);
-        motorista.setAvaliacaoMedia(0.0f);
-        motorista.setTipoEstudante(TipoEstudante.AMBOS);
-        motorista.setStatus(StatusCadastro.PENDENTE);
-        motorista.setMostrarWhatsapp(cadastroRequest.getMostrarWhatsapp() != null ? 
-                                     cadastroRequest.getMostrarWhatsapp() : false);
-        
-        motoristaRepository.save(motorista);
-        log.info("Estudante motorista cadastrado com sucesso: {}", cadastroRequest.getEmail());
-        
-        return new MessageResponse(MensagensErro.CADASTRO_SUCESSO);
+
+        return perfilMotoristaMapper.tDto(estudante.getPerfilMotorista());
     }
 }

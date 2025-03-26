@@ -1,123 +1,132 @@
 package com.br.puc.carona.controller;
 
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDateTime;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.br.puc.carona.constants.MensagensErro;
-import com.br.puc.carona.dto.request.AdminCadastroRequest;
-import com.br.puc.carona.dto.response.MessageResponse;
-import com.br.puc.carona.exception.ErrorResponse;
-import com.br.puc.carona.service.AdminService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.br.puc.carona.constants.MensagensResposta;
+import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.service.AdministradorService;
 
-@WebMvcTest(controllers = AdminController.class)
+@WebMvcTest(AdminController.class)
 @AutoConfigureMockMvc(addFilters = false) // Disable security for testing
+@ActiveProfiles("test")
+@DisplayName("Teste Controller: Admin")
 class AdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AdminService adminService;
+    private AdministradorService administradorService;
 
-    private ObjectMapper objectMapper;
-    private AdminCadastroRequest adminRequest;
+    @ParameterizedTest
+    @EnumSource(Status.class)
+    @DisplayName("Deve revisar o registro de usuário com sucesso")
+    void deveRevisarRegistroDeUsuarioComSucesso(Status status) throws Exception {
+        // Given
+        Long userId = 1L;
+        doNothing().when(administradorService).reviewUserRegistration(userId, status);
 
-    @BeforeEach
-    void setup() {
-        objectMapper = new ObjectMapper();
+        // When & Then
+        mockMvc.perform(patch("/admin/revisar/{userId}/{status}", userId, status))
+                .andExpect(status().isOk());
 
-        // Configurando dados do administrador
-        adminRequest = new AdminCadastroRequest();
-        adminRequest.setNome("Admin Teste");
-        adminRequest.setEmail("admin@email.com");
-        adminRequest.setPassword("21232f297a57a5a743894a0e4a801fc3"); // MD5 para "admin"
+        verify(administradorService).reviewUserRegistration(userId, status);
     }
 
     @Test
-    @DisplayName("Deve cadastrar administrador com sucesso")
-    void shouldRegisterAdminSuccessfully() throws Exception {
-        when(adminService.register(Mockito.any(AdminCadastroRequest.class)))
-            .thenReturn(new MessageResponse(MensagensErro.ADMIN_CADASTRO_SUCESSO));
+    @DisplayName("Deve retornar erro 404 quando usuário não existe")
+    void deveRetornarErroQuandoUsuarioNaoExiste() throws Exception {
+        // Arrange
+        Long userId = 999L;
+        Status status = Status.APROVADO;
+        
+        doThrow(new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO))
+            .when(administradorService).reviewUserRegistration(userId, status);
 
-        mockMvc.perform(post("/admin/")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(adminRequest)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.codigo").value(MensagensErro.ADMIN_CADASTRO_SUCESSO));
+        // Act & Assert
+        mockMvc.perform(patch("/admin/revisar/{userId}/{status}", userId, status))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.statusCode").value(404))
+                .andExpect(jsonPath("$.descricao").value(MensagensResposta.USUARIO_NAO_ENCONTRADO))
+                .andExpect(jsonPath("$.codigo").value(MensagensResposta.ENTIDADE_NAO_ENCONTRADA));
 
-        Mockito.verify(adminService).register(Mockito.any(AdminCadastroRequest.class));
+        verify(administradorService).reviewUserRegistration(userId, status);
     }
 
     @Test
-    @DisplayName("Deve retornar erro quando email já está cadastrado")
-    void shouldReturnErrorWhenEmailAlreadyExists() throws Exception {
-        when(adminService.register(Mockito.any(AdminCadastroRequest.class)))
-            .thenReturn(new MessageResponse(MensagensErro.EMAIL_JA_CADASTRADO));
+    @DisplayName("Deve retornar erro 400 quando status é inválido para aprovação")
+    void deveRetornarErroQuandoStatusInvalido() throws Exception {
+        // Arrange
+        Long userId = 1L;
+        Status status = Status.PENDENTE; // Status inválido para aprovação
+        
+        doThrow(new ErroDeCliente(MensagensResposta.STATUS_CADASTRO_INVALIDO))
+            .when(administradorService).reviewUserRegistration(userId, status);
 
-        mockMvc.perform(post("/admin/")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(adminRequest)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.codigo").value(MensagensErro.EMAIL_JA_CADASTRADO));
+        // Act & Assert
+        mockMvc.perform(patch("/admin/revisar/{userId}/{status}", userId, status))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.descricao").value(MensagensResposta.STATUS_CADASTRO_INVALIDO))
+                .andExpect(jsonPath("$.codigo").value(MensagensResposta.REQUISICAO_INVALIDA));
 
-        Mockito.verify(adminService).register(Mockito.any(AdminCadastroRequest.class));
+        verify(administradorService).reviewUserRegistration(userId, status);
     }
 
     @Test
-    @DisplayName("Deve retornar erro quando formato da senha é inválido")
-    void shouldReturnErrorWhenPasswordFormatIsInvalid() throws Exception {
-        when(adminService.register(Mockito.any(AdminCadastroRequest.class)))
-            .thenReturn(new MessageResponse(MensagensErro.FORMATO_SENHA_INVALIDO));
+    @DisplayName("Deve retornar erro 400 quando cadastro já foi revisado")
+    void deveRetornarErroQuandoCadastroJaRevisado() throws Exception {
+        // Arrange
+        Long userId = 1L;
+        Status status = Status.APROVADO;
+        
+        doThrow(new ErroDeCliente(MensagensResposta.CADASTRO_JA_REVISADO))
+            .when(administradorService).reviewUserRegistration(userId, status);
 
-        mockMvc.perform(post("/admin/")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(adminRequest)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.codigo").value(MensagensErro.FORMATO_SENHA_INVALIDO));
+        // Act & Assert
+        mockMvc.perform(patch("/admin/revisar/{userId}/{status}", userId, status))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.descricao").value(MensagensResposta.CADASTRO_JA_REVISADO))
+                .andExpect(jsonPath("$.codigo").value(MensagensResposta.REQUISICAO_INVALIDA));
 
-        Mockito.verify(adminService).register(Mockito.any(AdminCadastroRequest.class));
+        verify(administradorService).reviewUserRegistration(userId, status);
     }
 
     @Test
-    @DisplayName("Deve retornar erro com dados inválidos")
-    void shouldReturnErrorWithInvalidData() throws Exception {
-        // Criando um objeto inválido para teste
-        AdminCadastroRequest invalidRequest = new AdminCadastroRequest();
-        invalidRequest.setNome("Admin Test");
-        invalidRequest.setPassword("21232f297a57a5a743894a0e4a801fc3");
+    @DisplayName("Deve retornar erro 500 quando ocorre erro interno do servidor")
+    void deveRetornarErroQuandoOcorreErroInterno() throws Exception {
+        // Arrange
+        Long userId = 1L;
+        Status status = Status.APROVADO;
+        
+        doThrow(new RuntimeException())
+            .when(administradorService).reviewUserRegistration(userId, status);
 
-        mockMvc.perform(post("/admin/")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(invalidRequest)))
-            .andExpect(status().isBadRequest())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
-            .andExpect(jsonPath("$.codigo").value(MensagensErro.PARAMETRO_INVALIDO))
-            .andExpect(jsonPath("$.descricao").value("{comum.atributos.email.obrigatorio}"))
-            .andExpect(jsonPath("$.timestamp").isNotEmpty());
+        // Act & Assert
+        mockMvc.perform(patch("/admin/revisar/{userId}/{status}", userId, status))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.statusCode").value(500))
+                .andExpect(jsonPath("$.codigo").value(MensagensResposta.ERRO_INTERNO));
 
-        // O serviço não deve ser chamado com dados inválidos
-        Mockito.verifyNoInteractions(adminService);
+        verify(administradorService).reviewUserRegistration(userId, status);
     }
 }

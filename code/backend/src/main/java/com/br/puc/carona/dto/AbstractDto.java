@@ -7,16 +7,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Classe base abstrata para DTOs que contém atributos comuns relacionados ao ciclo de vida.
- * Essa classe fornece campos para id e datas de criação e atualização.
- */
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class AbstractDTO {
-    
+public abstract class AbstractDto {
     private Long id;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;

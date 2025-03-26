@@ -153,6 +153,7 @@
 						<exclude>**/com/br/puc/carona/exception/**</exclude>
 						<exclude>**/com/br/puc/carona/model/**</exclude>
 						<exclude>**/com/br/puc/carona/mapper/**</exclude>
+						<exclude>**/com/br/puc/carona/model/**</exclude>
 						<exclude>**/com/br/puc/carona/repository/**</exclude>
 						<exclude>**/com/br/puc/carona/security/**</exclude>
 						<exclude>**/com/br/puc/carona/CaronaApplication*</exclude>

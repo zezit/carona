@@ -1,20 +1,18 @@
 package com.br.puc.carona.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-@Getter
-@Setter
+@Data
 @SuperBuilder
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "administradores")
-@SequenceGenerator(name = "id_sequence", sequenceName = "admin_seq", allocationSize = 1)
+@Table(name = "administrador")
 public class Administrador extends Usuario {
-    // No specific fields for now
+    // Sem campos específicos por enquanto
 }

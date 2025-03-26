@@ -13,10 +13,10 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class CarroDto extends AbstractDto {
-    private Long id;
-    private String modelo;
-    private String placa;
-    private String cor;
-    private Integer capacidadePassageiros;
+public class PerfilMotoristaDto extends AbstractDto{
+    private EstudanteDto estudante;
+    private CarroDto carro;
+    private String cnh;
+    private String whatsapp;
+    private Boolean mostrarWhatsapp;
 }

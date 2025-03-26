@@ -1,327 +1,331 @@
 package com.br.puc.carona.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.time.LocalDate;
-
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
-import com.br.puc.carona.constants.MensagensErro;
-import com.br.puc.carona.dto.request.CadastroEstudanteRequest;
-import com.br.puc.carona.dto.request.CarroRequest;
-import com.br.puc.carona.dto.response.MessageResponse;
-import com.br.puc.carona.enums.TipoEstudante;
-import com.br.puc.carona.mapper.UserMapper;
-import com.br.puc.carona.model.Carro;
+import com.br.puc.carona.constants.MensagensResposta;
+import com.br.puc.carona.dto.request.PerfilMotoristaRequest;
+import com.br.puc.carona.dto.request.SignupEstudanteRequest;
+import com.br.puc.carona.dto.response.PerfilMotoristaDto;
+import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.mapper.EstudanteMapper;
+import com.br.puc.carona.mapper.PerfilMotoristaMapper;
+import com.br.puc.carona.mock.PerfilMotoristaRequestMock;
+import com.br.puc.carona.mock.SignupEstudanteRequesttMock;
 import com.br.puc.carona.model.Estudante;
-import com.br.puc.carona.model.Motorista;
+import com.br.puc.carona.model.PerfilMotorista;
 import com.br.puc.carona.repository.EstudanteRepository;
-import com.br.puc.carona.repository.MotoristaRepository;
-import com.br.puc.carona.util.MD5Util;
+import com.br.puc.carona.repository.PerfilMotoristaRepository;
+
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
+@DisplayName("Teste Service: Estudante")
 class EstudanteServiceTest {
 
     @Mock
     private EstudanteRepository estudanteRepository;
+
+    @Mock
+    private PerfilMotoristaRepository perfilMotoristaRepository;
     
     @Mock
-    private MotoristaRepository motoristaRepository;
+    private EstudanteMapper estudanteMapper;
     
     @Mock
-    private UserMapper userMapper;
-    
-    @Mock
-    private MD5Util md5Util;
-    
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    
+    private PerfilMotoristaMapper perfilMotoristaMapper;
+
     @InjectMocks
     private EstudanteService estudanteService;
+
+    @Captor
+    private ArgumentCaptor<Estudante> estudanteCaptor;
     
-    private CadastroEstudanteRequest requestEstudante;
-    private CadastroEstudanteRequest requestMotorista;
+    @Captor
+    private ArgumentCaptor<PerfilMotorista> perfilMotoristaCaptor;
+
+    private SignupEstudanteRequest estudanteRequest;
     private Estudante estudante;
-    private Motorista motorista;
-    private CarroRequest carroRequest;
-    private Carro carro;
-    
+    private Long estudanteId;
+    private PerfilMotoristaRequest perfilMotoristaRequest;
+    private PerfilMotorista perfilMotorista;
+    private PerfilMotoristaDto perfilMotoristaDto;
+
     @BeforeEach
-    void setup() {
-        // Configuração básica do estudante
-        requestEstudante = new CadastroEstudanteRequest();
-        requestEstudante.setNome("João Silva");
-        requestEstudante.setEmail("joao@email.com");
-        requestEstudante.setPassword("5d41402abc4b2a76b9719d911017c592"); // MD5 hash
-        requestEstudante.setDataDeNascimento(LocalDate.of(2000, 1, 1));
-        requestEstudante.setMatricula("2023001");
-        requestEstudante.setTipoEstudante(TipoEstudante.PASSAGEIRO);
+    void setUp() {
+        // Comum
+        estudanteId = 1L;
+        
+        // Para testes de cadastro de estudante
+        estudanteRequest = SignupEstudanteRequesttMock.createValidEstudanteRequest();
         
         estudante = Estudante.builder()
-                .nome("João Silva")
-                .email("joao@email.com")
-                .password("hashedPassword")
-                .dataDeNascimento(LocalDate.of(2000, 1, 1))
-                .matricula("2023001")
-                .tipoEstudante(TipoEstudante.PASSAGEIRO)
+                .id(estudanteId)
+                .nome(estudanteRequest.getNome())
+                .email(estudanteRequest.getEmail())
+                .matricula(estudanteRequest.getMatricula())
+                .dataDeNascimento(estudanteRequest.getDataDeNascimento())
+                .tipoUsuario(estudanteRequest.getTipoUsuario())
+                .statusCadastro(Status.APROVADO)
                 .build();
+                
+        // Para testes de perfil de motorista
+        perfilMotoristaRequest = PerfilMotoristaRequestMock.createValidRequest();
         
-        // Configuração do motorista
-        requestMotorista = new CadastroEstudanteRequest();
-        requestMotorista.setNome("Maria Oliveira");
-        requestMotorista.setEmail("maria@email.com");
-        requestMotorista.setPassword("5d41402abc4b2a76b9719d911017c592"); // MD5 hash
-        requestMotorista.setDataDeNascimento(LocalDate.of(1998, 5, 15));
-        requestMotorista.setMatricula("2023002");
-        requestMotorista.setTipoEstudante(TipoEstudante.AMBOS);
-        requestMotorista.setCnh("12345678901");
-        requestMotorista.setWhatsapp("11987654321");
-        requestMotorista.setMostrarWhatsapp(true);
-        
-        carroRequest = new CarroRequest();
-        carroRequest.setModelo("Fiat Uno");
-        carroRequest.setPlaca("ABC1234");
-        carroRequest.setCor("Branco");
-        carroRequest.setCapacidadePassageiros(4);
-        requestMotorista.setVeiculo(carroRequest);
-        
-        carro = Carro.builder()
-                .modelo("Fiat Uno")
-                .placa("ABC1234")
-                .cor("Branco")
-                .capacidadePassageiros(4)
+        perfilMotorista = PerfilMotorista.builder()
+                .id(1L)
+                .cnh(perfilMotoristaRequest.getCnh())
+                .whatsapp(perfilMotoristaRequest.getWhatsapp())
+                .mostrarWhatsapp(perfilMotoristaRequest.getMostrarWhatsapp())
                 .build();
-        
-        motorista = Motorista.builder()
-                .nome("Maria Oliveira")
-                .email("maria@email.com")
-                .password("hashedPassword")
-                .dataDeNascimento(LocalDate.of(1998, 5, 15))
-                .matricula("2023002")
-                .tipoEstudante(TipoEstudante.AMBOS)
-                .cnh("12345678901")
-                .whatsapp("11987654321")
-                .mostrarWhatsapp(true)
-                .veiculo(carro)
+                
+        perfilMotoristaDto = PerfilMotoristaDto.builder()
+                .id(1L)
+                .cnh(perfilMotoristaRequest.getCnh())
+                .whatsapp(perfilMotoristaRequest.getWhatsapp())
+                .mostrarWhatsapp(perfilMotoristaRequest.getMostrarWhatsapp())
                 .build();
-        
-        // Mock para md5Util
-        // Mockito.when(md5Util.isValidMD5Hash(Mockito.anyString())).thenReturn(true);
-        
-        // Mock para passwordEncoder
-        // Mockito.when(passwordEncoder.encode(Mockito.anyString())).thenReturn("hashedPassword");
     }
 
     @AfterEach
     void tearDown() {
-        // Verificar que não existem mais interações com os mocks além das verificadas explicitamente
-        Mockito.verifyNoMoreInteractions(estudanteRepository, motoristaRepository, userMapper, md5Util, passwordEncoder);
-    }
-    
-    @Test
-    @DisplayName("Deve registrar um estudante com sucesso")
-    void shouldRegisterStudentSuccessfully() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(requestMotorista.getPassword())).thenReturn(true);
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(false);
-        Mockito.when(userMapper.toEstudante(Mockito.any(CadastroEstudanteRequest.class))).thenReturn(estudante);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestEstudante);
-        
-        // Assert
-        assertEquals(MensagensErro.CADASTRO_SUCESSO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(Mockito.anyString());
-        Mockito.verify(estudanteRepository).existsByEmail(requestEstudante.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestEstudante.getMatricula());
-        Mockito.verify(userMapper).toEstudante(requestEstudante);
-        Mockito.verify(passwordEncoder).encode(requestEstudante.getPassword());
-        Mockito.verify(estudanteRepository).save(Mockito.any(Estudante.class));
-    }
-    
-    @Test
-    @DisplayName("Deve retornar erro quando o email já existe")
-    void shouldReturnErrorWhenEmailAlreadyExists() {
-        // Arrange
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(true);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestEstudante);
-        
-        // Assert
-        assertEquals(MensagensErro.EMAIL_JA_CADASTRADO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(estudanteRepository).existsByEmail(requestEstudante.getEmail());
-    }
-    
-    @Test
-    @DisplayName("Deve retornar erro quando a matrícula já existe")
-    void shouldReturnErrorWhenMatriculaAlreadyExists() {
-        // Arrange
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(true);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestEstudante);
-        
-        // Assert
-        assertEquals(MensagensErro.MATRICULA_JA_CADASTRADA, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(estudanteRepository).existsByEmail(requestEstudante.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestEstudante.getMatricula());
-    }
-    
-    @Test
-    @DisplayName("Deve retornar erro quando o formato da senha é inválido")
-    void shouldReturnErrorWhenPasswordFormatIsInvalid() {
-        // Arrange
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(false);
-        Mockito.when(md5Util.isValidMD5Hash(Mockito.anyString())).thenReturn(false);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestEstudante);
-        
-        // Assert
-        assertEquals(MensagensErro.FORMATO_SENHA_INVALIDO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(Mockito.anyString());
-        Mockito.verify(estudanteRepository).existsByEmail(requestEstudante.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestEstudante.getMatricula());
-    }
-    
-    @Test
-    @DisplayName("Deve registrar um motorista com sucesso")
-    void shouldRegisterDriverSuccessfully() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(requestMotorista.getPassword())).thenReturn(true);
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(false);
-        Mockito.when(motoristaRepository.existsByCnh(Mockito.anyString())).thenReturn(false);
-        Mockito.when(userMapper.toMotorista(Mockito.any(CadastroEstudanteRequest.class))).thenReturn(motorista);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestMotorista);
-        
-        // Assert
-        assertEquals(MensagensErro.CADASTRO_SUCESSO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(Mockito.anyString());
-        Mockito.verify(estudanteRepository).existsByEmail(requestMotorista.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestMotorista.getMatricula());
-        Mockito.verify(motoristaRepository).existsByCnh(requestMotorista.getCnh());
-        Mockito.verify(userMapper).toMotorista(requestMotorista);
-        Mockito.verify(passwordEncoder).encode(requestMotorista.getPassword());
-        Mockito.verify(motoristaRepository).save(Mockito.any(Motorista.class));
-    }
-    
-    @Test
-    @DisplayName("Deve retornar erro quando CNH já existe")
-    void shouldReturnErrorWhenCnhAlreadyExists() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(requestMotorista.getPassword())).thenReturn(true);
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(false);
-        Mockito.when(motoristaRepository.existsByCnh(Mockito.anyString())).thenReturn(true);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestMotorista);
-        
-        // Assert
-        assertEquals(MensagensErro.CNH_JA_CADASTRADA, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(requestMotorista.getPassword());
-        Mockito.verify(estudanteRepository).existsByEmail(requestMotorista.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestMotorista.getMatricula());
-        Mockito.verify(motoristaRepository).existsByCnh(requestMotorista.getCnh());
-    }
-    
-    @Test
-    @DisplayName("Deve retornar erro quando CNH está ausente para motorista")
-    void shouldReturnErrorWhenCnhIsMissingForDriver() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(requestMotorista.getPassword())).thenReturn(true);
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(false);
-        requestMotorista.setCnh(null);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestMotorista);
-        
-        // Assert
-        assertEquals(MensagensErro.CNH_OBRIGATORIA, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(Mockito.anyString());
-        Mockito.verify(estudanteRepository).existsByEmail(requestMotorista.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestMotorista.getMatricula());
-    }
-    
-    @Test
-    @DisplayName("Deve retornar erro quando veículo está ausente para motorista")
-    void shouldReturnErrorWhenVehicleIsMissingForDriver() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(requestMotorista.getPassword())).thenReturn(true);
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(false);
-        Mockito.when(motoristaRepository.existsByCnh(Mockito.anyString())).thenReturn(false);
-        requestMotorista.setVeiculo(null);
-        
-        // Act
-        final MessageResponse result = estudanteService.register(requestMotorista);
-        
-        // Assert
-        assertEquals(MensagensErro.VEICULO_OBRIGATORIO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(Mockito.anyString());
-        Mockito.verify(estudanteRepository).existsByEmail(requestMotorista.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestMotorista.getMatricula());
-        Mockito.verify(motoristaRepository).existsByCnh(requestMotorista.getCnh());
+        Mockito.verifyNoMoreInteractions(estudanteRepository, estudanteMapper, perfilMotoristaMapper, perfilMotoristaRepository);
     }
 
     @Test
-    @DisplayName("Deve definir valor padrão para mostrarWhatsapp quando nulo")
-    void shouldSetDefaultValueForMostrarWhatsappWhenNull() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(requestMotorista.getPassword())).thenReturn(true);
-        Mockito.when(estudanteRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(estudanteRepository.existsByMatricula(Mockito.anyString())).thenReturn(false);
-        Mockito.when(motoristaRepository.existsByCnh(Mockito.anyString())).thenReturn(false);
-        Mockito.when(userMapper.toMotorista(Mockito.any(CadastroEstudanteRequest.class))).thenReturn(motorista);
-        requestMotorista.setMostrarWhatsapp(null);
+    @DisplayName("Deve completar o cadastro de estudante com sucesso")
+    void deveCompletarCadastroDeEstudanteComSucesso() {
+        // Given
+        Mockito.when(estudanteRepository.existsByMatricula(estudanteRequest.getMatricula())).thenReturn(false);
+        Mockito.when(estudanteMapper.toEntity(estudanteRequest)).thenReturn(estudante);
+        Mockito.when(estudanteRepository.save(ArgumentMatchers.any(Estudante.class))).thenReturn(estudante);
+
+        // When
+        Estudante resultado = estudanteService.completeEstudanteCreation(estudanteRequest);
+
+        // Then
+        Assertions.assertNotNull(resultado);
+        Assertions.assertEquals(estudante.getId(), resultado.getId());
+        Assertions.assertEquals(estudante.getNome(), resultado.getNome());
+        Assertions.assertEquals(estudante.getEmail(), resultado.getEmail());
+        Assertions.assertEquals(estudante.getMatricula(), resultado.getMatricula());
+        Assertions.assertEquals(estudante.getDataDeNascimento(), resultado.getDataDeNascimento());
         
-        // Act
-        final MessageResponse result = estudanteService.register(requestMotorista);
+        Mockito.verify(estudanteRepository).existsByMatricula(estudanteRequest.getMatricula());
+        Mockito.verify(estudanteMapper).toEntity(estudanteRequest);
+        Mockito.verify(estudanteRepository).save(ArgumentMatchers.any(Estudante.class));
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando matrícula já estiver cadastrada")
+    void deveLancarExcecaoQuandoMatriculaJaEstiverCadastrada() {
+        // Given
+        Mockito.when(estudanteRepository.existsByMatricula(estudanteRequest.getMatricula())).thenReturn(true);
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            estudanteService.completeEstudanteCreation(estudanteRequest);
+        });
+
+        // Then
+        Assertions.assertEquals(MensagensResposta.MATRICULA_JA_CADASTRADA, exception.getMessage());
+        Mockito.verify(estudanteRepository).existsByMatricula(estudanteRequest.getMatricula());
+        Mockito.verify(estudanteMapper, Mockito.never()).toEntity(ArgumentMatchers.any());
+        Mockito.verify(estudanteRepository, Mockito.never()).save(ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro ao criar perfil se estudante não estiver com cadastro aprovado")
+    void deveLancarErroAoCriarPerfilSeEstudanteNaoEstiverAprovado() {
+        // Given
+        estudante.setStatusCadastro(Status.PENDENTE); // Estudante com cadastro pendente
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.of(estudante));
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            estudanteService.criarPerfilMotorista(estudanteId, perfilMotoristaRequest);
+        });
+
+        // Assert exception message
+        Assertions.assertEquals(MensagensResposta.CADASTRO_NAO_APROVADO, exception.getMessage());
         
-        // Assert
-        assertEquals(MensagensErro.CADASTRO_SUCESSO, result.getCodigo());
+        // Verify interactions
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaRepository, Mockito.never()).existsByCnh(Mockito.anyString());
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(estudanteRepository, Mockito.never()).save(Mockito.any());
+    }
+    
+    @Test
+    @DisplayName("Deve criar perfil de motorista com sucesso")
+    void deveCriarPerfilMotoristaComSucesso() {
+        // Given
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.of(estudante));
+        Mockito.when(perfilMotoristaRepository.existsByCnh(perfilMotoristaRequest.getCnh())).thenReturn(false);
+        Mockito.when(perfilMotoristaMapper.toEntity(perfilMotoristaRequest)).thenReturn(perfilMotorista);
+        Mockito.when(estudanteRepository.save(Mockito.any(Estudante.class))).thenReturn(estudante);
+        Mockito.when(perfilMotoristaMapper.tDto(Mockito.any(PerfilMotorista.class))).thenReturn(perfilMotoristaDto);
+
+        // When
+        PerfilMotoristaDto resultado = estudanteService.criarPerfilMotorista(estudanteId, perfilMotoristaRequest);
+
+        // Then
+        Assertions.assertNotNull(resultado);
+        Assertions.assertEquals(perfilMotoristaDto.getId(), resultado.getId());
+        Assertions.assertEquals(perfilMotoristaDto.getCnh(), resultado.getCnh());
+        Assertions.assertEquals(perfilMotoristaDto.getWhatsapp(), resultado.getWhatsapp());
+        Assertions.assertEquals(perfilMotoristaDto.getMostrarWhatsapp(), resultado.getMostrarWhatsapp());
+
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaRepository).existsByCnh(perfilMotoristaRequest.getCnh());
+        Mockito.verify(perfilMotoristaMapper).toEntity(perfilMotoristaRequest);
+        Mockito.verify(estudanteRepository).save(Mockito.any(Estudante.class));
+        Mockito.verify(perfilMotoristaMapper).tDto(Mockito.any(PerfilMotorista.class));
         
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(Mockito.anyString());
-        Mockito.verify(estudanteRepository).existsByEmail(requestMotorista.getEmail());
-        Mockito.verify(estudanteRepository).existsByMatricula(requestMotorista.getMatricula());
-        Mockito.verify(motoristaRepository).existsByCnh(requestMotorista.getCnh());
-        Mockito.verify(userMapper).toMotorista(requestMotorista);
-        Mockito.verify(passwordEncoder).encode(requestMotorista.getPassword());
-        Mockito.verify(motoristaRepository).save(Mockito.any(Motorista.class));
+        // Capturar e verificar o estudante salvo
+        Mockito.verify(estudanteRepository).save(estudanteCaptor.capture());
+        Estudante estudanteSalvo = estudanteCaptor.getValue();
+        Assertions.assertTrue(estudanteSalvo.isMotorista());
+        Assertions.assertSame(perfilMotorista, estudanteSalvo.getPerfilMotorista());
+        Assertions.assertSame(estudanteSalvo, perfilMotorista.getEstudante());
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro ao criar perfil de motorista quando estudante não encontrado")
+    void deveLancarErroAoCriarPerfilQuandoEstudanteNaoEncontrado() {
+        // Given
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.empty());
+
+        // When & Then
+        EntidadeNaoEncontrada exception = Assertions.assertThrows(EntidadeNaoEncontrada.class, () -> {
+            estudanteService.criarPerfilMotorista(estudanteId, perfilMotoristaRequest);
+        });
+
+        // Assert exception message
+        Assertions.assertTrue(exception.getMessage().contains(new StringBuilder().append("{").append(String.valueOf(estudanteId)).append("}").toString()));
+        
+        // Verify interactions
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaRepository, Mockito.never()).existsByCnh(Mockito.anyString());
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(estudanteRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro ao criar perfil se estudante já for motorista")
+    void deveLancarErroAoCriarPerfilSeEstudanteJaForMotorista() {
+        // Given
+        estudante.setPerfilMotorista(perfilMotorista); // Make student already a driver
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.of(estudante));
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            estudanteService.criarPerfilMotorista(estudanteId, perfilMotoristaRequest);
+        });
+
+        // Assert exception message
+        Assertions.assertEquals(MensagensResposta.ESTUDANTE_JA_E_MOTORISTA, exception.getMessage());
+        
+        // Verify interactions
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaRepository, Mockito.never()).existsByCnh(Mockito.anyString());
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(estudanteRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro ao criar perfil se CNH já estiver cadastrada")
+    void deveLancarErroAoCriarPerfilSeCnhJaEstiverCadastrada() {
+        // Given
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.of(estudante));
+        Mockito.when(perfilMotoristaRepository.existsByCnh(perfilMotoristaRequest.getCnh())).thenReturn(true);
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            estudanteService.criarPerfilMotorista(estudanteId, perfilMotoristaRequest);
+        });
+
+        // Assert exception message
+        Assertions.assertEquals(MensagensResposta.CNH_JA_CADASTRADA, exception.getMessage());
+        
+        // Verify interactions
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaRepository).existsByCnh(perfilMotoristaRequest.getCnh());
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(estudanteRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve buscar perfil de motorista com sucesso")
+    void deveBuscarPerfilMotoristaComSucesso() {
+        // Given
+        estudante.setPerfilMotorista(perfilMotorista); // Estudante já é motorista
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.of(estudante));
+        Mockito.when(perfilMotoristaMapper.tDto(perfilMotorista)).thenReturn(perfilMotoristaDto);
+
+        // When
+        PerfilMotoristaDto resultado = estudanteService.buscarPerfilMotorista(estudanteId);
+
+        // Then
+        Assertions.assertNotNull(resultado);
+        Assertions.assertEquals(perfilMotoristaDto.getId(), resultado.getId());
+        Assertions.assertEquals(perfilMotoristaDto.getCnh(), resultado.getCnh());
+        
+        // Verify interactions
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaMapper).tDto(perfilMotorista);
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro ao buscar perfil quando estudante não encontrado")
+    void deveLancarErroAoBuscarPerfilQuandoEstudanteNaoEncontrado() {
+        // Given
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.empty());
+
+        // When & Then
+        EntidadeNaoEncontrada exception = Assertions.assertThrows(EntidadeNaoEncontrada.class, () -> {
+            estudanteService.buscarPerfilMotorista(estudanteId);
+        });
+
+        // Assert exception message
+        Assertions.assertTrue(exception.getMessage().contains(String.valueOf(estudanteId)));
+        
+        // Verify interactions
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).tDto(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro ao buscar perfil quando estudante não é motorista")
+    void deveLancarErroAoBuscarPerfilQuandoEstudanteNaoEMotorista() {
+        // Given (estudante without perfilMotorista)
+        Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.of(estudante));
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            estudanteService.buscarPerfilMotorista(estudanteId);
+        });
+
+        // Assert exception message
+        Assertions.assertEquals(MensagensResposta.ESTUDANTE_NAO_E_MOTORISTA, exception.getMessage());
+        
+        // Verify interactions
+        Mockito.verify(estudanteRepository).findById(estudanteId);
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).tDto(Mockito.any());
     }
 }

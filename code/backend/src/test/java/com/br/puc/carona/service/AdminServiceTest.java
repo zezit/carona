@@ -1,172 +1,164 @@
 package com.br.puc.carona.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
-import com.br.puc.carona.constants.MensagensErro;
-import com.br.puc.carona.dto.request.AdminCadastroRequest;
-import com.br.puc.carona.dto.response.MessageResponse;
-import com.br.puc.carona.enums.StatusCadastro;
+import com.br.puc.carona.constants.MensagensResposta;
+import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.TipoUsuario;
-import com.br.puc.carona.mapper.AdminMapper;
-import com.br.puc.carona.model.Administrador;
-import com.br.puc.carona.repository.AdministradorRepository;
-import com.br.puc.carona.util.MD5Util;
+import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.model.Usuario;
+import com.br.puc.carona.repository.UsuarioRepository;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
+@DisplayName("Teste Service: Admin")
 class AdminServiceTest {
 
     @Mock
-    private AdministradorRepository administradorRepository;
-    
-    @Mock
-    private AdminMapper adminMapper;
-    
-    @Mock
-    private MD5Util md5Util;
-    
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    
+    private UsuarioRepository usuarioRepository;
+
     @InjectMocks
-    private AdminService adminService;
-    
-    private AdminCadastroRequest adminRequest;
-    private Administrador administrador;
-    
+    private AdministradorService adminService;
+
+    @Captor
+    private ArgumentCaptor<Usuario> usuarioCaptor;
+
+    private Usuario usuarioPendente;
+    private Usuario usuarioAprovado;
+    private Long userId;
+
     @BeforeEach
-    void setup() {
-        // Configuração básica do administrador
-        adminRequest = new AdminCadastroRequest();
-        adminRequest.setNome("Admin Teste");
-        adminRequest.setEmail("admin@email.com");
-        adminRequest.setPassword("21232f297a57a5a743894a0e4a801fc3"); // MD5 hash for "admin"
+    void setUp() {
+        userId = 1L;
         
-        administrador = new Administrador();
-        administrador.setNome("Admin Teste");
-        administrador.setEmail("admin@email.com");
-        administrador.setPassword("hashedPassword");
+        usuarioPendente = Usuario.builder()
+                .id(userId)
+                .nome("Usuário Teste")
+                .email("usuario@test.com")
+                .password("e7d80ffeefa212b7c5c55700e4f7193e")
+                .tipoUsuario(TipoUsuario.ADMINISTRADOR)
+                .statusCadastro(Status.PENDENTE)
+                .build();
+                
+        usuarioAprovado = Usuario.builder()
+                .id(userId)
+                .nome("Usuário Teste")
+                .email("usuario@test.com")
+                .password("e7d80ffeefa212b7c5c55700e4f7193e")
+                .tipoUsuario(TipoUsuario.ESTUDANTE)
+                .statusCadastro(Status.APROVADO)
+                .build();
     }
 
-    @AfterEach
-    void tearDown() {
-        // Verificar que não existem mais interações com os mocks além das verificadas explicitamente
-        Mockito.verifyNoMoreInteractions(administradorRepository, adminMapper, md5Util, passwordEncoder);
-    }
-    
     @Test
-    @DisplayName("Deve registrar um administrador com sucesso")
-    void shouldRegisterAdminSuccessfully() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(Mockito.anyString())).thenReturn(true);
-        Mockito.when(administradorRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(adminMapper.toEntity(Mockito.any(AdminCadastroRequest.class))).thenReturn(administrador);
-        Mockito.when(passwordEncoder.encode(Mockito.anyString())).thenReturn("hashedPassword");
+    @DisplayName("Deve aprovar o cadastro de um usuário pendente")
+    void deveAprovarCadastroDeUsuarioPendente() {
+        // Given
+        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioPendente));
+        Mockito.when(usuarioRepository.save(ArgumentMatchers.any(Usuario.class))).thenReturn(usuarioAprovado);
+
+        // When
+        adminService.reviewUserRegistration(userId, Status.APROVADO);
+
+        // Then
+        Mockito.verify(usuarioRepository, Mockito.times(1)).findById(userId);
+        Mockito.verify(usuarioRepository, Mockito.times(1)).save(usuarioCaptor.capture());
         
-        // Act
-        final MessageResponse result = adminService.register(adminRequest);
-        
-        // Assert
-        assertEquals(MensagensErro.ADMIN_CADASTRO_SUCESSO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(md5Util).isValidMD5Hash(adminRequest.getPassword());
-        Mockito.verify(administradorRepository).existsByEmail(adminRequest.getEmail());
-        Mockito.verify(adminMapper).toEntity(adminRequest);
-        Mockito.verify(passwordEncoder).encode(adminRequest.getPassword());
-        Mockito.verify(administradorRepository).save(Mockito.any(Administrador.class));
+        Usuario usuarioSalvo = usuarioCaptor.getValue();
+        Assertions.assertEquals(Status.APROVADO, usuarioSalvo.getStatusCadastro());
     }
-    
+
     @Test
-    @DisplayName("Deve verificar se administrador tem tipo e status corretos")
-    void shouldSetCorrectTypeAndStatusForAdmin() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(Mockito.anyString())).thenReturn(true);
-        Mockito.when(administradorRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(adminMapper.toEntity(Mockito.any(AdminCadastroRequest.class))).thenReturn(administrador);
-        Mockito.when(passwordEncoder.encode(Mockito.anyString())).thenReturn("hashedPassword");
+    @DisplayName("Deve rejeitar o cadastro de um usuário pendente")
+    void deveRejeitarCadastroDeUsuarioPendente() {
+        // Given
+        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioPendente));
+
+        // When
+        adminService.reviewUserRegistration(userId, Status.REJEITADO);
+
+        // Then
+        Mockito.verify(usuarioRepository, Mockito.times(1)).findById(userId);
+        Mockito.verify(usuarioRepository, Mockito.times(1)).save(usuarioCaptor.capture());
         
-        // Act
-        adminService.register(adminRequest);
-        
-        // Assert & Verify
-        Mockito.verify(administradorRepository).save(Mockito.argThat(admin -> 
-            admin.getTipoUsuario() == TipoUsuario.ADMINISTRADOR && 
-            admin.getStatus() == StatusCadastro.APROVADO
-        ));
-        
-        // Verify common interactions
-        Mockito.verify(md5Util).isValidMD5Hash(adminRequest.getPassword());
-        Mockito.verify(administradorRepository).existsByEmail(adminRequest.getEmail());
-        Mockito.verify(adminMapper).toEntity(adminRequest);
-        Mockito.verify(passwordEncoder).encode(adminRequest.getPassword());
+        Usuario usuarioSalvo = usuarioCaptor.getValue();
+        Assertions.assertEquals(Status.REJEITADO, usuarioSalvo.getStatusCadastro());
     }
-    
+
     @Test
-    @DisplayName("Deve retornar erro quando o email já existe")
-    void shouldReturnErrorWhenEmailAlreadyExists() {
-        // Arrange
-        Mockito.when(administradorRepository.existsByEmail(Mockito.anyString())).thenReturn(true);
-        
-        // Act
-        final MessageResponse result = adminService.register(adminRequest);
-        
-        // Assert
-        assertEquals(MensagensErro.EMAIL_JA_CADASTRADO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(administradorRepository).existsByEmail(adminRequest.getEmail());
+    @DisplayName("Deve lançar exceção quando usuário não for encontrado")
+    void deveLancarExcecaoQuandoUsuarioNaoForEncontrado() {
+        // Given
+        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.empty());
+
+        // When & Then
+        EntidadeNaoEncontrada exception = Assertions.assertThrows(EntidadeNaoEncontrada.class, () -> {
+            adminService.reviewUserRegistration(userId, Status.APROVADO);
+        });
+
+        Assertions.assertEquals(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, exception.getMessage());
+        Mockito.verify(usuarioRepository, Mockito.never()).save(ArgumentMatchers.any());
     }
-    
+
     @Test
-    @DisplayName("Deve retornar erro quando o formato da senha é inválido")
-    void shouldReturnErrorWhenPasswordFormatIsInvalid() {
-        // Arrange
-        Mockito.when(administradorRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(md5Util.isValidMD5Hash(Mockito.anyString())).thenReturn(false);
-        
-        // Act
-        final MessageResponse result = adminService.register(adminRequest);
-        
-        // Assert
-        assertEquals(MensagensErro.FORMATO_SENHA_INVALIDO, result.getCodigo());
-        
-        // Verify
-        Mockito.verify(administradorRepository).existsByEmail(adminRequest.getEmail());
-        Mockito.verify(md5Util).isValidMD5Hash(adminRequest.getPassword());
+    @DisplayName("Deve lançar exceção quando cadastro já foi revisado")
+    void deveLancarExcecaoQuandoCadastroJaFoiRevisado() {
+        // Given
+        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioAprovado));
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            adminService.reviewUserRegistration(userId, Status.APROVADO);
+        });
+
+        Assertions.assertEquals(MensagensResposta.CADASTRO_JA_REVISADO, exception.getMessage());
+        Mockito.verify(usuarioRepository, Mockito.never()).save(ArgumentMatchers.any());
     }
-    
+
     @Test
-    @DisplayName("Deve aplicar criptografia adicional sobre o hash MD5 recebido")
-    void shouldApplyAdditionalEncryptionToMD5Hash() {
-        // Arrange
-        Mockito.when(md5Util.isValidMD5Hash(Mockito.anyString())).thenReturn(true);
-        Mockito.when(administradorRepository.existsByEmail(Mockito.anyString())).thenReturn(false);
-        Mockito.when(adminMapper.toEntity(Mockito.any(AdminCadastroRequest.class))).thenReturn(administrador);
-        Mockito.when(passwordEncoder.encode(Mockito.anyString())).thenReturn("doubleHashedPassword");
-        
-        // Act
-        adminService.register(adminRequest);
-        
-        // Assert & Verify
-        Mockito.verify(passwordEncoder).encode(adminRequest.getPassword());
-        Mockito.verify(administradorRepository).save(Mockito.argThat(admin -> 
-            "doubleHashedPassword".equals(admin.getPassword())
-        ));
-        
-        // Verify common interactions
-        Mockito.verify(md5Util).isValidMD5Hash(adminRequest.getPassword());
-        Mockito.verify(administradorRepository).existsByEmail(adminRequest.getEmail());
-        Mockito.verify(adminMapper).toEntity(adminRequest);
+    @DisplayName("Deve lançar exceção quando status for nulo")
+    void deveLancarExcecaoQuandoStatusForNulo() {
+        // Given
+        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioPendente));
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            adminService.reviewUserRegistration(userId, null);
+        });
+
+        Assertions.assertEquals(MensagensResposta.STATUS_CADASTRO_INVALIDO, exception.getMessage());
+        Mockito.verify(usuarioRepository, Mockito.never()).save(ArgumentMatchers.any());
+    }
+
+    @ParameterizedTest(name = "Deve lançar exceção quando status for {0}")
+    @EnumSource(value = Status.class, names = {"PENDENTE", "CANCELADO", "FINALIZADO"})
+    void deveLancarExcecaoParaStatusInvalido(Status status) {
+        // Given
+        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioPendente));
+
+        // When & Then
+        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            adminService.reviewUserRegistration(userId, status);
+        });
+
+        Assertions.assertEquals(MensagensResposta.STATUS_CADASTRO_INVALIDO, exception.getMessage());
+        Mockito.verify(usuarioRepository, Mockito.never()).save(ArgumentMatchers.any());
     }
 }

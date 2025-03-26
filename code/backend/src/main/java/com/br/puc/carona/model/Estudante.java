@@ -2,40 +2,40 @@ package com.br.puc.carona.model;
 
 import java.time.LocalDate;
 
-import com.br.puc.carona.enums.TipoEstudante;
-
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-@Getter
-@Setter
+@Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "estudantes")
-@SequenceGenerator(name = "id_sequence", sequenceName = "estudante_seq", allocationSize = 1)
+@Table(name = "estudante")
 public class Estudante extends Usuario {
-
-    @Column(name = "data_nascimento")
+    
+    @Column(nullable = false)
     private LocalDate dataDeNascimento;
-
-    @Column(name = "matricula", unique = true)
+    
+    @Column(nullable = false, unique = true)
     private String matricula;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_estudante")
-    private TipoEstudante tipoEstudante;
-
-    @Column(name = "avaliacao_media")
+    
+    @Column
     private Float avaliacaoMedia;
+    
+    @OneToOne(mappedBy = "estudante", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private PerfilMotorista perfilMotorista;
+    
+    public boolean isMotorista() {
+        return perfilMotorista != null;
+    }
 }

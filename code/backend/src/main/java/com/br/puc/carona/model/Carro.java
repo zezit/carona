@@ -5,19 +5,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-@Getter
-@Setter
+@Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "carros")
-@SequenceGenerator(name = "id_sequence", sequenceName = "carro_seq", allocationSize = 1)
+@Table(name = "carro")
+@SequenceGenerator(name = "seq_generator", sequenceName = "carro_seq", allocationSize = 1)
 public class Carro extends AbstractEntity {
     
     @Column(nullable = false)
