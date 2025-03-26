@@ -1,0 +1,170 @@
+name: Testes Unitários 🧪 - Backend
+
+on:
+  push:
+    paths:
+      - 'code/backend/**'
+    branches-ignore:
+      - 'dependabot/**' #avoid duplicates: only run the PR, not the push
+  pull_request:
+    paths:
+      - 'code/backend/**'
+
+jobs:
+  unit_tests:
+    if: (github.event_name != 'pull_request' && ! github.event.pull_request.head.repo.fork) || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.fork || startsWith(github.head_ref, 'dependabot/')))
+    runs-on: ubuntu-latest
+    permissions:
+      # Required for publishing the coverage report to GitHub Pages
+      contents: write
+      # Required for JaCoCo reporter action to create a check
+      checks: write
+      # Required for GitHub Pages
+      pages: write
+      # Required for GitHub Actions workflow status
+      statuses: write
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 3306
+      DB_NAME: carpool_db
+      DB_USERNAME: root
+      DB_PASSWORD: carpool_password
+      SERVER_PORT: 8080
+
+    steps:
+      - name: Checando código fonte
+        uses: actions/checkout@v3
+
+      - name: Configurando JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Configurando cache do Maven
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven
+
+      - name: Compilando e executando testes com cobertura
+        working-directory: ./code/backend
+        run: mvn clean verify
+        continue-on-error: true
+
+      - name: Instalar xmllint
+        run: sudo apt-get install -y libxml2-utils
+
+      - name: Extraindo dados de cobertura
+        id: extract_coverage
+        run: |
+          REPORT_FILE="./code/backend/target/site/jacoco/jacoco.xml"
+          if [ -f "$REPORT_FILE" ]; then
+            echo "report_exists=true" >> $GITHUB_OUTPUT
+            
+            # Use a more robust approach with xmllint
+            if command -v xmllint &> /dev/null; then
+              # Extract line coverage data
+              COUNTER_DATA=$(xmllint --xpath "string(/report/counter[@type='LINE']/@covered)" $REPORT_FILE)
+              COVERED_LINES=${COUNTER_DATA:-0}
+              MISSED_DATA=$(xmllint --xpath "string(/report/counter[@type='LINE']/@missed)" $REPORT_FILE)
+              MISSED_LINES=${MISSED_DATA:-0}
+              
+              # Extract branch coverage data
+              BRANCH_COVERED_DATA=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@covered)" $REPORT_FILE)
+              BRANCH_COVERED=${BRANCH_COVERED_DATA:-0}
+              BRANCH_MISSED_DATA=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@missed)" $REPORT_FILE)
+              BRANCH_MISSED=${BRANCH_MISSED_DATA:-0}
+            else
+              # Fallback to simple grep if xmllint is not available
+              COVERED_LINES=$(cat $REPORT_FILE | grep -o 'counter.*type=\"LINE\".*covered=\"[0-9]*\"' | grep -o 'covered=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
+              MISSED_LINES=$(cat $REPORT_FILE | grep -o 'counter.*type=\"LINE\".*missed=\"[0-9]*\"' | grep -o 'missed=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
+              
+              # Extract branch coverage data
+              BRANCH_COVERED=$(cat $REPORT_FILE | grep -o 'counter.*type=\"BRANCH\".*covered=\"[0-9]*\"' | grep -o 'covered=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
+              BRANCH_MISSED=$(cat $REPORT_FILE | grep -o 'counter.*type=\"BRANCH\".*missed=\"[0-9]*\"' | grep -o 'missed=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
+            fi
+            
+            # Calculate total and percentage for lines
+            TOTAL_LINES=$((COVERED_LINES + MISSED_LINES))
+            if [ $TOTAL_LINES -gt 0 ]; then
+              COVERAGE_PERCENT=$(echo "scale=2; 100*$COVERED_LINES/$TOTAL_LINES" | bc)
+            else
+              COVERAGE_PERCENT="0"
+            fi
+            
+            # Calculate total and percentage for branches
+            TOTAL_BRANCHES=$((BRANCH_COVERED + BRANCH_MISSED))
+            if [ $TOTAL_BRANCHES -gt 0 ]; then
+              BRANCH_COVERAGE_PERCENT=$(echo "scale=2; 100*$BRANCH_COVERED/$TOTAL_BRANCHES" | bc)
+            else
+              BRANCH_COVERAGE_PERCENT="0"
+            fi
+            
+            # Set outputs for lines
+            echo "covered_lines=$COVERED_LINES" >> $GITHUB_OUTPUT
+            echo "missed_lines=$MISSED_LINES" >> $GITHUB_OUTPUT
+            echo "total_lines=$TOTAL_LINES" >> $GITHUB_OUTPUT
+            echo "coverage_percent=$COVERAGE_PERCENT" >> $GITHUB_OUTPUT
+            
+            # Set outputs for branches
+            echo "branch_covered=$BRANCH_COVERED" >> $GITHUB_OUTPUT
+            echo "branch_missed=$BRANCH_MISSED" >> $GITHUB_OUTPUT
+            echo "total_branches=$TOTAL_BRANCHES" >> $GITHUB_OUTPUT
+            echo "branch_coverage_percent=$BRANCH_COVERAGE_PERCENT" >> $GITHUB_OUTPUT
+          else
+            echo "report_exists=false" >> $GITHUB_OUTPUT
+            echo "covered_lines=0" >> $GITHUB_OUTPUT
+            echo "missed_lines=0" >> $GITHUB_OUTPUT
+            echo "total_lines=0" >> $GITHUB_OUTPUT
+            echo "coverage_percent=0" >> $GITHUB_OUTPUT
+            
+            # Set outputs for branches
+            echo "branch_covered=0" >> $GITHUB_OUTPUT
+            echo "branch_missed=0" >> $GITHUB_OUTPUT
+            echo "total_branches=0" >> $GITHUB_OUTPUT
+            echo "branch_coverage_percent=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Adicionando relatório ao resumo do workflow
+        if: steps.extract_coverage.outputs.report_exists == 'true'
+        run: |
+          echo "## 📊 Relatório de Cobertura de Código" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cobertura de Linhas" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "| ------- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📏 Porcentagem de Cobertura | ${{ steps.extract_coverage.outputs.coverage_percent }}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Linhas Cobertas | ${{ steps.extract_coverage.outputs.covered_lines }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ❌ Linhas Não Cobertas | ${{ steps.extract_coverage.outputs.missed_lines }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📋 Total de Linhas | ${{ steps.extract_coverage.outputs.total_lines }} |" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cobertura de Branches" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "| ------- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔄 Porcentagem de Cobertura | ${{ steps.extract_coverage.outputs.branch_coverage_percent }}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Branches Cobertos | ${{ steps.extract_coverage.outputs.branch_covered }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ❌ Branches Não Cobertos | ${{ steps.extract_coverage.outputs.branch_missed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📋 Total de Branches | ${{ steps.extract_coverage.outputs.total_branches }} |" >> $GITHUB_STEP_SUMMARY
+          
+          # Verifica se a cobertura está acima ou abaixo do limite
+          coverage="${{ steps.extract_coverage.outputs.coverage_percent }}"
+          if (( $(echo "$coverage < 70" | bc -l) )); then
+            echo "⚠️ **Atenção**: A cobertura está abaixo do mínimo recomendado de 70%" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Ótimo**: A cobertura está acima do mínimo recomendado de 70%" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Armazenando artefatos do relatório de cobertura
+        if: steps.extract_coverage.outputs.report_exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-cobertura-codigo
+          path: ./code/backend/target/site/jacoco
+          retention-days: 7
