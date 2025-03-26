@@ -1,4 +1,4 @@
-# Termo de Abertura de Projeto (TAP) no.: 9999
+# Termo de Abertura de Projeto (TAP) no.: 1
 
 **Nome da empresa:** Carona?
 
@@ -32,7 +32,7 @@ Cleiton Tavares
 
 ---
 
-_Curso de Engenharia de Software, Unidade Praça da Liberdade_
+_Curso de Engenharia de Software, Unidade Lourdes_
 
 _Instituto de Informática e Ciências Exatas – Pontifícia Universidade de Minas Gerais (PUC MINAS), Belo Horizonte – MG – Brasil_
 

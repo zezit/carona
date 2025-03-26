@@ -46,6 +46,7 @@ _**Resumo**. O projeto Carona? é uma solução para facilitar a mobilidade dos 
 | 14/03/2025 | Renato Matos            | Adicionando diagrama arquitetural seção 4    | v0.3       |
 | 18/03/2025 | José Victor Mendes Dias | Pequenos ajustes estruturais de documentação | v0.4       |
 | 20/03/2025 | Renato Matos            | Melhorando seção de abreviaturas                       | v0.5       |
+| 20/03/2025 | Renato Matos | Melhorando a descrição da persona | v0.6       |
 
 ## SUMÁRIO
 
@@ -160,7 +161,7 @@ O objetivo principal do projeto _*Carona?*_ é oferecer um sistema de caronas pa
       <strong>Trabalho:</strong> Estagiario de Engenheria Mecanica <br>
       <strong>Personalidade:</strong> Comunicativo, incisivo  e determinado <br>
       <strong>Sonho:</strong> Ficar rico ainda jovem <br>
-      <strong>Dores:</strong> Mora longe da faculdade perde muito tempo no translado <br>
+      <strong>Dores:</strong> Mora longe da faculdade perde muito tempo no ônibus <br>
     </td>
   </tr>
 </table>
