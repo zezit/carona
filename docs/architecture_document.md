@@ -301,7 +301,7 @@ A seguir serão apresenta os diagramas que descrevem a estrutura lógica do sist
 
 O diagrama de classes abaixo representa a estrutura do sistema Carona?, detalhando as entidades, seus atributos, relacionamentos e hierarquias.
 
-![Diagrama de classes](imagens/diagrams/classes_diagram.svg "Diagrama de classes")
+![Diagrama de classes](imagens/diagrams/umlAtualizada.png "Diagrama de classes")
 
 **Figura 2 – Diagrama de classes. Fonte: o próprio autor.**
 
