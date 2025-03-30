@@ -1,5 +1,8 @@
 package com.br.puc.carona.service;
 
+import com.br.puc.carona.dto.response.EstudanteDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,4 +84,12 @@ public class EstudanteService {
 
         return perfilMotoristaMapper.tDto(estudante.getPerfilMotorista());
     }
+
+    public Page<EstudanteDto> buscarTodosOsEstudantes(Pageable pageable){
+        Page<Estudante> estudantesPage = this.repository.findAll(pageable);
+
+        return estudantesPage.map(mapper::toDto);
+
+    }
+
 }
