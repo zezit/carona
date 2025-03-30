@@ -305,7 +305,7 @@ O diagrama de classes abaixo representa a estrutura do sistema Carona?, detalhan
 
 **Figura 2 – Diagrama de classes. Fonte: o próprio autor.**
 
-Na Figura 2, podemos visualizar o modelo de domínio do sistema Carona?, incluindo as principais entidades e seus relacionamentos. O sistema é estruturado em torno de diferentes tipos de usuários (Administrador, Estudante e Motorista), onde o Motorista é uma especialização de Estudante. A classe Carona é central ao sistema, conectando-se com Motorista, Paradas, SolicitaçãoCarona e PassageiroRecorrência. Os relacionamentos mostram como os estudantes podem solicitar caronas, avaliar outros usuários e fazer denúncias, que serão tratadas por administradores.
+Na Figura 2, podemos visualizar o modelo de domínio do sistema Carona?, incluindo as principais entidades e seus relacionamentos. O sistema é estruturado em torno de diferentes tipos de usuários (Administrador e Estudante), onde Estudante pode ser apenas passageiro ou passageiro e motorista. Os relacionamentos mostram como os estudantes podem solicitar caronas, avaliar outros usuários e fazer denúncias, que serão tratadas por administradores.
 
 ### Diagrama de componentes
 

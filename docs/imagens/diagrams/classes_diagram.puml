@@ -1,174 +1,150 @@
 @startuml classes_diagram
 left to right direction
 
-' ============ Enumeradores ============
+' ============ Enumeradores Consolidados ============
 enum TipoUsuario {
-    ADMINISTRADOR
-    ESTUDANTE
+ ADMINISTRADOR
+ ESTUDANTE
 }
 
-enum TipoEstudante {
-    PASSAGEIRO
-    AMBOS /' Passageiro e Motorista '/
+enum Status {
+ PENDENTE
+ APROVADO
+ REJEITADO
+ CANCELADO
+ FINALIZADO
 }
 
 enum StatusCarona {
-    AGENDADA
-    EM_ANDAMENTO
-    FINALIZADA
-    CANCELADA
-}
-
-enum StatusDenuncia {
-    PENDENTE
-    RESOLVIDA
-}
-
-enum StatusRecorrencia {
-    CONFIRMADA
-    CANCELADA
-    AGUARDANDO
-}
-
-enum StatusSolicitacao {
-    PENDENTE
-    ACEITA
-    RECUSADA
-    CANCELADA
-}
-
-enum StatusCadastro {
-    PENDENTE
-    APROVADO
-    REJEITADO
+ AGENDADA
+ EM_ANDAMENTO
+ FINALIZADA
+ CANCELADA
 }
 
 ' ============ Entidades ============
 abstract class Usuario {
-    - nome: string
-    - email: string
-    - senha: string
-    - tipo: TipoUsuario
+ - nome: string
+ - email: string
+ - senha: string
+ - tipo: TipoUsuario
+ + autenticar(email: string, senha: string): boolean
+ + alterarSenha(senhaAtual: string, novaSenha: string): boolean
 }
 
 class Estudante {
-    - dataDeNascimento: LocalDate
-    - matricula: string
-    - tipoEstudante: TipoEstudante
-    - avaliacaoMedia: float
-    - avaliacoes: List<Avaliacao>
-    - caronasRecorrentes: List<PassageiroRecorrencia>
-    - denucias: List<Denuncia>
+ - dataDeNascimento: LocalDate
+ - matricula: string
+ - avaliacaoMedia: float
+ - statusCadastro: Status
+ + solicitarCarona(carona: Carona): SolicitacaoCarona
+ + avaliarUsuario(usuario: Estudante, nota: int, comentario: string): Avaliacao
+ + isMotorista(): boolean
+}
+
+class PerfilMotorista {
+ - veiculo: Carro
+ - cnh: string
+ - whatsapp: string
+ - mostrarWhatsapp: boolean
+ + criarCarona(origem: Parada, destino: Parada, horario: DateTime): Carona
+ + cancelarCarona(carona: Carona): boolean
 }
 
 class Administrador {
-    /' Não possui atributos específicos ainda '/
-    - denunciasSolucionadas: List<Denuncia>
-}
-
-class Motorista {
-    - veiculo: Carro
-    - cnh: string
-    - whatsapp: string
-    - mostrarWhatsapp: boolean
-    - caronas: List<Carona>
+ - denunciasSolucionadas: List<Denuncia>
+ + aprovarCadastroUsuario(estudante: Estudante): boolean
 }
 
 class Carro {
-    - modelo: string
-    - placa: string
-    - cor: string /' HEX '/
-    - capacidadePassageiros: long
+ - modelo: string
+ - placa: string
+ - cor: string
+ - capacidadePassageiros: int
+ + atualizarInformacoes(modelo: string, cor: string): boolean
 }
 
 class Carona {
-    - origem: string
-    - destino: string
-    - recorrente: boolean
-    - horaAgendamento: DateTime
-    - horarioDePartida: DateTime
-    - horaDeChegada: DateTime
-    - status: StatusCarona
-    - motorista: Motorista
-    - solicitacoes: List<SolicitacaoCarona>
-    - paradas: List<Parada>
-    - passageirosRecorrentes: List<PassageiroRecorrencia>
+ - origem: Parada
+ - destino: Parada
+ - recorrente: boolean
+ - horarioDePartida: DateTime
+ - horaDeChegada: DateTime
+ - status: StatusCarona
+ + adicionarParada(endereco: string, ordem: int): Parada
+ + alterarStatus(novoStatus: StatusCarona): boolean
 }
 
 class SolicitacaoCarona {
-    - status: StatusSolicitacao
-    - dataSolicitacao: DateTime
-    - estudante: Estudante
+ - status: Status
+ - dataSolicitacao: DateTime
+ + aceitar(): boolean
+ + recusar(): boolean
+ + cancelar(): boolean
 }
 
 class Parada {
-    - endereco: string
-    - orderm: int
-    - horarioChegada: DateTime
-    - horarioSaida: DateTime
+ - endereco: string
+ - latitude: float
+ - longitude: float
+ - ordem: int
+ + alterarOrdem(novaOrdem: int): boolean
 }
 
-class PassageiroRecorrencia {
-    - estudante: Estudante
-    - carona: Carona
-    - status: StatusRecorrencia
-}
-
-class Avaliacao {
-    - nota: int /' 1 a 5 '/
-    - comentario: string
-    - data: DateTime
+class Avaliacao {      
+ - nota: int
+ - comentario: string
+ - data: DateTime
+ + reportarAvaliacaoImpropria(): Denuncia
 }
 
 class Denuncia {
-    - descricao: string
-    - data: DateTime
-    - status: StatusDenuncia
-    - solucionador: Administrador
-    - denunciante: Estudante
-    - denunciado: Estudante
+ - descricao: string
+ - data: DateTime
+ - status: Status
+ + validarDenuncia(): boolean
+ + rejectarDenuncia(): boolean
 }
 
 class Notificacao {
-    - mensagem: string
-    - horarioDeEnvio: DateTime
-    - resposta: boolean
-    - usuario: Usuario
+ - mensagem: string
+ - horarioDeEnvio: DateTime
+ - resposta: boolean
+ + responder(resposta: boolean): boolean
+ + reenviar(): boolean
 }
 
 ' ============ Relacionamentos ============
 ' Hierarquia de Usuários
 Usuario <|-- Estudante
 Usuario <|-- Administrador
-Estudante <|-- Motorista
+
+' Estudante pode ter um perfil de motorista
+Estudante "1" -- "0..1" PerfilMotorista : possui >
 
 ' Motorista e Carro
-Motorista -- Carro : possui
+PerfilMotorista -- Carro : possui >
 
 ' Carona conduzida pelo Motorista
-Carona -- Motorista : conduz
+Carona "0..*" -l- "1" PerfilMotorista : < conduzida por
 
-' Solicitação de Carona: Estudante solicita e Carona recebe
-Estudante -- SolicitacaoCarona : solicita
-Carona -- SolicitacaoCarona : recebe
+' Solicitação de Carona
+Estudante "1" -- "0..*" SolicitacaoCarona : solicita >
+Carona "1" -- "0..*" SolicitacaoCarona : < recebe
 
 ' Carona e suas Paradas
-Carona -d- Parada : possui
+Carona "1" -d- "0..*" Parada : possui >
 
-' Participação Recorrente: Estudante e Carona vinculam PassageiroRecorrencia
-Estudante -d- PassageiroRecorrencia : participa
-Carona -d- PassageiroRecorrencia : vincula
+' Passageiros participam de caronas (simplificado)
+Carona "0..*" -- "0..*" Estudante : tem passageiros >
 
-' Avaliações realizadas pelo Estudante
-Estudante -- Avaliacao : realiza
-Avaliacao -u- Estudante : avaliador
-Avaliacao -d- Estudante : avaliado
+' Avaliações
+Estudante "1" -- "0..*" Avaliacao : possui >
 
-' Denúncias realizadas pelo Estudante e analisadas pelo Administrador
-Estudante -d- Denuncia : faz
-Denuncia -- Administrador : solucionador
+' Denúncias
+Estudante "1" -d- "0..*" Denuncia : possui >
+Administrador "0..1" -- "0..*" Denuncia : avalia >
 
-' Notificações enviadas a partir do Usuario
-Usuario -u- Notificacao : recebe
-
+' Notificações
+Usuario "1" -u- "0..*" Notificacao : recebe >
 @enduml
