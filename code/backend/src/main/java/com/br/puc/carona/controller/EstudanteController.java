@@ -1,5 +1,9 @@
 package com.br.puc.carona.controller;
 
+import com.br.puc.carona.dto.response.EstudanteDto;
+import com.br.puc.carona.model.Estudante;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,5 +61,16 @@ public class EstudanteController {
         PerfilMotoristaDto perfilMotorista = estudanteService.buscarPerfilMotorista(estudanteId);
         log.info("Fim requisição busca perfil de motorista para estudante ID: {}", estudanteId);
         return ResponseEntity.ok(perfilMotorista);
+    }
+
+    @GetMapping()
+    @Operation(summary = "Busca perfil de motorista", description = "Busca o perfil de motorista de um estudante")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil de motorista encontrado"),
+            @ApiResponse(responseCode = "404", description = "Estudante não encontrado ou não possui perfil de motorista")
+    })
+    public ResponseEntity<Page<EstudanteDto>> buscarTodosOsEstudantes(Pageable pageable){
+        Page<EstudanteDto> estudanteDtoPage = this.estudanteService.buscarTodosOsEstudantes(pageable);
+        return  ResponseEntity.ok(estudanteDtoPage);
     }
 }
