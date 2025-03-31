@@ -10,11 +10,12 @@ Os principais documentos a serem produzidos são:
 * `Registro das Partes Interessadas.xlsx`
 	* Registro das Partes Interessadas.
 
-* `Declaracao de escopo.docx`
+* `EAPWBSCARONA`
 	* Declaracao de escopo.
 
- * `EAPWBSCARONA`
-       * Estrutura analítica do projeto (EAP) 	
+* `Declaracao de escopo.docx`
+	* Estrutura analítica do projeto (EAP).
+	
 
 
 Demais artefatos que julgar pertinentes.
