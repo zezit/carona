@@ -13,5 +13,8 @@ Os principais documentos a serem produzidos são:
 * `Declaracao de escopo.docx`
 	* Declaracao de escopo.
 
+ * `EAPWBSCARONA`
+       * Estrutura analítica do projeto (EAP) 	
+
 
 Demais artefatos que julgar pertinentes.
