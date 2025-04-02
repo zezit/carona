@@ -1,125 +1,112 @@
+import axios from 'axios';
 
-// This is a mock API service
-// In a real application, this would connect to your backend API
+// Set base URL from environment or use default
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-export type SuccessResponse<T> = {
-  success: true;
-  data: T;
-};
+// Configure axios instance
+export const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-export type ErrorResponse = {
-  success: false;
-  error: string;
-};
+// Interceptor to add auth token to requests
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
+// Define API functions for admin-related operations
 export const api = {
   auth: {
-    login: async (email: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> => {
-      // Simulate API delay
-      console.log("Logging in...");
-      await delay(800);
-      
-      // Mock validation
-      if (email === "admin@carona.com" && password === "admin123") {
-        return {
-          success: true,
-          data: {
-            token: "mock-jwt-token",
-            user: {
-              id: "1",
-              name: "Administrador",
-              email,
-              role: "admin"
-            }
-          }
-        };
+    login: async (email: string, password: string) => {
+      try {
+        const response = await apiClient.post('/auth/login', { email, password });
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Login error:', error);
+        return { success: false, error };
       }
-      
-      return {
-        success: false,
-        error: "Credenciais inválidas"
-      };
     },
-    logout: async (): Promise<ApiResponse<null>> => {
-      await delay(300);
-      return {
-        success: true,
-        data: null
-      };
-    }
+    validateToken: async () => {
+      try {
+        const response = await apiClient.get('/auth/validate');
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Token validation error:', error);
+        return { success: false, error };
+      }
+    },
   },
-  
-  users: {
-    getAll: async (): Promise<ApiResponse<any[]>> => {
-      await delay(1000);
-      
-      // Mock users data would be returned here
-      return {
-        success: true,
-        data: [] // This would be your mock user data
-      };
+  admin: {
+    // Get pending users that need approval
+    getPendingUsers: async () => {
+      try {
+        const response = await apiClient.get('/admin/pendentes');
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Error fetching pending users:', error);
+        return { success: false, error };
+      }
     },
-    
-    getPending: async (): Promise<ApiResponse<any[]>> => {
-      await delay(800);
-      
-      // Mock pending users data would be returned here
-      return {
-        success: true,
-        data: [] // This would be your mock pending user data
-      };
+    // Review a user (approve/reject)
+    reviewUser: async (userId: string, status: string) => {
+      try {
+        const response = await apiClient.patch(`/admin/revisar/${userId}/${status}`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Error reviewing user:', error);
+        return { success: false, error };
+      }
     },
-    
-    approve: async (userId: string): Promise<ApiResponse<null>> => {
-      await delay(500);
-      return {
-        success: true,
-        data: null
-      };
+    // Get all students (for user management)
+    getAllStudents: async () => {
+      try {
+        const response = await apiClient.get('/estudante');
+        return { success: true, data: response.data.content || [] };
+      } catch (error) {
+        console.error('Error fetching all students:', error);
+        return { success: false, error };
+      }
     },
-    
-    reject: async (userId: string): Promise<ApiResponse<null>> => {
-      await delay(500);
-      return {
-        success: true,
-        data: null
-      };
+    // Block a student (set status to CANCELADO)
+    blockStudent: async (userId: string) => {
+      try {
+        const response = await apiClient.patch(`/admin/revisar/${userId}/CANCELADO`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Error blocking student:', error);
+        return { success: false, error };
+      }
     },
-    
-    block: async (userId: string): Promise<ApiResponse<null>> => {
-      await delay(500);
-      return {
-        success: true,
-        data: null
-      };
+    // Unblock a student (set status to APROVADO)
+    unblockStudent: async (userId: string) => {
+      try {
+        const response = await apiClient.patch(`/admin/revisar/${userId}/APROVADO`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Error unblocking student:', error);
+        return { success: false, error };
+      }
     },
-    
-    unblock: async (userId: string): Promise<ApiResponse<null>> => {
-      await delay(500);
-      return {
-        success: true,
-        data: null
-      };
+    // Delete a student
+    deleteStudent: async (userId: string) => {
+      try {
+        const response = await apiClient.delete(`/estudante/${userId}`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Error deleting student:', error);
+        return { success: false, error };
+      }
     },
-    
-    delete: async (userId: string): Promise<ApiResponse<null>> => {
-      await delay(700);
-      return {
-        success: true,
-        data: null
-      };
-    },
-    
-    update: async (userId: string, data: any): Promise<ApiResponse<null>> => {
-      await delay(600);
-      return {
-        success: true,
-        data: null
-      };
-    }
-  }
+  },
 };
+
+export default api;

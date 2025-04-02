@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -6,13 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { md5Hash } from "@/utils/crypto";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isAuthenticated, token } = useAuth();
   const navigate = useNavigate();
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      navigate("/approval");
+    }
+  }, [isAuthenticated, token, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,10 +31,12 @@ const Login = () => {
     }
     
     try {
-      await login(email, password);
-      // Navigation is handled in the auth context
-    } catch (error) {
-      // Error handling is done in the auth context
+      // Hash the password with MD5 before sending to the server
+      const hashedPassword = md5Hash(password);
+      await login(email, hashedPassword);
+      // Navigation is handled in the auth context or by the effect above
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao fazer login");
     }
   };
 

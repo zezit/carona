@@ -9,6 +9,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -39,5 +40,6 @@ public class PerfilMotorista extends AbstractEntity{
     private String whatsapp;
     
     @Column(nullable = false)
-    private Boolean mostrarWhatsapp;
+    @Builder.Default
+    private Boolean mostrarWhatsapp = false;
 }

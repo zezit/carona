@@ -1,6 +1,7 @@
-
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import { useAuth } from "./AuthContext";
 
 export type User = {
   id: string;
@@ -25,124 +26,114 @@ type UserContextType = {
   updateUser: (id: string, data: Partial<User>) => Promise<void>;
   getUser: (id: string) => User | undefined;
   filterUsers: (query: string, status?: string) => User[];
+  fetchAllUsers: () => Promise<void>;
+  fetchPendingUsers: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// Mock data for users with updated fields
-const mockUsers: User[] = [
-  {
-    id: "1",
-    nome: "Ana Silva",
-    email: "ana.silva@sga.pucminas.br",
-    dataDeNascimento: "1998-04-15",
-    matricula: "00123456",
-    avaliacaoMedia: 4.8,
-    status: "PENDENTE"
-  },
-  {
-    id: "2",
-    nome: "Pedro Oliveira",
-    email: "pedro.oliveira@sga.pucminas.br",
-    dataDeNascimento: "1999-07-22",
-    matricula: "00234567",
-    avaliacaoMedia: 4.5,
-    status: "PENDENTE"
-  },
-  {
-    id: "3",
-    nome: "Mariana Costa",
-    email: "mariana.costa@sga.pucminas.br",
-    dataDeNascimento: "2000-03-10",
-    matricula: "00345678",
-    avaliacaoMedia: 4.9,
-    status: "APROVADO"
-  },
-  {
-    id: "4",
-    nome: "Lucas Martins",
-    email: "lucas.martins@sga.pucminas.br",
-    dataDeNascimento: "1997-11-05",
-    matricula: "00456789",
-    avaliacaoMedia: 4.7,
-    status: "APROVADO"
-  },
-  {
-    id: "5",
-    nome: "Juliana Santos",
-    email: "juliana.santos@sga.pucminas.br",
-    dataDeNascimento: "1999-09-18",
-    matricula: "00567890",
-    avaliacaoMedia: 3.8,
-    status: "REJEITADO"
-  },
-  {
-    id: "6",
-    nome: "Rafael Almeida",
-    email: "rafael.almeida@sga.pucminas.br",
-    dataDeNascimento: "2001-02-27",
-    matricula: "00678901",
-    avaliacaoMedia: 4.0,
-    status: "PENDENTE"
-  },
-  {
-    id: "7",
-    nome: "Carolina Lima",
-    email: "carolina.lima@sga.pucminas.br",
-    dataDeNascimento: "1998-08-14",
-    matricula: "00789012",
-    avaliacaoMedia: 3.7,
-    status: "CANCELADO"
-  },
-  {
-    id: "8",
-    nome: "João Pereira",
-    email: "joao.pereira@sga.pucminas.br",
-    dataDeNascimento: "1996-12-03",
-    matricula: "00890123",
-    avaliacaoMedia: 4.2,
-    status: "APROVADO"
-  }
-];
-
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+  // Function to fetch all users from the backend
+  const fetchAllUsers = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await api.admin.getAllStudents();
+      if (response.success && response.data) {
+        // Map the response data to match our User type
+        const formattedUsers = response.data.map((user: any) => ({
+          id: user.id.toString(),
+          nome: user.nome,
+          email: user.email,
+          dataDeNascimento: user.dataDeNascimento,
+          matricula: user.matricula || '',
+          avaliacaoMedia: user.avaliacaoMedia || 0,
+          status: user.statusCadastro,
+        }));
         
-        // In a real app, this would be a fetch call to your API
-        setUsers(mockUsers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        toast.error("Erro ao carregar usuários");
-      } finally {
-        setIsLoading(false);
+        setUsers(formattedUsers);
+      } else {
+        throw new Error("Failed to fetch users");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Erro ao carregar usuários");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
-    fetchUsers();
-  }, []);
+  // Function to fetch pending users from the backend
+  const fetchPendingUsers = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await api.admin.getPendingUsers();
+      
+      if (response.success && response.data) {
+        // Map the response data to match our User type
+        const formattedUsers = response.data.map((user: any) => ({
+          id: user.id.toString(),
+          nome: user.nome,
+          email: user.email,
+          dataDeNascimento: user.dataDeNascimento,
+          matricula: user.matricula || '',
+          avaliacaoMedia: user.avaliacaoMedia || 0,
+          status: "PENDENTE",
+        }));
+        
+        setPendingUsers(formattedUsers);
+      } else {
+        throw new Error("Failed to fetch pending users");
+      }
+    } catch (error) {
+      console.error("Error fetching pending users:", error);
+      toast.error("Erro ao carregar usuários pendentes");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
-  const pendingUsers = users.filter(user => user.status === "PENDENTE");
+  // Fetch all users and pending users when component mounts and authentication state changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAllUsers();
+      fetchPendingUsers();
+    }
+  }, [isAuthenticated, fetchAllUsers, fetchPendingUsers]);
+
+  // Get approved users from the users list
   const approvedUsers = users.filter(user => user.status === "APROVADO");
 
   const approveUser = async (id: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await api.admin.reviewUser(id, "APROVADO");
       
-      setUsers(users.map(user => 
-        user.id === id ? { ...user, status: "APROVADO" } : user
-      ));
-      
-      toast.success("Usuário aprovado com sucesso!");
+      if (response.success) {
+        // Update local state
+        setPendingUsers(prev => prev.filter(user => user.id !== id));
+        setUsers(prev => 
+          prev.map(user => 
+            user.id === id ? { ...user, status: "APROVADO" } : user
+          )
+        );
+        
+        // Refresh lists
+        await fetchPendingUsers();
+        await fetchAllUsers();
+        
+        toast.success("Usuário aprovado com sucesso!");
+      } else {
+        throw new Error("Failed to approve user");
+      }
     } catch (error) {
       console.error("Error approving user:", error);
       toast.error("Erro ao aprovar usuário");
@@ -155,14 +146,25 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const rejectUser = async (id: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await api.admin.reviewUser(id, "REJEITADO");
       
-      setUsers(users.map(user => 
-        user.id === id ? { ...user, status: "REJEITADO" } : user
-      ));
-      
-      toast.success("Usuário rejeitado com sucesso!");
+      if (response.success) {
+        // Update local state
+        setPendingUsers(prev => prev.filter(user => user.id !== id));
+        setUsers(prev => 
+          prev.map(user => 
+            user.id === id ? { ...user, status: "REJEITADO" } : user
+          )
+        );
+        
+        // Refresh lists
+        await fetchPendingUsers();
+        await fetchAllUsers();
+        
+        toast.success("Usuário rejeitado com sucesso!");
+      } else {
+        throw new Error("Failed to reject user");
+      }
     } catch (error) {
       console.error("Error rejecting user:", error);
       toast.error("Erro ao rejeitar usuário");
@@ -175,14 +177,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const blockUser = async (id: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await api.admin.blockStudent(id);
       
-      setUsers(users.map(user => 
-        user.id === id ? { ...user, status: "CANCELADO" } : user
-      ));
-      
-      toast.success("Usuário bloqueado com sucesso!");
+      if (response.success) {
+        // Update local state
+        setUsers(prev => 
+          prev.map(user => 
+            user.id === id ? { ...user, status: "CANCELADO" } : user
+          )
+        );
+        
+        // Refresh list
+        await fetchAllUsers();
+        
+        toast.success("Usuário bloqueado com sucesso!");
+      } else {
+        throw new Error("Failed to block user");
+      }
     } catch (error) {
       console.error("Error blocking user:", error);
       toast.error("Erro ao bloquear usuário");
@@ -195,14 +206,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const unblockUser = async (id: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await api.admin.unblockStudent(id);
       
-      setUsers(users.map(user => 
-        user.id === id ? { ...user, status: "APROVADO" } : user
-      ));
-      
-      toast.success("Usuário desbloqueado com sucesso!");
+      if (response.success) {
+        // Update local state
+        setUsers(prev => 
+          prev.map(user => 
+            user.id === id ? { ...user, status: "APROVADO" } : user
+          )
+        );
+        
+        // Refresh list
+        await fetchAllUsers();
+        
+        toast.success("Usuário desbloqueado com sucesso!");
+      } else {
+        throw new Error("Failed to unblock user");
+      }
     } catch (error) {
       console.error("Error unblocking user:", error);
       toast.error("Erro ao desbloquear usuário");
@@ -215,12 +235,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteUser = async (id: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await api.admin.deleteStudent(id);
       
-      setUsers(users.filter(user => user.id !== id));
-      
-      toast.success("Usuário excluído com sucesso!");
+      if (response.success) {
+        // Update local state
+        setUsers(prev => prev.filter(user => user.id !== id));
+        
+        // Refresh list
+        await fetchAllUsers();
+        
+        toast.success("Usuário excluído com sucesso!");
+      } else {
+        throw new Error("Failed to delete user");
+      }
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Erro ao excluir usuário");
@@ -231,9 +258,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUser = async (id: string, data: Partial<User>) => {
+    // Not implemented with backend yet
     setIsLoading(true);
     try {
-      // Simulate API call delay
+      // Mock for now
       await new Promise(resolve => setTimeout(resolve, 500));
       
       setUsers(users.map(user => 
@@ -283,7 +311,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteUser,
         updateUser,
         getUser,
-        filterUsers
+        filterUsers,
+        fetchAllUsers,
+        fetchPendingUsers
       }}
     >
       {children}

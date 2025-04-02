@@ -1,5 +1,6 @@
 package com.br.puc.carona.repository;
 
+import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.model.Estudante;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,8 +16,9 @@ public interface EstudanteRepository extends JpaRepository<Estudante, Long> {
     Boolean existsByEmail(String email);
     boolean existsByMatricula(String matricula);
     
-    // Novos métodos para CRUD aprimorado
     List<Estudante> findByNomeContainingIgnoreCase(String nome);
     
     Page<Estudante> findByCursoIgnoreCase(String curso, Pageable pageable);
+    
+    List<Estudante> findByStatusCadastro(Status status);
 }

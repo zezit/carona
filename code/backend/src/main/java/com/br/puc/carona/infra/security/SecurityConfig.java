@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:8080}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:8080,**}")
     private String allowedOrigins;
 
     private final SecurityFilter securityFilter;
@@ -40,7 +40,7 @@ public class SecurityConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration config = new CorsConfiguration();
 
-                List<String> origins = Arrays.asList(allowedOrigins.split(","));
+                List<String> origins = Collections.singletonList("*");
                 config.setAllowedOrigins(origins);
                 config.setAllowedMethods(Collections.singletonList("*"));
                 config.setAllowedHeaders(Collections.singletonList("*"));
@@ -64,9 +64,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        //.requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        //.requestMatchers(HttpMethod.POST, "/estudante").hasRole("USER")
-                        .anyRequest().permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario/estudante").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/validate").permitAll()
+                        .requestMatchers("/swagger/**", "/docs/**", "/health/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUsers, User } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import UserCard from "@/components/UserCard";
@@ -21,7 +20,7 @@ import {
 
 const UserManagement = () => {
   const { isAuthenticated } = useAuth();
-  const { users, blockUser, unblockUser, deleteUser, isLoading, filterUsers } = useUsers();
+  const { users, blockUser, unblockUser, deleteUser, isLoading, filterUsers, fetchAllUsers } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
@@ -34,9 +33,21 @@ const UserManagement = () => {
     userId: "",
   });
   
-  const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 9;
+
+  // Load users when component mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAllUsers();
+    }
+  }, [isAuthenticated, fetchAllUsers]);
+
+  // Update filtered users when users changes
+  useEffect(() => {
+    setFilteredUsers(users);
+  }, [users]);
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
@@ -86,6 +97,8 @@ const UserManagement = () => {
       } else if (confirmAction.type === "delete") {
         await deleteUser(confirmAction.userId);
       }
+      // Close the modal after action is completed
+      setConfirmAction({ ...confirmAction, isOpen: false });
     } catch (error) {
       console.error("Error performing action:", error);
     }
@@ -94,7 +107,13 @@ const UserManagement = () => {
   const handleFilter = (query: string, status?: string) => {
     const filtered = filterUsers(query, status || undefined);
     setFilteredUsers(filtered);
-    // Redefinir para a primeira página ao filtrar
+    // Reset to the first page when filtering
+    setCurrentPage(1);
+  };
+
+  const handleRefresh = () => {
+    fetchAllUsers();
+    setCurrentPage(1);
   };
 
   // Pagination
@@ -121,7 +140,7 @@ const UserManagement = () => {
           </div>
           <Button 
             variant="outline" 
-            onClick={() => handleFilter("", "")}
+            onClick={handleRefresh}
             className="flex items-center text-gray-700"
             disabled={isLoading}
           >

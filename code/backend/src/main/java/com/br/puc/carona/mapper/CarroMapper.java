@@ -1,21 +1,44 @@
 package com.br.puc.carona.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
 import com.br.puc.carona.dto.request.CarroRequest;
 import com.br.puc.carona.dto.response.CarroDto;
 import com.br.puc.carona.model.Carro;
 
-@Mapper(componentModel = "spring")
-public interface CarroMapper {
+@Component
+public class CarroMapper {
     
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "dataCriacao", ignore = true)
-    @Mapping(target = "dataAtualizacao", ignore = true)
-    @Mapping(target = "criadoPor", ignore = true)
-    @Mapping(target = "atualizadoPor", ignore = true)
-    Carro toEntity(CarroRequest request);
+    public Carro toEntity(final CarroRequest request) {
+        if (request == null) {
+            return null;
+        }
+        
+        final Carro carro = new Carro();
+        carro.setModelo(request.getModelo());
+        carro.setCor(request.getCor());
+        carro.setPlaca(request.getPlaca());
+        carro.setCapacidadePassageiros(request.getCapacidadePassageiros());
+        
+        return carro;
+    }
     
-    CarroDto toDto(Carro entity);
+    public CarroDto toDto(final Carro entity) {
+        if (entity == null) {
+            return null;
+        }
+        
+        final CarroDto dto = new CarroDto();
+        dto.setId(entity.getId());
+        dto.setModelo(entity.getModelo());
+        dto.setCor(entity.getCor());
+        dto.setPlaca(entity.getPlaca());
+        dto.setCapacidadePassageiros(entity.getCapacidadePassageiros());
+        dto.setDataCriacao(entity.getDataCriacao());
+        dto.setDataAtualizacao(entity.getDataAtualizacao());
+        dto.setCriadoPor(entity.getCriadoPor());
+        dto.setAtualizadoPor(entity.getAtualizadoPor());
+        
+        return dto;
+    }
 }
