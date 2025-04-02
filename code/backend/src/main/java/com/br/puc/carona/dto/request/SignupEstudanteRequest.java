@@ -24,4 +24,7 @@ public class SignupEstudanteRequest extends SignupUsuarioRequest {
 
     @NotBlank(message = "{comum.atributos.matricula.obrigatorio}")
     private String matricula;
+
+    @NotBlank(message = "{comum.atributos.curso.obrigatorio}")
+    private String curso;
 }

@@ -14,7 +14,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class PerfilMotoristaDto extends AbstractDto{
-    private EstudanteDto estudante;
     private CarroDto carro;
     private String cnh;
     private String whatsapp;

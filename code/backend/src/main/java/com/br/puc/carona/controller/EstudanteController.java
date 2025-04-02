@@ -1,19 +1,21 @@
 package com.br.puc.carona.controller;
 
-import com.br.puc.carona.dto.response.EstudanteDto;
-import com.br.puc.carona.model.Estudante;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.br.puc.carona.dto.request.EstudanteUpdateRequest;
 import com.br.puc.carona.dto.request.PerfilMotoristaRequest;
+import com.br.puc.carona.dto.response.EstudanteDto;
 import com.br.puc.carona.dto.response.PerfilMotoristaDto;
 import com.br.puc.carona.service.EstudanteService;
 
@@ -70,7 +72,63 @@ public class EstudanteController {
             @ApiResponse(responseCode = "404", description = "Estudante não encontrado ou não possui perfil de motorista")
     })
     public ResponseEntity<Page<EstudanteDto>> buscarTodosOsEstudantes(Pageable pageable){
+        log.info("Buscando todos os estudantes com paginação");
         Page<EstudanteDto> estudanteDtoPage = this.estudanteService.buscarTodosOsEstudantes(pageable);
+        log.info("Total de estudantes encontrados: {}", estudanteDtoPage.getTotalElements());
         return  ResponseEntity.ok(estudanteDtoPage);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Buscar estudante por ID", description = "Recupera os detalhes de um estudante pelo ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Estudante encontrado"),
+        @ApiResponse(responseCode = "404", description = "Estudante não encontrado")
+    })
+    public ResponseEntity<EstudanteDto> buscarEstudantePorId(@PathVariable Long id) {
+        log.info("Buscando estudante com ID: {}", id);
+        EstudanteDto estudante = estudanteService.buscarEstudantePorId(id);
+        return ResponseEntity.ok(estudante);
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Atualizar estudante", description = "Atualiza os dados de um estudante")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Estudante atualizado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos"),
+        @ApiResponse(responseCode = "404", description = "Estudante não encontrado")
+    })
+    public ResponseEntity<EstudanteDto> atualizarEstudante(
+            @PathVariable Long id,
+            @Valid @RequestBody EstudanteUpdateRequest request) {
+        log.info("Atualizando estudante com ID: {}", id);
+        EstudanteDto estudanteAtualizado = estudanteService.atualizarEstudante(id, request);
+        return ResponseEntity.ok(estudanteAtualizado);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Deletar estudante", description = "Remove um estudante do sistema")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Estudante removido com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Estudante não encontrado")
+    })
+    public ResponseEntity<Void> deletarEstudante(@PathVariable Long id) {
+        log.info("Deletando estudante com ID: {}", id);
+        estudanteService.deletarEstudante(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{estudanteId}/motorista")
+    @Operation(summary = "Atualizar perfil de motorista", description = "Atualiza o perfil de motorista de um estudante")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Perfil de motorista atualizado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos"),
+        @ApiResponse(responseCode = "404", description = "Estudante não encontrado ou não é motorista")
+    })
+    public ResponseEntity<PerfilMotoristaDto> atualizarPerfilMotorista(
+            @PathVariable Long estudanteId,
+            @Valid @RequestBody PerfilMotoristaRequest request) {
+        log.info("Atualizando perfil de motorista para estudante ID: {}", estudanteId);
+        PerfilMotoristaDto perfilAtualizado = estudanteService.atualizarPerfilMotorista(estudanteId, request);
+        return ResponseEntity.ok(perfilAtualizado);
     }
 }

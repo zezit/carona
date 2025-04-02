@@ -19,16 +19,16 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "carro")
 @SequenceGenerator(name = "seq_generator", sequenceName = "carro_seq", allocationSize = 1)
 public class Carro extends AbstractEntity {
-    
+
     @Column(nullable = false)
     private String modelo;
-    
-    @Column(nullable = false, unique = true)
+
+    @Column(nullable = false)
     private String placa;
-    
+
     @Column(nullable = false)
     private String cor;
-    
+
     @Column(name = "capacidade_passageiros", nullable = false)
     private Integer capacidadePassageiros;
 }
