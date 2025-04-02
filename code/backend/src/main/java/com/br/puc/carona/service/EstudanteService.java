@@ -1,19 +1,24 @@
 package com.br.puc.carona.service;
 
-import com.br.puc.carona.dto.request.EstudanteUpdateRequest;
-import com.br.puc.carona.dto.response.EstudanteDto;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.br.puc.carona.constants.MensagensResposta;
+import com.br.puc.carona.dto.request.CarroRequest;
+import com.br.puc.carona.dto.request.EstudanteUpdateRequest;
 import com.br.puc.carona.dto.request.PerfilMotoristaRequest;
 import com.br.puc.carona.dto.request.SignupEstudanteRequest;
+import com.br.puc.carona.dto.response.EstudanteDto;
 import com.br.puc.carona.dto.response.PerfilMotoristaDto;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.mapper.CarroMapper;
 import com.br.puc.carona.mapper.EstudanteMapper;
 import com.br.puc.carona.mapper.PerfilMotoristaMapper;
 import com.br.puc.carona.model.Carro;
@@ -25,9 +30,6 @@ import com.br.puc.carona.repository.PerfilMotoristaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -38,6 +40,7 @@ public class EstudanteService {
 
     private final EstudanteMapper mapper;
     private final PerfilMotoristaMapper perfilMotoristaMapper;
+    private final CarroMapper carroMapper;
 
     public Estudante completeEstudanteCreation(final SignupEstudanteRequest cadastroRequest) {
         if (repository.existsByMatricula(cadastroRequest.getMatricula())) {
@@ -192,10 +195,10 @@ public class EstudanteService {
         // Atualizar os dados do carro se existirem
         if (request.getCarro() != null) {
             if (perfilMotorista.getCarro() == null) {
-                final Carro novoCarro = perfilMotoristaMapper.toCarroEntity(request.getCarro());
+                final Carro novoCarro = carroMapper.toEntity(request.getCarro());
                 perfilMotorista.setCarro(novoCarro);
             } else {
-                perfilMotoristaMapper.updateCarroEntity(perfilMotorista.getCarro(), request.getCarro());
+                atualizarDadosCarro(perfilMotorista.getCarro(), request.getCarro());
             }
         }
 
@@ -203,5 +206,20 @@ public class EstudanteService {
         log.info("Perfil de motorista atualizado com sucesso para estudante ID: {}", estudanteId);
 
         return perfilMotoristaMapper.tDto(perfilMotorista);
+    }
+    
+    private void atualizarDadosCarro(final Carro carro, final CarroRequest carroRequest) {
+        if (carroRequest.getModelo() != null) {
+            carro.setModelo(carroRequest.getModelo());
+        }
+        if (carroRequest.getPlaca() != null) {
+            carro.setPlaca(carroRequest.getPlaca());
+        }
+        if (carroRequest.getCor() != null) {
+            carro.setCor(carroRequest.getCor());
+        }
+        if (carroRequest.getCapacidadePassageiros() != null) {
+            carro.setCapacidadePassageiros(carroRequest.getCapacidadePassageiros());
+        }
     }
 }

@@ -7,6 +7,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -15,6 +16,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import com.br.puc.carona.config.MockMvcSecurityConfig;
 import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.request.PerfilMotoristaRequest;
 import com.br.puc.carona.dto.response.CarroDto;
@@ -27,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(EstudanteController.class)
 @AutoConfigureMockMvc(addFilters = false) // Disable security for testing
+@Import(MockMvcSecurityConfig.class)
 @ActiveProfiles("test")
 @DisplayName("Teste Controller: Estudante")
 class EstudanteControllerTest {

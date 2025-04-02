@@ -18,4 +18,5 @@ public class EstudanteDto extends UsuarioDto {
     private String matricula;
     private Float avaliacaoMedia;
     private PerfilMotoristaDto perfilMotorista;
+    private String curso;
 }

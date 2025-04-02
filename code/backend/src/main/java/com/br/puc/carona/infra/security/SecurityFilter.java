@@ -29,12 +29,22 @@ public class SecurityFilter extends OncePerRequestFilter {
         var token = this.recoverToken(request);
 
         if (token != null) {
-            var email = tokenService.validateToken(token);
-            UserDetails user = usuarioRepository.findByEmail(email);
-
-            var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            try {
+                var email = tokenService.validateToken(token);
+                if (email != null) {
+                    UserDetails user = usuarioRepository.findByEmail(email);
+                    
+                    if (user != null) {
+                        var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.debug("User authenticated: {}", email);
+                    } else {
+                        log.warn("User with email {} not found in database", email);
+                    }
+                }
+            } catch (Exception ex) {
+                log.error("Error validating token: {}", ex.getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);
@@ -42,7 +52,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private String recoverToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
-        if(authHeader == null) return null;
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
 
         return authHeader.replace("Bearer ", "");
     }

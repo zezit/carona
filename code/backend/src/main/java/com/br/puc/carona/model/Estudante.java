@@ -32,7 +32,7 @@ public class Estudante extends Usuario {
     @Column
     private Float avaliacaoMedia;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String curso;
 
     @OneToOne(mappedBy = "estudante", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)

@@ -14,10 +14,12 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.br.puc.carona.config.MockMvcSecurityConfig;
 import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
@@ -26,6 +28,7 @@ import com.br.puc.carona.service.AdministradorService;
 
 @WebMvcTest(AdminController.class)
 @AutoConfigureMockMvc(addFilters = false) // Disable security for testing
+@Import(MockMvcSecurityConfig.class)
 @ActiveProfiles("test")
 @DisplayName("Teste Controller: Admin")
 class AdminControllerTest {
