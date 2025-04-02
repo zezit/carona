@@ -1,5 +1,7 @@
 package com.br.puc.carona.service;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,13 +27,11 @@ import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.EstudanteMapper;
 import com.br.puc.carona.mapper.PerfilMotoristaMapper;
 import com.br.puc.carona.mock.PerfilMotoristaRequestMock;
-import com.br.puc.carona.mock.SignupEstudanteRequesttMock;
+import com.br.puc.carona.mock.SignupEstudanteRequestMock;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.PerfilMotorista;
 import com.br.puc.carona.repository.EstudanteRepository;
 import com.br.puc.carona.repository.PerfilMotoristaRepository;
-
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -72,7 +72,7 @@ class EstudanteServiceTest {
         estudanteId = 1L;
         
         // Para testes de cadastro de estudante
-        estudanteRequest = SignupEstudanteRequesttMock.createValidEstudanteRequest();
+        estudanteRequest = SignupEstudanteRequestMock.createValidEstudanteRequest();
         
         estudante = Estudante.builder()
                 .id(estudanteId)

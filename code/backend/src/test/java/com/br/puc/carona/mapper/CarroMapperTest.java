@@ -22,13 +22,13 @@ class CarroMapperTest {
 
     @Spy
     @InjectMocks
-    private CarroMapperImpl mapper;
+    private CarroMapper mapper;
 
     @Test
     @DisplayName("Deve converter Carro para CarroDto corretamente")
     void deveConverterCarroParaCarroDtoCorretamente() {
         // Given
-        Carro carro = Carro.builder()
+        final Carro carro = Carro.builder()
                 .id(1L)
                 .modelo("Corolla")
                 .cor("Preto")
@@ -40,7 +40,7 @@ class CarroMapperTest {
                 .build();
 
         // When
-        CarroDto dto = mapper.toDto(carro);
+        final CarroDto dto = mapper.toDto(carro);
 
         // Then
         Assertions.assertNotNull(dto);
@@ -58,7 +58,7 @@ class CarroMapperTest {
     @DisplayName("Deve converter CarroRequest para Carro corretamente")
     void deveConverterCarroRequestParaCarroCorretamente() {
         // Given
-        CarroRequest request = CarroRequest.builder()
+        final CarroRequest request = CarroRequest.builder()
                 .modelo("Civic")
                 .cor("Branco")
                 .placa("XYZ5678")
@@ -66,7 +66,7 @@ class CarroMapperTest {
                 .build();
 
         // When
-        Carro carro = mapper.toEntity(request);
+        final Carro carro = mapper.toEntity(request);
 
         // Then
         Assertions.assertNotNull(carro);
@@ -85,7 +85,7 @@ class CarroMapperTest {
     @DisplayName("Deve retornar null quando carro for null")
     void deveRetornarNullQuandoCarroForNull() {
         // When
-        CarroDto dto = mapper.toDto(null);
+        final CarroDto dto = mapper.toDto(null);
         
         // Then
         Assertions.assertNull(dto);
@@ -95,7 +95,7 @@ class CarroMapperTest {
     @DisplayName("Deve retornar null quando request for null")
     void deveRetornarNullQuandoRequestForNull() {
         // When
-        Carro entity = mapper.toEntity(null);
+        final Carro entity = mapper.toEntity(null);
         
         // Then
         Assertions.assertNull(entity);

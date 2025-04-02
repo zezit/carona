@@ -27,7 +27,6 @@ import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.EstudanteMapper;
 import com.br.puc.carona.mapper.UsuarioMapper;
 import com.br.puc.carona.mock.SignupEstudanteRequestMock;
-import com.br.puc.carona.mock.SignupEstudanteRequesttMock;
 import com.br.puc.carona.mock.SingupUsuarioRequestMock;
 import com.br.puc.carona.model.Administrador;
 import com.br.puc.carona.model.Estudante;
@@ -80,7 +79,7 @@ class UsuarioServiceTest {
         adminRequest = SingupUsuarioRequestMock.createValidRequest(TipoUsuario.ADMINISTRADOR);
         
         // Criar mock de requisição de estudante
-        estudanteRequest = SignupEstudanteRequesttMock.createValidEstudanteRequest();
+        estudanteRequest = SignupEstudanteRequestMock.createValidEstudanteRequest();
         
         // Criar mock de entidade usuário para admin
         usuarioAdmin = Administrador.builder()

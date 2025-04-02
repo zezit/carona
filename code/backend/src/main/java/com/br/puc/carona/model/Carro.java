@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Data
@@ -15,20 +16,21 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @Table(name = "carro")
 @SequenceGenerator(name = "seq_generator", sequenceName = "carro_seq", allocationSize = 1)
 public class Carro extends AbstractEntity {
-    
+
     @Column(nullable = false)
     private String modelo;
-    
-    @Column(nullable = false, unique = true)
+
+    @Column(nullable = false)
     private String placa;
-    
+
     @Column(nullable = false)
     private String cor;
-    
+
     @Column(name = "capacidade_passageiros", nullable = false)
     private Integer capacidadePassageiros;
 }

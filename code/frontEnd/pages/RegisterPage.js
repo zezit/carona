@@ -1,108 +1,145 @@
-import { StyleSheet, Text, View, TextInput, Button ,TouchableOpacity,Alert} from "react-native";
-import React, { useState } from 'react';
+import { Text, View, TextInput, TouchableOpacity, Alert, ScrollView, Animated, Keyboard } from "react-native";
+import React, { useState, useRef, useEffect } from 'react';
+import { commonStyles } from '../styles/commonStyles';
+
 export default function RegisterPage({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   
-const  handleCadastro=()=>{
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  
+  useEffect(() => {
+    // Start animation when component mounts
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+  
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+  
+  const handleCadastro = () => {
+    Keyboard.dismiss();
+    
+    if (email === '' || password === '' || username === "") {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      Alert.alert('Erro', 'Por favor, insira um email válido.');
+      return;
+    }
+    
+    if (password.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    
+    navigation.navigate('Mais informações', { username, email, password });
+  };
 
-   if (email === '' || password === ''|| username==="") {
-        Alert.alert('Erro', 'Por favor, preencha todos os campos.');
-        return;
-      }
-      else{
-        navigation.navigate('Mais informações', { username, email, password });
-        
-      }
-  }
+  const animatedStyle = {
+    opacity: fadeAnim,
+    transform: [{ translateY: slideAnim }]
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.primeiraView}>
-        <Text style={styles.titulo}>Carona?</Text>
-      </View>
-
-      <View style={styles.containerInputs}>
-        <Text style={styles.subtitulo}  >Cadastre-se</Text>
-        <TextInput style={styles.textInput} value={username}  onChangeText={(text) => setUsername(text)} placeholder="Nome" />
-        <TextInput style={styles.textInput} placeholder="Email"  value={email}  onChangeText={(text) => setEmail(text)}  keyboardType="email-address"/>
-        <TextInput style={styles.textInput} value={password} placeholder="Senha"  onChangeText={(text) => setPassword(text)}   secureTextEntry/>
-      </View>
-
-      <View style={styles.ultimaView}>
-        <View style={styles.buttonView}>
-        <TouchableOpacity style={styles.button} onPress={ handleCadastro}>
-          <Text style={styles.buttonText}>Avançar</Text>
-        </TouchableOpacity>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <View style={commonStyles.container}>
+        <View style={commonStyles.headerView}>
+          <Animated.Text style={[commonStyles.title, { opacity: fadeAnim }]}>
+            Carona?
+          </Animated.Text>
         </View>
-        
+
+        <Animated.View style={[commonStyles.contentView, animatedStyle]}>
+          <Text style={commonStyles.subtitle}>Cadastre-se</Text>
+          
+          <View style={commonStyles.formGroup}>
+            <Text style={commonStyles.inputLabel}>Nome</Text>
+            <TextInput 
+              style={commonStyles.textInput} 
+              value={username} 
+              onChangeText={(text) => setUsername(text)} 
+              placeholder="Seu nome completo" 
+              accessibilityLabel="Campo de nome"
+              autoComplete="name"
+              textContentType="name"
+            />
+          </View>
+          
+          <View style={commonStyles.formGroup}>
+            <Text style={commonStyles.inputLabel}>Email</Text>
+            <TextInput 
+              style={commonStyles.textInput} 
+              placeholder="Seu email" 
+              value={email} 
+              onChangeText={(text) => setEmail(text)} 
+              keyboardType="email-address"
+              autoCapitalize="none"
+              accessibilityLabel="Campo de email"
+              autoComplete="email"
+              textContentType="emailAddress"
+            />
+          </View>
+          
+          <View style={commonStyles.formGroup}>
+            <Text style={commonStyles.inputLabel}>Senha</Text>
+            <TextInput 
+              style={commonStyles.textInput} 
+              value={password} 
+              placeholder="Mínimo de 6 caracteres" 
+              onChangeText={(text) => setPassword(text)} 
+              secureTextEntry
+              accessibilityLabel="Campo de senha"
+              textContentType="newPassword"
+            />
+            <Text style={commonStyles.inputHintText}>
+              Sua senha deve ter pelo menos 6 caracteres
+            </Text>
+          </View>
+
+          <View style={commonStyles.linkContainer}>
+            <Text style={commonStyles.normalText}>
+              Já tem uma conta?{' '}
+              <Text 
+                style={commonStyles.linkText} 
+                onPress={() => navigation.goBack()}
+              >
+                Faça login!
+              </Text>
+            </Text>
+          </View>
+        </Animated.View>
+
+        <Animated.View style={[commonStyles.footerView, { opacity: fadeAnim }]}>
+          <View style={commonStyles.buttonContainer}>
+            <TouchableOpacity 
+              style={commonStyles.button} 
+              onPress={handleCadastro}
+              accessibilityLabel="Botão de próximo passo"
+              accessibilityRole="button"
+            >
+              <Text style={commonStyles.buttonText}>Avançar</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textInput: {
-    height: 40,
-    borderBottomWidth: 1,
-    borderBottomColor: "gray",
-    width: "90%",
-  },
-  containerInputs: {
-    flex: 1,
-    backgroundColor: "white",
-    width: "100%",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  ultimaView: {
-    flex: 2,
-    width:'90%',
-    alignItems:"flex-end",
-    flexDirection:"row",
-    justifyContent:'flex-end',
-    paddingBottom:90,
-    
-    
-  },
-  primeiraView: {
-    flex: 1,
-
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  titulo: {
-    fontSize: 30,
-  },
-  subtitulo: {
-    fontSize: 20,
-    width: "90%",
-  },
-  buttonView: {
-  width:'30%',
-  borderWidth:3,
-  borderRadius:10,
-  borderColor:'#005b96',
-  
-  },
-  button:{
-    backgroundColor:"#005b96",
-    color:"red",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-
-});

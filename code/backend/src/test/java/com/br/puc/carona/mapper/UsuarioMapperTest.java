@@ -23,13 +23,13 @@ class UsuarioMapperTest {
 
     @Spy
     @InjectMocks
-    private UsuarioMapperImpl mapper;
+    private UsuarioMapper mapper;
 
     @Test
     @DisplayName("Deve converter Usuario para UsuarioDto corretamente")
     void deveConverterUsuarioParaUsuarioDtoCorretamente() {
         // Given
-        Usuario usuario = Usuario.builder()
+        final Usuario usuario = Usuario.builder()
                 .id(1L)
                 .nome("Test User")
                 .email("test@example.com")
@@ -39,7 +39,7 @@ class UsuarioMapperTest {
                 .build();
 
         // When
-        UsuarioDto dto = mapper.toDto(usuario);
+        final UsuarioDto dto = mapper.toDto(usuario);
 
         // Then
         Assertions.assertNotNull(dto);
@@ -54,10 +54,10 @@ class UsuarioMapperTest {
     @DisplayName("Deve converter SignupUsuarioRequest para Usuario corretamente")
     void deveConverterSignupUsuarioRequestParaUsuarioCorretamente() {
         // Given
-        SignupUsuarioRequest request = SingupUsuarioRequestMock.createValidRequest(TipoUsuario.ADMINISTRADOR);
+        final SignupUsuarioRequest request = SingupUsuarioRequestMock.createValidRequest(TipoUsuario.ADMINISTRADOR);
 
         // When
-        Usuario usuario = mapper.toEntity(request);
+        final Usuario usuario = mapper.toEntity(request);
 
         // Then
         Assertions.assertNotNull(usuario);
@@ -74,7 +74,7 @@ class UsuarioMapperTest {
     @DisplayName("Deve retornar null quando usuario for null")
     void deveRetornarNullQuandoUsuarioForNull() {
         // When
-        UsuarioDto dto = mapper.toDto(null);
+        final UsuarioDto dto = mapper.toDto(null);
         
         // Then
         Assertions.assertNull(dto);
@@ -84,7 +84,7 @@ class UsuarioMapperTest {
     @DisplayName("Deve retornar null quando request for null")
     void deveRetornarNullQuandoRequestForNull() {
         // When
-        Usuario entity = mapper.toEntity(null);
+        final Usuario entity = mapper.toEntity(null);
         
         // Then
         Assertions.assertNull(entity);

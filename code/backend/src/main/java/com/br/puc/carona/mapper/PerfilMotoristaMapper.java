@@ -1,27 +1,53 @@
 package com.br.puc.carona.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
 import com.br.puc.carona.dto.request.PerfilMotoristaRequest;
 import com.br.puc.carona.dto.response.PerfilMotoristaDto;
 import com.br.puc.carona.model.PerfilMotorista;
 
-@Mapper(componentModel = "spring", uses = {CarroMapper.class})
-public interface PerfilMotoristaMapper {
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "dataCriacao", ignore = true)
-    @Mapping(target = "dataAtualizacao", ignore = true)
-    @Mapping(target = "criadoPor", ignore = true)
-    @Mapping(target = "atualizadoPor", ignore = true)
-    @Mapping(target = "estudante", ignore = true)
-    PerfilMotorista toEntity(PerfilMotoristaRequest request);
+import lombok.RequiredArgsConstructor;
 
-    @Mapping(target = "whatsapp", source = "whatsapp")
-    @Mapping(target = "mostrarWhatsapp", source = "mostrarWhatsapp")
-    @Mapping(target = "cnh", source = "cnh")
-    @Mapping(target = "carro", source = "carro")
-    @Mapping(target = "estudante", ignore = true)
-    PerfilMotoristaDto tDto(PerfilMotorista entity);
+@Component
+@RequiredArgsConstructor
+public class PerfilMotoristaMapper {
+    
+    private final CarroMapper carroMapper;
+    
+    public PerfilMotorista toEntity(final PerfilMotoristaRequest request) {
+        if (request == null) {
+            return null;
+        }
+        
+        final PerfilMotorista perfilMotorista = new PerfilMotorista();
+        perfilMotorista.setCnh(request.getCnh());
+        
+        if (request.getCarro() != null) {
+            perfilMotorista.setCarro(carroMapper.toEntity(request.getCarro()));
+        }
+        
+        return perfilMotorista;
+    }
+
+    public PerfilMotoristaDto tDto(final PerfilMotorista perfilMotorista) {
+        if (perfilMotorista == null) {
+            return null;
+        }
+        
+        final PerfilMotoristaDto dto = new PerfilMotoristaDto();
+        dto.setId(perfilMotorista.getId());
+        dto.setCnh(perfilMotorista.getCnh());
+        dto.setDataCriacao(perfilMotorista.getDataCriacao());
+        dto.setDataAtualizacao(perfilMotorista.getDataAtualizacao());
+        dto.setCriadoPor(perfilMotorista.getCriadoPor());
+        dto.setAtualizadoPor(perfilMotorista.getAtualizadoPor());
+        dto.setWhatsapp(perfilMotorista.getWhatsapp());
+        dto.setMostrarWhatsapp(perfilMotorista.getMostrarWhatsapp());
+        
+        if (perfilMotorista.getCarro() != null) {
+            dto.setCarro(carroMapper.toDto(perfilMotorista.getCarro()));
+        }
+        
+        return dto;
+    }
 }

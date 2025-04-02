@@ -1,140 +1,166 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, Alert, TouchableOpacity, ActivityIndicator, Animated, Keyboard } from 'react-native';
+import { commonStyles } from '../styles/commonStyles';
+import useAuth from '../hooks/useAuth';
+import * as crypto from 'crypto-js';
 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { login, isLoading, error } = useAuth();
+  
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  
+  useEffect(() => {
+    // Start animation when component mounts
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
 
-  const handleLogin = () => {
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleLogin = async () => {
+    Keyboard.dismiss();
+    
     if (email === '' || password === '') {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
 
-    // Simulação de autenticação (substitua com sua lógica de autenticação)
-    if (email === 'user@example.com' && password === 'password123') {
-      // Navegar para a tela principal após login bem-sucedido
-      navigation.navigate('Home'); // Exemplo de navegação
-    } else {
-      Alert.alert('Erro', 'Credenciais inválidas.');
+    if (!validateEmail(email)) {
+      Alert.alert('Erro', 'Por favor, insira um email válido.');
+      return;
     }
+
+    // Hash the password with MD5 as required by the API spec
+    const hashedPassword = crypto.MD5(password).toString();
+
+    await login(email, hashedPassword);
+
+    // No need to manually navigate - the AuthContext will update isAuthenticated
+    // and AppNavigator will automatically switch to the Main stack
+  };
+
+  useEffect(() => {
+    if (error) {
+      // Customize error message based on error type
+      let errorMessage = error;
+      
+      if (error.includes('Email ou senha incorretos')) {
+        errorMessage = 'Email ou senha incorretos. Por favor, tente novamente.';
+      } else if (error.includes('Tempo limite')) {
+        errorMessage = 'O servidor não respondeu a tempo. Verifique sua conexão e tente novamente.';
+      } else if (error.includes('Erro de conexão')){
+        errorMessage = 'Ocorreu um erro ao comunicar com o servidor. Verifique sua conexão.';
+      } else {
+        errorMessage = 'Ocorreu um erro inesperado. Por favor, tente novamente.';
+      }
+      
+      Alert.alert('Erro de Login', errorMessage);
+    }
+  }, [error]);
+
+  const animatedStyle = {
+    opacity: fadeAnim,
+    transform: [{ translateY: slideAnim }]
   };
 
   return (
-    <View style={styles.container}>
-        <View style={styles.firstView}>
-            <Text style={styles.title}>Carona?</Text>
-      
-        </View>
+    <View style={commonStyles.container}>
+      <View style={commonStyles.headerView}>
+        <Animated.Text style={[commonStyles.title, { opacity: fadeAnim }]}>
+          Carona?
+        </Animated.Text>
+      </View>
 
-        <View style={styles.containerInputs}>
-        <Text style={styles.subtitle}>Login</Text>
-        <Text style={styles.signupText}> Novo Usuário?{' '}
-        <Text style={styles.signupLink} onPress={() => navigation.navigate('Registrar')}>Crie uma conta!</Text>
-      </Text>
-      <TextInput style={styles.TextInput} placeholder="Email"  value={email}  onChangeText={(text) => setEmail(text)}  keyboardType="email-address"/>
-      <TextInput style={styles.TextInput} placeholder="Senha"  value={password}  onChangeText={(text) => setPassword(text)}   secureTextEntry/>
-        </View>
-        <View style={styles.lastViwer}>
-      <TouchableOpacity style={styles.signButton} onPress={handleLogin}>
-        <Text style={styles.signButtonText}>Entrar</Text>
-      </TouchableOpacity>
-     
-        </View>
-
-        <View style={styles.lastView}>
-
+      <Animated.View style={[commonStyles.contentView, animatedStyle]}>
+        <Text style={commonStyles.subtitle}>Login</Text>
         
-
-
-
-
+        <View style={commonStyles.linkContainer}>
+          <Text style={commonStyles.normalText}>
+            Novo Usuário?{' '}
+            <Text 
+              style={commonStyles.linkText} 
+              onPress={() => {
+                // Use navigation animation
+                navigation.navigate('Registrar');
+              }}
+            >
+              Crie uma conta!
+            </Text>
+          </Text>
         </View>
+        
+        <TextInput 
+          style={commonStyles.textInput} 
+          placeholder="Email" 
+          value={email} 
+          onChangeText={(text) => setEmail(text)} 
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          textContentType="emailAddress"
+          accessibilityLabel="Campo de email"
+        />
+        
+        <TextInput 
+          style={commonStyles.textInput} 
+          placeholder="Senha" 
+          value={password} 
+          onChangeText={(text) => setPassword(text)} 
+          secureTextEntry
+          autoCapitalize="none"
+          textContentType="password"
+          accessibilityLabel="Campo de senha"
+        />
+        
+        <TouchableOpacity 
+          style={commonStyles.forgotPasswordContainer} 
+          onPress={() => Alert.alert("Redefinir senha", "Função de recuperação de senha será implementada em breve.")}
+        >
+          <Text style={commonStyles.forgotPasswordText}>Esqueceu sua senha?</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+      <View style={[commonStyles.footerView, { paddingBottom: 0 }]}>
+        <View style={commonStyles.buttonContainer}>
+          <TouchableOpacity 
+            style={[
+              commonStyles.button, 
+              isLoading && commonStyles.buttonDisabled
+            ]} 
+            onPress={handleLogin}
+            disabled={isLoading}
+            accessibilityLabel="Botão de login"
+            accessibilityRole="button"
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={commonStyles.buttonText}>Entrar</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={[commonStyles.footerView, { flex: 0 }]} />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 30,
-  },
-  TextInput: {
-    height: 40,
-    borderBottomWidth: 1,
-    borderBottomColor: "gray",
-    width: "90%",
-  },
-  signupText: {
-    marginTop: 12,
-    height: 40,
-    width: "92%",
-   
-  },
-  signButton: {
-    backgroundColor:"#005b96",
-    color:"red",
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-    borderRadius: 5,
-    width: 100,
-    alignItems: "center",
-  },
-  signButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-
-
-  },
-  signupLink: {
-    color: 'blue',
-  },
-  tittle: {
-    fontSize: 30,
-  },
-  subtitle: {
-    fontSize: 20,
-    width: "90%",
-  },
-  containerInputs: {
-    flex: 1,
-    backgroundColor: "white",
-    width: "100%",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  lastViwer: {
-    flex: 2,
-    width:'90%',
-    alignItems:"flex-end",
-    flexDirection:"row",
-    justifyContent:'flex-end',
-    paddingBottom:0,
-    
-    
-  },
-  lastView: {
-    flex: 0,
-    width:'90%',
-    alignItems:"flex-end",
-    flexDirection:"row",
-    justifyContent:'flex-end',
-    paddingBottom:90,
-    
-    
-  },
-  firstView: {
-    flex: 1,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
 
 export default LoginPage;

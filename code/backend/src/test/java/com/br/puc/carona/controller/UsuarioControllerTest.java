@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,11 +22,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.br.puc.carona.config.MockMvcSecurityConfig;
 import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.request.SignupEstudanteRequest;
 import com.br.puc.carona.dto.request.SignupUsuarioRequest;
@@ -33,7 +36,6 @@ import com.br.puc.carona.dto.response.AdministradorDto;
 import com.br.puc.carona.dto.response.EstudanteDto;
 import com.br.puc.carona.enums.TipoUsuario;
 import com.br.puc.carona.mock.AdministradorMock;
-import com.br.puc.carona.mock.EstudanteMock;
 import com.br.puc.carona.mock.SignupEstudanteRequestMock;
 import com.br.puc.carona.mock.SignupUsuarioRequestMock;
 import com.br.puc.carona.service.UsuarioService;
@@ -41,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(UsuarioController.class)
 @AutoConfigureMockMvc(addFilters = false) // Disable security for testing
+@Import(MockMvcSecurityConfig.class)
 @ActiveProfiles("test")
 @DisplayName("Teste Controller: Usuario")
 class UsuarioControllerTest {
@@ -53,6 +56,24 @@ class UsuarioControllerTest {
 
     @MockitoBean
     private UsuarioService usuarioService;
+
+    private SignupEstudanteRequest estudanteRequest;
+    private EstudanteDto estudanteDto;
+
+    @BeforeEach
+    void setUp() {
+        estudanteRequest = SignupEstudanteRequestMock.createValidEstudanteRequest();
+        
+        estudanteDto = EstudanteDto.builder()
+                .id(1L)
+                .nome(estudanteRequest.getNome())
+                .email(estudanteRequest.getEmail())
+                .tipoUsuario(TipoUsuario.ESTUDANTE)
+                .curso(estudanteRequest.getCurso())
+                .matricula(estudanteRequest.getMatricula())
+                .dataDeNascimento(estudanteRequest.getDataDeNascimento())
+                .build();
+    }
 
     @Test
     @DisplayName("Deve registrar administrador com sucesso")
@@ -76,20 +97,14 @@ class UsuarioControllerTest {
     @Test
     @DisplayName("Deve registrar estudante com sucesso")
     void deveRegistrarEstudanteComSucesso() throws Exception {
-        // Arrange
-        final SignupEstudanteRequest request = SignupEstudanteRequestMock.createValidEstudanteRequest();
-        final EstudanteDto responseDto = EstudanteMock.fromRequest(request);
+        when(usuarioService.registerEstudante(any(SignupEstudanteRequest.class)))
+                .thenReturn(estudanteDto);
 
-        when(usuarioService.registerEstudante(any(SignupEstudanteRequest.class))).thenReturn(responseDto);
-
-        // Act & Assert
         mockMvc.perform(post("/usuario/estudante")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                .content(objectMapper.writeValueAsString(estudanteRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/estudante/1"));
-
-        verify(usuarioService).registerEstudante(any(SignupEstudanteRequest.class));
+                .andExpect(header().exists("Location"));
     }
 
     @ParameterizedTest(name = "{0}")

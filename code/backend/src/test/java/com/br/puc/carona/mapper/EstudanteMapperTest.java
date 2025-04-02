@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -34,9 +33,8 @@ class EstudanteMapperTest {
     @Mock
     private UsuarioMapper usuarioMapper;
 
-    @Spy
     @InjectMocks
-    private EstudanteMapperImpl estudanteMapper;
+    private EstudanteMapper estudanteMapper;
 
     private Estudante estudante;
     private PerfilMotorista perfilMotorista;
@@ -80,7 +78,7 @@ class EstudanteMapperTest {
                .thenReturn(perfilMotoristaDto);
 
         // When
-        EstudanteDto dto = estudanteMapper.toDto(estudante);
+        final EstudanteDto dto = estudanteMapper.toDto(estudante);
 
         // Then
         Assertions.assertNotNull(dto);
@@ -109,7 +107,7 @@ class EstudanteMapperTest {
     @DisplayName("Deve converter SignupEstudanteRequest para Estudante corretamente")
     void deveConverterSignupEstudanteRequestParaEstudanteCorretamente() {
         // Given
-        SignupEstudanteRequest request = SignupEstudanteRequest.builder()
+        final SignupEstudanteRequest request = SignupEstudanteRequest.builder()
                 .nome("Estudante Teste")
                 .email("estudante@test.com")
                 .password("bbcfb0a6f78208bdfbfd66e9880c70c2") // md5 hash for "estudante-pass"
@@ -118,7 +116,7 @@ class EstudanteMapperTest {
                 .build();
 
         // When
-        Estudante estudante = estudanteMapper.toEntity(request);
+        final Estudante estudante = estudanteMapper.toEntity(request);
 
         // Then
         Assertions.assertNotNull(estudante);
@@ -146,7 +144,7 @@ class EstudanteMapperTest {
     @DisplayName("Deve retornar null quando estudante for null")
     void deveRetornarNullQuandoEstudanteForNull() {
         // When
-        EstudanteDto dto = estudanteMapper.toDto(null);
+        final EstudanteDto dto = estudanteMapper.toDto(null);
         
         // Then
         Assertions.assertNull(dto);
@@ -156,7 +154,7 @@ class EstudanteMapperTest {
     @DisplayName("Deve retornar null quando request for null")
     void deveRetornarNullQuandoRequestForNull() {
         // When
-        Estudante entity = estudanteMapper.toEntity(null);
+        final Estudante entity = estudanteMapper.toEntity(null);
         
         // Then
         Assertions.assertNull(entity);
@@ -166,7 +164,7 @@ class EstudanteMapperTest {
     @DisplayName("Deve lidar com perfilMotorista null")
     void deveLidarComPerfilMotoristaNulo() {
         // Given
-        Estudante estudanteSemPerfil = Estudante.builder()
+        final Estudante estudanteSemPerfil = Estudante.builder()
                 .id(1L)
                 .nome("Test Student")
                 .email("student@example.com")
@@ -174,7 +172,7 @@ class EstudanteMapperTest {
                 .build();
                 
         // When
-        EstudanteDto dto = estudanteMapper.toDto(estudanteSemPerfil);
+        final EstudanteDto dto = estudanteMapper.toDto(estudanteSemPerfil);
         
         // Then
         Assertions.assertNotNull(dto);

@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUsers, User } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import UserCard from "@/components/UserCard";
@@ -12,8 +11,8 @@ import { Navigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 
 const UserApproval = () => {
-  const { isAuthenticated } = useAuth();
-  const { pendingUsers, approveUser, rejectUser, isLoading } = useUsers();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { pendingUsers, approveUser, rejectUser, isLoading, fetchPendingUsers } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
@@ -25,7 +24,28 @@ const UserApproval = () => {
     type: "approve",
     userId: "",
   });
-  const [filteredUsers, setFilteredUsers] = useState<User[]>(pendingUsers);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+
+  // Load pending users when component mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPendingUsers();
+    }
+  }, [isAuthenticated, fetchPendingUsers]);
+
+  // Update filtered users when pendingUsers changes
+  useEffect(() => {
+    setFilteredUsers(pendingUsers);
+  }, [pendingUsers]);
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin-slow h-8 w-8 border-4 border-carona-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
@@ -65,14 +85,16 @@ const UserApproval = () => {
       } else {
         await rejectUser(confirmAction.userId);
       }
+      // Close the modal after action is completed
+      setConfirmAction({ ...confirmAction, isOpen: false });
     } catch (error) {
       console.error("Error performing action:", error);
     }
   };
 
   const handleFilter = (query: string, status?: string) => {
-    // Para a página de aprovação, queremos mostrar apenas usuários pendentes
-    // mas ainda permitimos a filtragem por nome/email
+    // For the approval page, we only want to show pending users
+    // but we still allow filtering by name/email
     const filtered = pendingUsers.filter(user => {
       const matchesQuery = query 
         ? user.nome.toLowerCase().includes(query.toLowerCase()) || 
@@ -83,6 +105,10 @@ const UserApproval = () => {
     });
     
     setFilteredUsers(filtered);
+  };
+
+  const handleRefresh = () => {
+    fetchPendingUsers();
   };
 
   return (
@@ -99,7 +125,7 @@ const UserApproval = () => {
           </div>
           <Button 
             variant="outline" 
-            onClick={() => handleFilter("", "")}
+            onClick={handleRefresh}
             className="flex items-center text-gray-700"
             disabled={isLoading}
           >

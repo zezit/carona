@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -32,9 +31,8 @@ class PerfilMotoristaMapperTest {
     @Mock
     private EstudanteMapper estudanteMapper;
 
-    @Spy
     @InjectMocks
-    private PerfilMotoristaMapperImpl perfilMotoristaMapper;
+    private PerfilMotoristaMapper perfilMotoristaMapper;
 
     private PerfilMotorista perfilMotorista;
     private Carro carro;
@@ -76,7 +74,7 @@ class PerfilMotoristaMapperTest {
                .thenReturn(carroDto);
 
         // When
-        PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(perfilMotorista);
+        final PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(perfilMotorista);
 
         // Then
         Assertions.assertNotNull(dto);
@@ -96,19 +94,19 @@ class PerfilMotoristaMapperTest {
     @DisplayName("Deve converter PerfilMotoristaRequest para PerfilMotorista corretamente")
     void deveConverterPerfilMotoristaRequestParaPerfilMotoristaCorretamente() {
         // Given
-        CarroRequest carroRequest = CarroRequest.builder()
+        final CarroRequest carroRequest = CarroRequest.builder()
                 .modelo("Civic")
                 .cor("Branco")
                 .placa("XYZ5678")
                 .capacidadePassageiros(4)
                 .build();
 
-        PerfilMotoristaRequest request = PerfilMotoristaRequest.builder()
+        final PerfilMotoristaRequest request = PerfilMotoristaRequest.builder()
                 .cnh("98765432101")
                 .carro(carroRequest)
                 .build();
                 
-        Carro novoCarro = Carro.builder()
+        final Carro novoCarro = Carro.builder()
                 .modelo("Civic")
                 .cor("Branco")
                 .placa("XYZ5678")
@@ -119,7 +117,7 @@ class PerfilMotoristaMapperTest {
                .thenReturn(novoCarro);
 
         // When
-        PerfilMotorista perfilMotorista = perfilMotoristaMapper.toEntity(request);
+        final PerfilMotorista perfilMotorista = perfilMotoristaMapper.toEntity(request);
 
         // Then
         Assertions.assertNotNull(perfilMotorista);
@@ -140,7 +138,7 @@ class PerfilMotoristaMapperTest {
     @DisplayName("Deve retornar null quando perfilMotorista for null")
     void deveRetornarNullQuandoPerfilMotoristaForNull() {
         // When
-        PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(null);
+        final PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(null);
         
         // Then
         Assertions.assertNull(dto);
@@ -150,7 +148,7 @@ class PerfilMotoristaMapperTest {
     @DisplayName("Deve retornar null quando request for null")
     void deveRetornarNullQuandoRequestForNull() {
         // When
-        PerfilMotorista entity = perfilMotoristaMapper.toEntity(null);
+        final PerfilMotorista entity = perfilMotoristaMapper.toEntity(null);
         
         // Then
         Assertions.assertNull(entity);
@@ -160,14 +158,14 @@ class PerfilMotoristaMapperTest {
     @DisplayName("Deve lidar com carro null")
     void deveLidarComCarroNulo() {
         // Given
-        PerfilMotorista perfilSemCarro = PerfilMotorista.builder()
+        final PerfilMotorista perfilSemCarro = PerfilMotorista.builder()
                 .id(1L)
                 .cnh("12345678901")
                 .carro(null)
                 .build();
                 
         // When
-        PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(perfilSemCarro);
+        final PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(perfilSemCarro);
         
         // Then
         Assertions.assertNotNull(dto);
