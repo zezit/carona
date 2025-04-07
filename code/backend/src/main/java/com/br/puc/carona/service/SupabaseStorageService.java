@@ -29,6 +29,6 @@ public class SupabaseStorageService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(response -> "https://nfrirozajhxljhkieidn.supabase.co/storage/v1/object/public/" + BUCKET_NAME + "/" + fileName)
-                .block(); // bloco apenas para simplificar aqui
+                .block();
     }
 }

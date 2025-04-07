@@ -15,16 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class EstudanteMapper {
     
     private final PerfilMotoristaMapper perfilMotoristaMapper;
-    
+
     public EstudanteDto toDto(final Estudante estudante) {
         if (estudante == null) {
             return null;
         }
-        
+
         final EstudanteDto dto = new EstudanteDto();
         dto.setId(estudante.getId());
         dto.setNome(estudante.getNome());
         dto.setEmail(estudante.getEmail());
+        dto.setImgUrl(estudante.getImgUrl());
         dto.setMatricula(estudante.getMatricula());
         dto.setDataDeNascimento(estudante.getDataDeNascimento());
         dto.setAvaliacaoMedia(estudante.getAvaliacaoMedia());
@@ -33,13 +34,14 @@ public class EstudanteMapper {
         dto.setDataAtualizacao(estudante.getDataAtualizacao());
         dto.setCriadoPor(estudante.getCriadoPor());
         dto.setAtualizadoPor(estudante.getAtualizadoPor());
-        
+
         if (estudante.getPerfilMotorista() != null) {
             dto.setPerfilMotorista(perfilMotoristaMapper.tDto(estudante.getPerfilMotorista()));
         }
-        
+
         return dto;
     }
+
 
     public Estudante toEntity(final SignupEstudanteRequest cadastroRequest) {
         if (cadastroRequest == null) {
