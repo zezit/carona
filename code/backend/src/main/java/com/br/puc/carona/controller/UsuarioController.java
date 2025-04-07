@@ -2,11 +2,11 @@ package com.br.puc.carona.controller;
 
 import java.net.URI;
 
+import com.br.puc.carona.model.Usuario;
+import com.br.puc.carona.service.SupabaseStorageService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.br.puc.carona.dto.request.SignupEstudanteRequest;
 import com.br.puc.carona.dto.request.SignupUsuarioRequest;
@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 @AllArgsConstructor
 @RestController
@@ -31,6 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+
+    private final SupabaseStorageService storageService;
+
 
     @Operation(summary = "Registrar um novo usuário administrador", description = "Registra um novo usuário administrador no sistema")
     @ApiResponses(value = {
@@ -69,5 +73,18 @@ public class UsuarioController {
                 request.getMatricula(), registeredEstudante.getId());
 
         return ResponseEntity.created(location).build();
+    }
+
+    @PostMapping("/{id}/foto")
+    public ResponseEntity<?> uploadFoto(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        try {
+            String fileName = "usuario_" + id + "_" + file.getOriginalFilename();
+            storageService.uploadImage(file, fileName);
+
+            return ResponseEntity.ok("Imagem enviada com sucesso!");
+        } catch (Exception e) {
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar imagem." + e.getMessage());
+        }
     }
 }
