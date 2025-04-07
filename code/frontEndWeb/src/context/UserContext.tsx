@@ -11,6 +11,7 @@ export type User = {
   matricula: string;
   avaliacaoMedia: number;
   status: "PENDENTE" | "APROVADO" | "REJEITADO" | "CANCELADO" | "FINALIZADO";
+  imgUrl?: string;
 };
 
 type UserContextType = {
@@ -55,6 +56,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           matricula: user.matricula || '',
           avaliacaoMedia: user.avaliacaoMedia || 0,
           status: user.statusCadastro,
+          imgUrl: user.imgUrl || '',
         }));
         
         setUsers(formattedUsers);
@@ -87,6 +89,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           matricula: user.matricula || '',
           avaliacaoMedia: user.avaliacaoMedia || 0,
           status: "PENDENTE",
+          imgUrl: user.imgUrl || '',
         }));
         
         setPendingUsers(formattedUsers);
