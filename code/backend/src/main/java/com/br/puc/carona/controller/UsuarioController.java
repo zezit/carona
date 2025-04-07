@@ -75,16 +75,5 @@ public class UsuarioController {
         return ResponseEntity.created(location).build();
     }
 
-    @PostMapping("/{id}/foto")
-    public ResponseEntity<?> uploadFoto(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
-            String fileName = "usuario_" + id + "_" + file.getOriginalFilename();
-            storageService.uploadImage(file, fileName);
 
-            return ResponseEntity.ok("Imagem enviada com sucesso!");
-        } catch (Exception e) {
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar imagem." + e.getMessage());
-        }
-    }
 }
