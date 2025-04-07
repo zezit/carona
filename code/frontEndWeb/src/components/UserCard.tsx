@@ -60,9 +60,18 @@ const UserCard: React.FC<UserCardProps> = ({
   return (
     <Card className="glass-card overflow-hidden">
       <CardHeader className="p-4 flex flex-row items-center space-x-4 pb-2">
-        <div className="h-12 w-12 rounded-full bg-carona-100 flex items-center justify-center text-carona-700 border-2 border-white shadow-sm">
-          <UserIcon className="h-6 w-6" />
-        </div>
+        {/* User Image or Icon */}
+        {user.imgUrl ? (
+          <img 
+            src={user.imgUrl} 
+            alt={user.nome} 
+            className="h-12 w-12 rounded-full border-2 border-white shadow-sm object-cover" 
+          />
+        ) : (
+          <div className="h-12 w-12 rounded-full bg-carona-100 flex items-center justify-center text-carona-700 border-2 border-white shadow-sm">
+            <UserIcon className="h-6 w-6" />
+          </div>
+        )}
         <div className="flex-1 overflow-hidden">
           <div className="font-medium text-lg truncate">{user.nome}</div>
           <div className="text-sm text-gray-500 truncate">{user.email}</div>
