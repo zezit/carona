@@ -241,6 +241,7 @@ A seguir serão apresentados os requisitos funcionais e não funcionais que guia
 | **Análise** | **Design** | **Implementação** |
 | --- | --- | --- |
 | Persistência | Banco de dados relacional | MySQL |
+| Persistência de imagens | Banco de dados | Supabase |
 | Front end | Framework de UI | React Native |
 | Back end | API RESTful | Java Spring Boot |
 | Integração | API de mapas | Google Maps API |
