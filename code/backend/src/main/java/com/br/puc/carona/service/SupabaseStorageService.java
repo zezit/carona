@@ -21,7 +21,7 @@ public class SupabaseStorageService {
 
     public String uploadImage(MultipartFile file, String fileName) throws IOException {
         byte[] fileBytes = file.getBytes();
-
+        log.info("Fazendo upload de imagem no Supabase Storage: {}", fileName);
         return webClient.post()
                 .uri("/storage/v1/object/" + BUCKET_NAME + "/" + fileName)
                 .header(HttpHeaders.CONTENT_TYPE, file.getContentType())
