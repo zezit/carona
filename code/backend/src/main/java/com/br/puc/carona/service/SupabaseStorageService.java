@@ -19,7 +19,7 @@ import java.util.List;
 @Slf4j
 public class SupabaseStorageService {
 
-    List<String> allowedContentTypes = List.of("image/png", "image/webp");
+    List<String> allowedContentTypes = List.of("image/jpeg", "image/png", "image/webp");
 
 
     private final WebClient webClient;
@@ -30,7 +30,7 @@ public class SupabaseStorageService {
     @Value("${supabase.code}")
     private String supabaseCode;
 
-    public String uploadImage(MultipartFile file, String fileName, String bucketName) throws IOException {
+    private String uploadImage(MultipartFile file, String fileName, String bucketName) throws IOException {
         final byte[] fileBytes = file.getBytes();
         log.info("Fazendo upload de imagem no Supabase Storage: {}", fileName);
 
@@ -66,7 +66,7 @@ public class SupabaseStorageService {
         }
     }
 
-    public String updateImage(MultipartFile file, String fileName, String bucketName) throws IOException {
+    private String updateImage(MultipartFile file, String fileName, String bucketName) throws IOException {
         final byte[] fileBytes = file.getBytes();
         log.info("Atualizando imagem no Supabase Storage: {}", fileName);
 
