@@ -94,7 +94,7 @@ public class UsuarioService {
                 .orElseThrow(() -> new EntidadeNaoEncontrada("Usuário não encontrado com id: " + id));
 
         try{
-            final String fileName = "profile_photo_student_" + id;
+            final String fileName = "profile_user_photo_" + id;
             final String url = supabaseStorageService.uploadOrUpdateUserPhoto(file, fileName);
             usuario.setImgUrl(url);
         }catch (IOException e){
