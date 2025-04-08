@@ -1,5 +1,6 @@
 package com.br.puc.carona.service;
 
+import com.br.puc.carona.exception.custom.ImagemInvalidaException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,12 +9,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SupabaseStorageService {
+
+    List<String> allowedContentTypes = List.of("image/png", "image/webp");
+
 
     private final WebClient webClient;
 
@@ -24,7 +31,7 @@ public class SupabaseStorageService {
     private String supabaseCode;
 
     public String uploadImage(MultipartFile file, String fileName, String bucketName) throws IOException {
-        byte[] fileBytes = file.getBytes();
+        final byte[] fileBytes = file.getBytes();
         log.info("Fazendo upload de imagem no Supabase Storage: {}", fileName);
 
         return webClient.post()
@@ -38,7 +45,9 @@ public class SupabaseStorageService {
     }
 
     public String uploadOrUpdateUserPhoto(MultipartFile file, String fileName) throws IOException {
-        String fileUrl = "/storage/v1/object/" + userPhotosBucketName + "/" + fileName;
+        validateImage(file);
+
+        final String fileUrl = "/storage/v1/object/" + userPhotosBucketName + "/" + fileName;
 
         log.info("Checando existência do arquivo: {} no Supabase", fileName);
         try {
@@ -58,7 +67,7 @@ public class SupabaseStorageService {
     }
 
     public String updateImage(MultipartFile file, String fileName, String bucketName) throws IOException {
-        byte[] fileBytes = file.getBytes();
+        final byte[] fileBytes = file.getBytes();
         log.info("Atualizando imagem no Supabase Storage: {}", fileName);
 
         return webClient.put()
@@ -69,6 +78,32 @@ public class SupabaseStorageService {
                 .bodyToMono(String.class)
                 .map(response -> "https://" + supabaseCode + ".supabase.co/storage/v1/object/public/" + bucketName + "/" + fileName)
                 .block();
+    }
+
+
+    private void validateImage(MultipartFile file) throws IOException {
+
+        if (!allowedContentTypes.contains(file.getContentType())) {
+            throw new ImagemInvalidaException("Formato de imagem não suportado. Use JPEG, PNG ou WEBP.");
+        }
+
+        final long maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+        if (file.getSize() > maxSizeInBytes) {
+            throw new ImagemInvalidaException("A imagem excede o tamanho máximo permitido de 5MB.");
+        }
+
+        BufferedImage image = ImageIO.read(file.getInputStream());
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        double ratio = (double) width / height;
+        if (ratio < 0.8 || ratio > 1.2) {
+            throw new ImagemInvalidaException("A imagem deve ter proporção próxima a 1:1 (quadrada).");
+        }
+
+        if (width < 200 || height < 200 || width > 2000 || height > 2000) {
+            throw new ImagemInvalidaException("A resolução da imagem deve estar entre 200x200 e 2000x2000 pixels.");
+        }
     }
 
 

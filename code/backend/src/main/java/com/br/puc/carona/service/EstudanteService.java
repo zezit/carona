@@ -139,8 +139,8 @@ public class EstudanteService {
 
         if (file != null && !file.isEmpty()) {
             try{
-                String fileName = "profile_photo_student_" + id;
-                String url = supabaseStorageService.uploadOrUpdateUserPhoto(file, fileName);
+                final String fileName = "profile_photo_student_" + id;
+                final String url = supabaseStorageService.uploadOrUpdateUserPhoto(file, fileName);
                 estudante.setImgUrl(url);
             }catch (IOException e){
                 throw new ErroUploadImage("Erro ao fazer upload da imagem de perfil", e);

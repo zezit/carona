@@ -2,9 +2,6 @@ package com.br.puc.carona.controller;
 
 import java.net.URI;
 
-import com.br.puc.carona.model.Usuario;
-import com.br.puc.carona.service.SupabaseStorageService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +19,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.multipart.MultipartFile;
 
 @AllArgsConstructor
 @RestController
@@ -32,9 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
-
-    private final SupabaseStorageService storageService;
-
 
     @Operation(summary = "Registrar um novo usuário administrador", description = "Registra um novo usuário administrador no sistema")
     @ApiResponses(value = {
