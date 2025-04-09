@@ -79,11 +79,42 @@ const UpdateProfilePage = ({ navigation, route }) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
       allowsEditing: true,
+      aspect: [1, 1],
     });
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
       // Aqui você pode chamar a função de upload passando o `result.assets[0]`
+      try {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: result.assets[0].uri,
+          name: 'profile.jpg',
+          type: 'image/jpeg',
+        });
+
+        const options = {
+          headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'multipart/form-data',
+          },
+        };
+
+        const response = await apiClient.patch(
+          `/usuario/${user.id}/imagem`,
+          formData,
+          options
+        );
+
+        if (response.success) {
+          Alert.alert("Sucesso", "Imagem de perfil atualizada com sucesso!");
+        } else {
+          Alert.alert("Erro", response.error?.message || "Não foi possível atualizar a imagem.");
+        }
+      } catch (error) {
+        console.error("Erro ao atualizar imagem:", error);
+        Alert.alert("Erro", "Ocorreu um erro ao atualizar a imagem. Tente novamente.");
+      }
     }
   };
 

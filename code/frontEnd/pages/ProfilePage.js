@@ -5,6 +5,7 @@ import { Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiClient } from '../api/apiClient';
+import { Image } from 'react-native';
 
 const ProfilePage = ({ navigation }) => {
   const { user, logout, authToken } = useAuthContext();
@@ -12,17 +13,17 @@ const ProfilePage = ({ navigation }) => {
   const [isDriverProfile, setIsDriverProfile] = useState(false);
   const [driverProfile, setDriverProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Animation values
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  
+
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
       useNativeDriver: true,
     }).start();
-    
+
     fetchUserDetails();
   }, []);
 
@@ -45,7 +46,7 @@ const ProfilePage = ({ navigation }) => {
       }
 
       const options = {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
@@ -53,10 +54,10 @@ const ProfilePage = ({ navigation }) => {
 
       // Fetch student details
       const response = await apiClient.get(`/estudante/${user.id}`, options);
-      
+
       if (response.success) {
         setUserDetails(response.data);
-        
+
         // Check if user has driver profile
         try {
           const driverResponse = await apiClient.get(`/estudante/${user.id}/motorista`, options);
@@ -69,16 +70,16 @@ const ProfilePage = ({ navigation }) => {
           }
         } catch (err) {
           console.log("User doesn't have a driver profile yet or there was an error:", err.message);
-          
+
           // Check if the error is because the user is not a driver (HTTP 400 with specific message)
-          if (err.response && err.response.status === 400 && 
-              (err.response.data?.message?.includes('não é motorista') || 
-               err.response.data?.error?.includes('não é motorista'))) {
+          if (err.response && err.response.status === 400 &&
+            (err.response.data?.message?.includes('não é motorista') ||
+              err.response.data?.error?.includes('não é motorista'))) {
             console.log("User is not a driver yet");
           } else {
             console.error("Error fetching driver profile:", err);
           }
-          
+
           setIsDriverProfile(false);
           setDriverProfile(null);
         }
@@ -110,23 +111,23 @@ const ProfilePage = ({ navigation }) => {
       "Tem certeza que deseja sair?",
       [
         { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sair", 
-          style: "destructive", 
+        {
+          text: "Sair",
+          style: "destructive",
           onPress: async () => {
             await logout();
-          } 
+          }
         }
       ]
     );
   };
-  
+
   // Check if user has completed their basic profile
   const isProfileComplete = () => {
-    return userDetails && 
-           userDetails.nome && 
-           userDetails.matricula && 
-           userDetails.curso;
+    return userDetails &&
+      userDetails.nome &&
+      userDetails.matricula &&
+      userDetails.curso;
   };
 
   if (loading) {
@@ -151,17 +152,26 @@ const ProfilePage = ({ navigation }) => {
           <Ionicons name="log-out-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {userDetails ? (
             <>
               <View style={styles.profileHeader}>
                 <View style={styles.avatarContainer}>
-                  <Text style={styles.avatarText}>
-                    {userDetails.nome ? userDetails.nome[0].toUpperCase() : "?"}
-                  </Text>
+                  {userDetails.imgUrl ? (
+                    <Image
+                      source={{ uri: userDetails.imgUrl }}
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>
+                      {userDetails.nome ? userDetails.nome[0].toUpperCase() : "?"}
+                    </Text>
+                  )}
                 </View>
+
                 <Text style={styles.userName}>{userDetails.nome}</Text>
                 <Text style={styles.userEmail}>{userDetails.email}</Text>
               </View>
@@ -178,10 +188,10 @@ const ProfilePage = ({ navigation }) => {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Status:</Text>
-                  <Text style={[styles.infoValue, 
-                    userDetails.statusCadastro === 'APROVADO' ? styles.statusApproved : 
-                    userDetails.statusCadastro === 'PENDENTE' ? styles.statusPending : 
-                    styles.statusRejected]}>
+                  <Text style={[styles.infoValue,
+                  userDetails.statusCadastro === 'APROVADO' ? styles.statusApproved :
+                    userDetails.statusCadastro === 'PENDENTE' ? styles.statusPending :
+                      styles.statusRejected]}>
                     {userDetails.statusCadastro || 'PENDENTE'}
                   </Text>
                 </View>
@@ -191,35 +201,35 @@ const ProfilePage = ({ navigation }) => {
                 <View style={styles.infoSection}>
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Perfil de Motorista</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.editButton}
                       onPress={handleUpdateDriverProfile}
                     >
                       <Ionicons name="pencil" size={18} color="#4285F4" />
                     </TouchableOpacity>
                   </View>
-                  
+
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>CNH:</Text>
                     <Text style={styles.infoValue}>{driverProfile.cnh || 'Não informado'}</Text>
                   </View>
-                  
+
                   {driverProfile.whatsapp && (
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>WhatsApp:</Text>
                       <Text style={styles.infoValue}>{driverProfile.whatsapp}</Text>
                     </View>
                   )}
-                  
+
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Mostrar WhatsApp:</Text>
                     <Text style={styles.infoValue}>{driverProfile.mostrarWhatsapp ? 'Sim' : 'Não'}</Text>
                   </View>
-                  
+
                   <View style={styles.sectionSubtitle}>
                     <Text style={styles.sectionSubtitleText}>Informações do Veículo</Text>
                   </View>
-                  
+
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Modelo:</Text>
                     <Text style={styles.infoValue}>{driverProfile.carro?.modelo || 'Não informado'}</Text>
@@ -239,8 +249,8 @@ const ProfilePage = ({ navigation }) => {
                 </View>
               ) : (
                 userDetails && userDetails.statusCadastro === 'APROVADO' && (
-                  <TouchableOpacity 
-                    style={styles.createDriverButton} 
+                  <TouchableOpacity
+                    style={styles.createDriverButton}
                     onPress={handleCreateDriverProfile}
                   >
                     <Ionicons name="car-outline" size={24} color="#fff" style={styles.buttonIcon} />
@@ -251,7 +261,7 @@ const ProfilePage = ({ navigation }) => {
 
               {/* Show profile button based on completion status */}
               {userDetails && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.updateProfileButton}
                   onPress={handleUpdateProfile}
                 >
@@ -265,7 +275,7 @@ const ProfilePage = ({ navigation }) => {
           ) : (
             <View style={styles.noDataContainer}>
               <Text style={styles.noDataText}>Não foi possível carregar os dados do perfil</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.retryButton}
                 onPress={fetchUserDetails}
               >
@@ -329,6 +339,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
   },
   avatarText: {
     fontSize: 40,
