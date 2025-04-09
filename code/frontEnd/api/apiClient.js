@@ -4,7 +4,8 @@ import {API_BASE_URL} from '@env';
 // Determine the base URL based on environment
 const getBaseUrl = () => {
   // return API_BASE_URL;
-  return 'https://fdcb-189-71-58-174.ngrok-free.app/api';
+  // return 'https://fdcb-189-71-58-174.ngrok-free.app/api';
+  return ' https://6e27-191-185-84-176.ngrok-free.app/api';
 };
 
 const BASE_URL = getBaseUrl();

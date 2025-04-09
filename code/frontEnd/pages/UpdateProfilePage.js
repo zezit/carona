@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+
+
 import { 
   View, 
   Text, 
@@ -8,7 +11,8 @@ import {
   StyleSheet, 
   Alert,
   ActivityIndicator,
-  Animated
+  Animated,
+  Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -22,6 +26,7 @@ const UpdateProfilePage = ({ navigation, route }) => {
   const [curso, setCurso] = useState(userDetails?.curso || '');
   const [isLoading, setIsLoading] = useState(false);
   const { user, authToken } = useAuthContext();
+  const [image, setImage] = useState(null);
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -59,6 +64,58 @@ const UpdateProfilePage = ({ navigation, route }) => {
     }
 
     return true;
+  };
+
+  const pickImage = async () => {
+    // Pede permissão para acessar a galeria
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert('Permissão para acessar a galeria é necessária!');
+      return;
+    }
+
+    // Abre a galeria
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+      // Aqui você pode chamar a função de upload passando o `result.assets[0]`
+      try {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: result.assets[0].uri,
+          name: 'profile.jpg',
+          type: 'image/jpeg',
+        });
+
+        const options = {
+          headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'multipart/form-data',
+          },
+        };
+
+        const response = await apiClient.patch(
+          `/usuario/${user.id}/imagem`,
+          formData,
+          options
+        );
+
+        if (response.success) {
+          Alert.alert("Sucesso", "Imagem de perfil atualizada com sucesso!");
+        } else {
+          Alert.alert("Erro", response.error?.message || "Não foi possível atualizar a imagem.");
+        }
+      } catch (error) {
+        console.error("Erro ao atualizar imagem:", error);
+        Alert.alert("Erro", "Ocorreu um erro ao atualizar a imagem. Tente novamente.");
+      }
+    }
   };
 
   const handleSubmit = async () => {
@@ -141,6 +198,20 @@ const UpdateProfilePage = ({ navigation, route }) => {
           ]}
         >
           <Text style={styles.subtitle}>Informações Pessoais</Text>
+
+          <View style={styles.imgView}>
+          <TouchableOpacity style={styles.imgButton} onPress={pickImage}>
+          {image ? (
+    <Image
+      source={{ uri: image }}
+      style={styles.imgPreview}
+    />
+  ) : (
+    <Ionicons name="image" size={24} color="#4285F4" />
+  )}
+          </TouchableOpacity>
+          </View>
+          
           
           <Text style={styles.label}>Nome Completo</Text>
           <TextInput 
@@ -259,6 +330,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  imgButton:{
+    width: 100,
+    backgroundColor:'white',
+    borderRadius:50,
+    borderColor: '#4285F4',
+    borderWidth: 1,
+    height:100,
+    alignItems:"center",
+    flexDirection:"column",
+    justifyContent:"center"
+  },
+  imgView:{
+  width:"full",
+ 
+  alignItems:"center",
+  },
+  imgPreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  }
 });
 
 export default UpdateProfilePage;
