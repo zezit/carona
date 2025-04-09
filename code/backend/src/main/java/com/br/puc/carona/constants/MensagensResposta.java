@@ -20,15 +20,35 @@ public final class MensagensResposta {
     public static final String CADASTRO_JA_REVISADO = "status.ja_revisado";
     public static final String STATUS_CADASTRO_INVALIDO = "status.invalido";
     public static final String CADASTRO_NAO_APROVADO = "usuario.cadastro.nao_aprovado";
+    public static final String USUARIO_NAO_AUTENTICADO = "usuario.nao_autenticado";
+    public static final String ADMINISTRADOR_NAO_PODE_ACESSAR_RECURSO = "usuario.administrador.nao_pode_acessar_recurso";
 
     // Messagens relacionadas aos estudantes
     public static final String MATRICULA_JA_CADASTRADA = "usuario.estudante.matricula.ja_cadastrada";
-
+    public static final String ESTUDANTE_NAO_ENCONTRADO = "usuario.estudante.nao_encontrado";
+    public static final String ESTUDANTE_NAO_PODE_ACESSAR_RECURSO = "usuario.estudante.nao_pode_acessar_recurso";
+    
     // Mensagens relacionadas ao motorista
     public static final String ESTUDANTE_JA_E_MOTORISTA = "usuario.estudante.motorista.ja_e_motorista";
     public static final String CNH_JA_CADASTRADA = "usuario.estudante.motorista.cnh_ja_cadastrada";
     public static final String ESTUDANTE_NAO_E_MOTORISTA = "usuario.estudante.motorista.nao_e_motorista";
     
+    // Mensagens relacionadas a caronas
+    public static final String CARONA_NAO_ENCONTRADA = "carona.nao.encontrada";
+    public static final String CARONA_CONCLUIDA_CANCELADA = "carona.concluida_cancelada";
+    public static final String CARONA_JA_INICIADA = "carona.ja.iniciada";
+    public static final String CARONA_NAO_PLANEJADA = "carona.nao.planejada";
+    public static final String VAGAS_INSUFICIENTES = "carona.vagas.insuficientes";
+    public static final String CARONA_SEM_VAGAS = "carona.sem.vagas";
+    public static final String ESTUDANTE_JA_PASSAGEIRO = "carona.estudante.ja.passageiro";
+    public static final String MOTORISTA_COMO_PASSAGEIRO = "carona.motorista.como.passageiro";
+    public static final String DATA_PARTIDA_INVALIDA = "carona.data.partida.invalida";
+    public static final String DATA_CHEGADA_INVALIDA = "carona.data.chegada.invalida";
+    public static final String DATA_CHEGADA_ANTERIOR_PARTIDA = "carona.data.chegada.anterior_partida";
+    public static final String CARONA_NAO_PERTENCE_AO_MOTORISTA = "carona.nao_pertence_motorista";
+    public static final String ALTERACAO_STATUS_CARONA_INVALIDA = "carona.alteracao_status_invalida";
+    public static final String CARONA_NAO_PERMITE_ADICIONAR_PASSAGEIRO = "carona.nao_permite_adicionar_passageiro";
+
     // Mensagens relacionadas à autenticação
     public static final String LOGIN_INVALIDO = "login.invalido";
     public static final String TOKEN_INVALIDO = "token.invalido";

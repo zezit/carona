@@ -24,17 +24,6 @@ import io.swagger.v3.oas.annotations.Hidden;
 @Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-        @ExceptionHandler(Exception.class)
-        @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-        public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-                ErrorResponse errorResponse = new ErrorResponse(
-                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                LocalDateTime.now(),
-                                request.getDescription(false),
-                                MensagensResposta.ERRO_INTERNO);
-                return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
         @ExceptionHandler(IllegalArgumentException.class)
         @ResponseStatus(HttpStatus.BAD_REQUEST)
         public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex,
@@ -66,7 +55,10 @@ public class GlobalExceptionHandler {
                 ErrorResponse errorResponse = new ErrorResponse(
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now(),
-                                ex.getBindingResult().getFieldError().getDefaultMessage(),
+                                ex.getBindingResult().getFieldError() != null ? ex.getBindingResult()
+                                                .getFieldError()
+                                                .getDefaultMessage()
+                                                : MensagensResposta.PARAMETRO_INVALIDO,
                                 MensagensResposta.PARAMETRO_INVALIDO);
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
@@ -96,23 +88,48 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(BadCredentialsException.class)
         @ResponseStatus(HttpStatus.FORBIDDEN)
-        public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
+        public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex,
+                        WebRequest request) {
                 ErrorResponse errorResponse = new ErrorResponse(
-                        HttpStatus.FORBIDDEN.value(),
-                        LocalDateTime.now(),
-                        "login ou senha invalido",
-                        MensagensResposta.LOGIN_INVALIDO);
+                                HttpStatus.FORBIDDEN.value(),
+                                LocalDateTime.now(),
+                                "login ou senha invalido",
+                                MensagensResposta.LOGIN_INVALIDO);
                 return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         }
 
         @ExceptionHandler(InternalAuthenticationServiceException.class)
         @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-        public ResponseEntity<ErrorResponse> handleBadCredentialsException(InternalAuthenticationServiceException ex, WebRequest request) {
+        public ResponseEntity<ErrorResponse> handleBadCredentialsException(InternalAuthenticationServiceException ex,
+                        WebRequest request) {
                 ErrorResponse errorResponse = new ErrorResponse(
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        LocalDateTime.now(),
-                        "Erro interno de autenticação",
-                        MensagensResposta.INTERNAL_AUTH_ERROR);
+                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                LocalDateTime.now(),
+                                "Erro interno de autenticação",
+                                MensagensResposta.INTERNAL_AUTH_ERROR);
+                return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        @ExceptionHandler(UnauthenticatedUserException.class)
+        @ResponseStatus(HttpStatus.UNAUTHORIZED)
+        public ResponseEntity<ErrorResponse> handleUnauthenticatedUserException(UnauthenticatedUserException ex,
+                        WebRequest request) {
+                ErrorResponse errorResponse = new ErrorResponse(
+                                HttpStatus.UNAUTHORIZED.value(),
+                                LocalDateTime.now(),
+                                ex.getLocalizedMessage(),
+                                MensagensResposta.USUARIO_NAO_AUTENTICADO);
+                return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+        }
+
+        @ExceptionHandler(Exception.class)
+        @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+        public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+                ErrorResponse errorResponse = new ErrorResponse(
+                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                LocalDateTime.now(),
+                                request.getDescription(false),
+                                MensagensResposta.ERRO_INTERNO);
                 return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

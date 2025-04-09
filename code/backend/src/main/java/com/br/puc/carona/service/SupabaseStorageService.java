@@ -1,8 +1,8 @@
 package com.br.puc.carona.service;
 
 import com.br.puc.carona.exception.custom.ImagemInvalidaException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -15,12 +15,10 @@ import java.io.IOException;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class SupabaseStorageService {
 
     List<String> allowedContentTypes = List.of("image/jpeg", "image/png", "image/webp");
-
 
     private final WebClient webClient;
 
@@ -29,6 +27,11 @@ public class SupabaseStorageService {
 
     @Value("${supabase.code}")
     private String supabaseCode;
+    
+    // Explicit constructor with @Qualifier annotation
+    public SupabaseStorageService(@Qualifier("supabaseWebClient") WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     private String uploadImage(MultipartFile file, String fileName, String bucketName) throws IOException {
         final byte[] fileBytes = file.getBytes();
@@ -40,7 +43,8 @@ public class SupabaseStorageService {
                 .bodyValue(fileBytes)
                 .retrieve()
                 .bodyToMono(String.class)
-                .map(response -> "https://" + supabaseCode + ".supabase.co/storage/v1/object/public/" + bucketName + "/" + fileName)
+                .map(response -> "https://" + supabaseCode + ".supabase.co/storage/v1/object/public/" + bucketName + "/"
+                        + fileName)
                 .block();
     }
 
@@ -61,7 +65,8 @@ public class SupabaseStorageService {
             return updateImage(file, fileName, this.userPhotosBucketName);
 
         } catch (Exception e) {
-            log.info("Arquivo '{}' não encontrado no bucket '{}'. Realizando upload...", fileName, userPhotosBucketName);
+            log.info("Arquivo '{}' não encontrado no bucket '{}'. Realizando upload...", fileName,
+                    userPhotosBucketName);
             return uploadImage(file, fileName, this.userPhotosBucketName);
         }
     }
@@ -76,10 +81,10 @@ public class SupabaseStorageService {
                 .bodyValue(fileBytes)
                 .retrieve()
                 .bodyToMono(String.class)
-                .map(response -> "https://" + supabaseCode + ".supabase.co/storage/v1/object/public/" + bucketName + "/" + fileName)
+                .map(response -> "https://" + supabaseCode + ".supabase.co/storage/v1/object/public/" + bucketName + "/"
+                        + fileName)
                 .block();
     }
-
 
     private void validateImage(MultipartFile file) throws IOException {
 
@@ -105,8 +110,4 @@ public class SupabaseStorageService {
             throw new ImagemInvalidaException("A resolução da imagem deve estar entre 200x200 e 2000x2000 pixels.");
         }
     }
-
-
-
-
 }

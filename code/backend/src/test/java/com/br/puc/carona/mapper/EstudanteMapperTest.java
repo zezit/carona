@@ -74,7 +74,7 @@ class EstudanteMapperTest {
     @DisplayName("Deve converter Estudante para EstudanteDto corretamente")
     void deveConverterEstudanteParaEstudanteDtoCorretamente() {
         // Given
-        Mockito.when(perfilMotoristaMapper.tDto(Mockito.any(PerfilMotorista.class)))
+        Mockito.when(perfilMotoristaMapper.toDto(Mockito.any(PerfilMotorista.class)))
                .thenReturn(perfilMotoristaDto);
 
         // When
@@ -100,7 +100,7 @@ class EstudanteMapperTest {
         Assertions.assertEquals(perfilMotoristaDto.getCnh(), dto.getPerfilMotorista().getCnh());
         
         // Verify the method call
-        Mockito.verify(perfilMotoristaMapper).tDto(perfilMotorista);
+        Mockito.verify(perfilMotoristaMapper).toDto(perfilMotorista);
     }
 
     @Test

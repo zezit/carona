@@ -179,7 +179,7 @@ class EstudanteServiceTest {
         Mockito.when(perfilMotoristaRepository.existsByCnh(perfilMotoristaRequest.getCnh())).thenReturn(false);
         Mockito.when(perfilMotoristaMapper.toEntity(perfilMotoristaRequest)).thenReturn(perfilMotorista);
         Mockito.when(estudanteRepository.save(Mockito.any(Estudante.class))).thenReturn(estudante);
-        Mockito.when(perfilMotoristaMapper.tDto(Mockito.any(PerfilMotorista.class))).thenReturn(perfilMotoristaDto);
+        Mockito.when(perfilMotoristaMapper.toDto(Mockito.any(PerfilMotorista.class))).thenReturn(perfilMotoristaDto);
 
         // When
         PerfilMotoristaDto resultado = estudanteService.criarPerfilMotorista(estudanteId, perfilMotoristaRequest);
@@ -195,7 +195,7 @@ class EstudanteServiceTest {
         Mockito.verify(perfilMotoristaRepository).existsByCnh(perfilMotoristaRequest.getCnh());
         Mockito.verify(perfilMotoristaMapper).toEntity(perfilMotoristaRequest);
         Mockito.verify(estudanteRepository).save(Mockito.any(Estudante.class));
-        Mockito.verify(perfilMotoristaMapper).tDto(Mockito.any(PerfilMotorista.class));
+        Mockito.verify(perfilMotoristaMapper).toDto(Mockito.any(PerfilMotorista.class));
         
         // Capturar e verificar o estudante salvo
         Mockito.verify(estudanteRepository).save(estudanteCaptor.capture());
@@ -276,7 +276,7 @@ class EstudanteServiceTest {
         // Given
         estudante.setPerfilMotorista(perfilMotorista); // Estudante já é motorista
         Mockito.when(estudanteRepository.findById(estudanteId)).thenReturn(Optional.of(estudante));
-        Mockito.when(perfilMotoristaMapper.tDto(perfilMotorista)).thenReturn(perfilMotoristaDto);
+        Mockito.when(perfilMotoristaMapper.toDto(perfilMotorista)).thenReturn(perfilMotoristaDto);
 
         // When
         PerfilMotoristaDto resultado = estudanteService.buscarPerfilMotorista(estudanteId);
@@ -288,7 +288,7 @@ class EstudanteServiceTest {
         
         // Verify interactions
         Mockito.verify(estudanteRepository).findById(estudanteId);
-        Mockito.verify(perfilMotoristaMapper).tDto(perfilMotorista);
+        Mockito.verify(perfilMotoristaMapper).toDto(perfilMotorista);
     }
 
     @Test
@@ -307,7 +307,7 @@ class EstudanteServiceTest {
         
         // Verify interactions
         Mockito.verify(estudanteRepository).findById(estudanteId);
-        Mockito.verify(perfilMotoristaMapper, Mockito.never()).tDto(Mockito.any());
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).toDto(Mockito.any());
     }
 
     @Test
@@ -326,6 +326,6 @@ class EstudanteServiceTest {
         
         // Verify interactions
         Mockito.verify(estudanteRepository).findById(estudanteId);
-        Mockito.verify(perfilMotoristaMapper, Mockito.never()).tDto(Mockito.any());
+        Mockito.verify(perfilMotoristaMapper, Mockito.never()).toDto(Mockito.any());
     }
 }
