@@ -20,6 +20,7 @@
     "crypto-js": "^4.2.0",
     "expo": "~52.0.42",
     "expo-constants": "^17.0.8",
+    "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
     "frontend": "file:",
     "react": "18.3.1",
