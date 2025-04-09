@@ -1,8 +1,10 @@
 package com.br.puc.carona.service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.br.puc.carona.exception.custom.ErroUploadImage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ import com.br.puc.carona.repository.PerfilMotoristaRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +40,8 @@ public class EstudanteService {
 
     private final EstudanteRepository repository;
     private final PerfilMotoristaRepository perfilMotoristaRepository;
+
+    private final SupabaseStorageService supabaseStorageService;
 
     private final EstudanteMapper mapper;
     private final PerfilMotoristaMapper perfilMotoristaMapper;
@@ -109,18 +114,17 @@ public class EstudanteService {
     }
 
     @Transactional
-    public EstudanteDto atualizarEstudante(final Long id, final EstudanteUpdateRequest request) {
+    public EstudanteDto atualizarEstudante(final Long id, final EstudanteUpdateRequest request, MultipartFile file) {
         log.info("Atualizando estudante com ID: {}", id);
         Estudante estudante = repository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, id));
 
-        // Verificar se matrícula já existe e pertence a outro estudante
         if (request.getMatricula() != null && !request.getMatricula().equals(estudante.getMatricula())
                 && repository.existsByMatricula(request.getMatricula())) {
             throw new ErroDeCliente(MensagensResposta.MATRICULA_JA_CADASTRADA);
         }
 
-        // Atualizar apenas campos não nulos
+
         if (request.getNome() != null) {
             estudante.setNome(request.getNome());
         }
@@ -131,6 +135,17 @@ public class EstudanteService {
 
         if (request.getCurso() != null) {
             estudante.setCurso(request.getCurso());
+        }
+
+        if (file != null && !file.isEmpty()) {
+            try{
+                final String fileName = "profile_photo_student_" + id;
+                final String url = supabaseStorageService.uploadOrUpdateUserPhoto(file, fileName);
+                estudante.setImgUrl(url);
+            }catch (IOException e){
+                throw new ErroUploadImage("Erro ao fazer upload da imagem de perfil", e);
+            }
+
         }
 
         repository.save(estudante);

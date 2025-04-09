@@ -2,6 +2,8 @@ package com.br.puc.carona.exception;
 
 import java.time.LocalDateTime;
 
+import com.br.puc.carona.exception.custom.ErroUploadImage;
+import com.br.puc.carona.exception.custom.ImagemInvalidaException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -113,4 +115,28 @@ public class GlobalExceptionHandler {
                         MensagensResposta.INTERNAL_AUTH_ERROR);
                 return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        @ExceptionHandler(ErroUploadImage.class)
+        @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+        public ResponseEntity<ErrorResponse> handleErroUploadImagem(ErroUploadImage ex, WebRequest request) {
+                ErrorResponse errorResponse = new ErrorResponse(
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        LocalDateTime.now(),
+                        ex.getLocalizedMessage(),
+                        "Erro ao enviar imagem de perfil para o servidor");
+                return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        @ExceptionHandler(ImagemInvalidaException.class)
+        @ResponseStatus(HttpStatus.BAD_REQUEST)
+        public ResponseEntity<ErrorResponse> handleImagemInvalidaException(ImagemInvalidaException ex, WebRequest request) {
+                ErrorResponse errorResponse = new ErrorResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        LocalDateTime.now(),
+                        ex.getLocalizedMessage(),
+                        "Imagem de perfil inválida");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+
+
 }

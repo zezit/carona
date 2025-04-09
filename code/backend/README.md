@@ -29,6 +29,20 @@ Este é o serviço de backend para a aplicação Carona?, desenvolvido com Sprin
    copy .env.example .env
    ```
 
+1.1 Configure as variáveis de ambiente
+
+Após criar o arquivo .env, abra-o e preencha os seguintes campos com os valores fornecidos pelo Supabase:
+
+- **SUPABASE_API_KEY:** sua chave de API do Supabase
+
+- **SUPABASE_CODE:** código único do seu projeto no Supabase (ex: abcxyzefgh)
+
+- **SUPABASE_USERPHOTOS_BUCKET_NAME:** nome do bucket onde serão armazenadas as imagens de perfil dos usuários
+
+Certifique-se de **não deixar esses campos em branco** para que a aplicação funcione corretamente.
+
+---
+
 2. Modifique os valores no arquivo `.env` conforme necessário.
 
 ## Executar o Banco de Dados

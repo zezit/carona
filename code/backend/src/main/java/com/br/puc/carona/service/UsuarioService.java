@@ -1,5 +1,8 @@
 package com.br.puc.carona.service;
 
+import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroUploadImage;
+import com.br.puc.carona.model.Usuario;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,9 @@ import com.br.puc.carona.util.MD5Util;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Service
 @AllArgsConstructor
@@ -32,6 +38,7 @@ public class UsuarioService {
     
     private final AdministradorService adminService;
     private final EstudanteService estudanteService;
+    private final SupabaseStorageService supabaseStorageService;
 
     private final UsuarioMapper mapper;
     private final EstudanteMapper estudanteMapper;
@@ -80,4 +87,21 @@ public class UsuarioService {
 
         return estudanteMapper.toDto(estudante);
     }
+
+    @Transactional
+    public void atualizarImagemUsuario(Long id, MultipartFile file) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontrada("Usuário não encontrado com id: " + id));
+
+        try{
+            final String fileName = "profile_user_photo_" + id;
+            final String url = supabaseStorageService.uploadOrUpdateUserPhoto(file, fileName);
+            usuario.setImgUrl(url);
+        }catch (IOException e){
+            throw new ErroUploadImage("Erro ao fazer upload da imagem de perfil", e);
+        }
+
+        usuarioRepository.save(usuario);
+    }
+
 }

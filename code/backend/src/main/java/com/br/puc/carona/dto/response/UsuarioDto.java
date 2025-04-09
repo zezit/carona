@@ -20,4 +20,5 @@ public class UsuarioDto extends AbstractDto {
     private String email;
     private TipoUsuario tipoUsuario;
     private Status statusCadastro;
+    private String imgUrl;
 }

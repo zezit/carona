@@ -3,10 +3,7 @@ package com.br.puc.carona.controller;
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.br.puc.carona.dto.request.SignupEstudanteRequest;
 import com.br.puc.carona.dto.request.SignupUsuarioRequest;
@@ -22,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 @AllArgsConstructor
 @RestController
@@ -70,4 +68,27 @@ public class UsuarioController {
 
         return ResponseEntity.created(location).build();
     }
+
+    @Operation(summary = "Atualizar imagem de perfil do usuário", description = "Atualiza o campo imgUrl do usuário com uma nova imagem")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Imagem atualizada com sucesso", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Requisição inválida", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor", content = @Content)
+    })
+    @PatchMapping(value = "/{id}/imagem", consumes = "multipart/form-data")
+    public ResponseEntity<Void> atualizarImagemUsuario(
+            @PathVariable Long id,
+            @RequestPart("file") MultipartFile file) {
+
+        log.info("Iniciando atualização de imagem para o usuário com id: {}", id);
+
+        usuarioService.atualizarImagemUsuario(id, file);
+
+        log.info("Imagem atualizada com sucesso para o usuário com id: {}", id);
+        return ResponseEntity.ok().build();
+    }
+
+
+
 }

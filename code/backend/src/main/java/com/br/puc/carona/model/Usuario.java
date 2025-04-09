@@ -43,7 +43,10 @@ public class Usuario extends AbstractEntity implements UserDetails{
     
     @Column(nullable = false)
     private String password;
-    
+
+    @Column(name = "img_url")
+    private String imgUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoUsuario tipoUsuario;
