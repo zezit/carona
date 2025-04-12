@@ -69,7 +69,7 @@ class CaronaControllerTest {
     private CaronaRequest caronaRequest;
     private PerfilMotoristaDto perfilMotoristaDto;
     private Set<EstudanteDto> passageiros;
-    private List<TrajetoDto> trajetorias;
+    private List<TrajetoDto> trajetos;
     private TrajetoDto trajetoPrincipal;
 
     @BeforeEach
@@ -122,8 +122,8 @@ class CaronaControllerTest {
                 .coordenadas(coordenadas)
                 .build();
         
-        trajetorias = new ArrayList<>();
-        trajetorias.add(trajetoPrincipal);
+        trajetos = new ArrayList<>();
+        trajetos.add(trajetoPrincipal);
 
         // Create sample CaronaDto using builder with proper format for dates
         LocalDateTime dataPartida = LocalDateTime.of(2025, 10, 1, 10, 0, 0);
@@ -147,7 +147,7 @@ class CaronaControllerTest {
                 .vagasDisponiveis(2)
                 .distanciaEstimadaKm(15.5)
                 .tempoEstimadoSegundos(1200)
-                .trajetos(trajetorias)
+                .trajetos(new ArrayList<>())
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();
 
@@ -170,6 +170,10 @@ class CaronaControllerTest {
     @DisplayName("POST /carona - Deve criar carona com sucesso")
     void deveCriarCaronaComSucesso() throws Exception {
         // Given
+        List<TrajetoDto> trajetosDtosSemPrincipal = trajetos.stream()
+                .filter(t -> t.getDescricao() == null || !t.getDescricao().equalsIgnoreCase("Principal"))
+                .toList();
+
         when(caronaService.criarCarona(any(CaronaRequest.class)))
                 .thenReturn(caronaDto);
 
@@ -186,7 +190,7 @@ class CaronaControllerTest {
                 .andExpect(jsonPath("$.vagas").value(caronaDto.getVagas()))
                 .andExpect(jsonPath("$.status").value(caronaDto.getStatus().toString()))
                 .andExpect(jsonPath("$.passageiros.length()").value(passageiros.size()))
-                .andExpect(jsonPath("$.trajetorias.length()").value(trajetorias.size()));
+                .andExpect(jsonPath("$.trajetos.length()").value(trajetosDtosSemPrincipal.size()));
 
         verify(caronaService).criarCarona(any(CaronaRequest.class));
     }
@@ -400,7 +404,7 @@ class CaronaControllerTest {
                 .vagasDisponiveis(3)
                 .distanciaEstimadaKm(15.5)
                 .tempoEstimadoSegundos(1200)
-                .trajetos(trajetorias)
+                .trajetos(trajetos)
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();
         
@@ -483,7 +487,7 @@ class CaronaControllerTest {
                 .vagasDisponiveis(2)
                 .distanciaEstimadaKm(15.5)
                 .tempoEstimadoSegundos(1200)
-                .trajetos(trajetorias)
+                .trajetos(trajetos)
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();
         

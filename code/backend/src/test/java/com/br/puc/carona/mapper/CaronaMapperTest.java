@@ -1,6 +1,7 @@
 package com.br.puc.carona.mapper;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +46,9 @@ class CaronaMapperTest {
         // Given
         final Carona carona = CaronaMock.createValidCarona();
         final List<TrajetoDto> trajetosDto = List.of(TrajetoMock.createTrajetoPrincipalDto());
+        final List<TrajetoDto> trajetosSemPrincipal = trajetosDto.stream()
+                .filter(t -> t.getDescricao() == null || !t.getDescricao().equalsIgnoreCase("Principal"))
+                .collect(Collectors.toList());
 
         Mockito.when(trajetoriaMapper.toDto(Mockito.anyList()))
                 .thenReturn(trajetosDto);
@@ -67,7 +71,7 @@ class CaronaMapperTest {
         Assertions.assertEquals(carona.getObservacoes(), dto.getObservacoes());
         Assertions.assertEquals(carona.getDistanciaEstimadaKm(), dto.getDistanciaEstimadaKm());
         Assertions.assertEquals(carona.getTempoEstimadoSegundos(), dto.getTempoEstimadoSegundos());
-        Assertions.assertEquals(trajetosDto, dto.getTrajetos());
+        Assertions.assertEquals(trajetosSemPrincipal, dto.getTrajetos());
         
         Mockito.verify(trajetoriaMapper).toDto(carona.getTrajetos());
     }
