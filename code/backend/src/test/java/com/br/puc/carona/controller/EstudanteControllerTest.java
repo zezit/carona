@@ -51,7 +51,7 @@ class EstudanteControllerTest {
     void setUp() {
         estudanteId = 1L;
         perfilMotoristaRequest = PerfilMotoristaRequestMock.createValidRequest();
-        
+
         // Create sample response DTO
         perfilMotoristaDto = PerfilMotoristaDto.builder()
                 .id(1L)
@@ -72,7 +72,8 @@ class EstudanteControllerTest {
     @DisplayName("POST /estudante/{id}/motorista - Deve cadastrar perfil de motorista com sucesso")
     void deveCadastrarPerfilMotoristaComSucesso() throws Exception {
         // Given
-        Mockito.when(estudanteService.criarPerfilMotorista(Mockito.eq(estudanteId), Mockito.any(PerfilMotoristaRequest.class)))
+        Mockito.when(estudanteService.criarPerfilMotorista(Mockito.eq(estudanteId),
+                Mockito.any(PerfilMotoristaRequest.class)))
                 .thenReturn(perfilMotoristaDto);
 
         // When & Then
@@ -84,18 +85,22 @@ class EstudanteControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(perfilMotoristaDto.getId()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.cnh").value(perfilMotoristaDto.getCnh()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.whatsapp").value(perfilMotoristaDto.getWhatsapp()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.mostrarWhatsapp").value(perfilMotoristaDto.getMostrarWhatsapp()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.mostrarWhatsapp")
+                        .value(perfilMotoristaDto.getMostrarWhatsapp()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.carro.id").value(perfilMotoristaDto.getCarro().getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.carro.modelo").value(perfilMotoristaDto.getCarro().getModelo()));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.carro.modelo")
+                        .value(perfilMotoristaDto.getCarro().getModelo()));
 
-        Mockito.verify(estudanteService).criarPerfilMotorista(Mockito.eq(estudanteId), Mockito.any(PerfilMotoristaRequest.class));
+        Mockito.verify(estudanteService).criarPerfilMotorista(Mockito.eq(estudanteId),
+                Mockito.any(PerfilMotoristaRequest.class));
     }
 
     @Test
     @DisplayName("POST /estudante/{id}/motorista - Deve retornar 404 quando estudante não encontrado")
     void deveRetornar404QuandoEstudanteNaoEncontrado() throws Exception {
         // Given
-        Mockito.when(estudanteService.criarPerfilMotorista(Mockito.eq(estudanteId), Mockito.any(PerfilMotoristaRequest.class)))
+        Mockito.when(estudanteService.criarPerfilMotorista(Mockito.eq(estudanteId),
+                Mockito.any(PerfilMotoristaRequest.class)))
                 .thenThrow(new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId));
 
         // When & Then
@@ -105,14 +110,16 @@ class EstudanteControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
 
-        Mockito.verify(estudanteService).criarPerfilMotorista(Mockito.eq(estudanteId), Mockito.any(PerfilMotoristaRequest.class));
+        Mockito.verify(estudanteService).criarPerfilMotorista(Mockito.eq(estudanteId),
+                Mockito.any(PerfilMotoristaRequest.class));
     }
 
     @Test
     @DisplayName("POST /estudante/{id}/motorista - Deve retornar 400 quando estudante já é motorista")
     void deveRetornar400QuandoEstudanteJaEMotorista() throws Exception {
         // Given
-        Mockito.when(estudanteService.criarPerfilMotorista(Mockito.eq(estudanteId), Mockito.any(PerfilMotoristaRequest.class)))
+        Mockito.when(estudanteService.criarPerfilMotorista(Mockito.eq(estudanteId),
+                Mockito.any(PerfilMotoristaRequest.class)))
                 .thenThrow(new ErroDeCliente(MensagensResposta.ESTUDANTE_JA_E_MOTORISTA));
 
         // When & Then
@@ -122,7 +129,8 @@ class EstudanteControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
 
-        Mockito.verify(estudanteService).criarPerfilMotorista(Mockito.eq(estudanteId), Mockito.any(PerfilMotoristaRequest.class));
+        Mockito.verify(estudanteService).criarPerfilMotorista(Mockito.eq(estudanteId),
+                Mockito.any(PerfilMotoristaRequest.class));
     }
 
     @Test
@@ -140,9 +148,11 @@ class EstudanteControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(perfilMotoristaDto.getId()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.cnh").value(perfilMotoristaDto.getCnh()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.whatsapp").value(perfilMotoristaDto.getWhatsapp()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.mostrarWhatsapp").value(perfilMotoristaDto.getMostrarWhatsapp()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.mostrarWhatsapp")
+                        .value(perfilMotoristaDto.getMostrarWhatsapp()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.carro.id").value(perfilMotoristaDto.getCarro().getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.carro.modelo").value(perfilMotoristaDto.getCarro().getModelo()));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.carro.modelo")
+                        .value(perfilMotoristaDto.getCarro().getModelo()));
 
         Mockito.verify(estudanteService).buscarPerfilMotorista(estudanteId);
     }

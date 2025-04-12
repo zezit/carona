@@ -40,5 +40,5 @@ public class Trajeto extends AbstractEntity {
     private String descricao;
     
     @Column(name = "is_principal")
-    private Boolean isPrincipal;
+    private Boolean principal;
 }

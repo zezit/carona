@@ -45,9 +45,13 @@ public final class MensagensResposta {
     public static final String DATA_PARTIDA_INVALIDA = "carona.data.partida.invalida";
     public static final String DATA_CHEGADA_INVALIDA = "carona.data.chegada.invalida";
     public static final String DATA_CHEGADA_ANTERIOR_PARTIDA = "carona.data.chegada.anterior_partida";
+    public static final String NECESSARIO_INFORMAR_DATA_PARTIDA_CHEGADA = "carona.data.deve_informar_partida_ou_chegada";
     public static final String CARONA_NAO_PERTENCE_AO_MOTORISTA = "carona.nao_pertence_motorista";
     public static final String ALTERACAO_STATUS_CARONA_INVALIDA = "carona.alteracao_status_invalida";
     public static final String CARONA_NAO_PERMITE_ADICIONAR_PASSAGEIRO = "carona.nao_permite_adicionar_passageiro";
+
+    // Mensagens relacionadas a trajetos
+    public static final String TRAJETO_NAO_ENCONTRADO = "carona.trajeto.nao_encontrado";
 
     // Mensagens relacionadas à autenticação
     public static final String LOGIN_INVALIDO = "login.invalido";
@@ -66,6 +70,19 @@ public final class MensagensResposta {
     public static final String PARAMETRO_INVALIDO = "comum.parametro.invalido";
     public static final String PARAMETRO_FALTANTE = "comum.parametro.faltante";
     public static final String ENTIDADE_NAO_ENCONTRADA = "comum.cliente.entidade_nao_encontrada";
+    
+    // Mensagens relacionadas ao upload de arquivos
+    public static final String ARQUIVO_INVALIDO = "arquivo.invalido";
+    public static final String ARQUIVO_VAZIO = "arquivo.vazio";
+    public static final String FORMATO_ARQUIVO_INVALIDO = "arquivo.formato.invalido";
+    public static final String ARQUIVO_MUITO_GRANDE = "arquivo.muito.grande";
+    public static final String IMAGEM_CORROMPIDA = "arquivo.imagem.corrompida";
+    public static final String ERRO_LEITURA_ARQUIVO = "arquivo.erro.leitura";
+    public static final String PROPORCAO_IMAGEM_INVALIDA = "arquivo.imagem.proporcao.invalida";
+    public static final String IMAGEM_MUITO_PEQUENA = "arquivo.imagem.muito.pequena";
+    public static final String IMAGEM_MUITO_GRANDE = "arquivo.imagem.muito.grande";
+    public static final String ERRO_UPLOAD_ARQUIVO = "arquivo.erro.upload";
+    public static final String ERRO_ATUALIZACAO_ARQUIVO = "arquivo.erro.atualizacao";
 
     private MensagensResposta() {
         throw new IllegalStateException("Utility class");

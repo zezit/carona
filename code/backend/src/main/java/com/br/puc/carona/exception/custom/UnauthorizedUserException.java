@@ -1,4 +1,4 @@
-package com.br.puc.carona.exception;
+package com.br.puc.carona.exception.custom;
 
 public class UnauthorizedUserException extends RuntimeException {
 

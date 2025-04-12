@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 
 import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.enums.TipoUsuario;
-import com.br.puc.carona.exception.UnauthenticatedUserException;
-import com.br.puc.carona.exception.UnauthorizedUserException;
+import com.br.puc.carona.exception.custom.UnauthenticatedUserException;
+import com.br.puc.carona.exception.custom.UnauthorizedUserException;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.PerfilMotorista;
 import com.br.puc.carona.model.Usuario;

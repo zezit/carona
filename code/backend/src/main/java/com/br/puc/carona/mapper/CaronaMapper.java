@@ -1,4 +1,4 @@
-package com.br.puc.carona.dto.response;
+package com.br.puc.carona.mapper;
 
 import java.util.List;
 
@@ -6,10 +6,8 @@ import org.springframework.stereotype.Component;
 
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.dto.request.CaronaRequest;
+import com.br.puc.carona.dto.response.CaronaDto;
 import com.br.puc.carona.enums.StatusCarona;
-import com.br.puc.carona.mapper.EstudanteMapper;
-import com.br.puc.carona.mapper.PerfilMotoristaMapper;
-import com.br.puc.carona.mapper.TrajetoMapper;
 import com.br.puc.carona.model.Carona;
 
 import lombok.RequiredArgsConstructor;
@@ -19,8 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class CaronaMapper {
     private final PerfilMotoristaMapper perfilMotoristaMapper;
     private final EstudanteMapper estudanteMapper;
-    private final TrajetoMapper trajetoriaMapper;
-
+    private final TrajetoMapper trajetoMapper;
     public Carona toEntity(final CaronaRequest request) {
         if (request == null) {
             return null;
@@ -40,13 +37,13 @@ public class CaronaMapper {
                 .build();
     }
 
-    public CaronaDto toDto(final Carona viagem) {
-        if (viagem == null) {
+    public CaronaDto toDto(final Carona carona) {
+        if (carona == null) {
             return null;
         }
         
         // Converte todas as trajetórias para DTOs
-        final List<TrajetoDto> trajetoriasDto = trajetoriaMapper.toDto(viagem.getTrajetorias());
+        final List<TrajetoDto> trajetoriasDto = trajetoMapper.toDto(carona.getTrajetos());
         
         // Identifica a trajetória principal (se existir)
         final TrajetoDto trajetoriaPrincipal = trajetoriasDto.stream()
@@ -55,28 +52,28 @@ public class CaronaMapper {
                 .orElse(trajetoriasDto.isEmpty() ? null : trajetoriasDto.get(0));
 
         return CaronaDto.builder()
-                .id(viagem.getId())
-                .motorista(perfilMotoristaMapper.toDto(viagem.getMotorista()))
-                .pontoPartida(viagem.getPontoPartida())
-                .latitudePartida(viagem.getLatitudePartida())
-                .longitudePartida(viagem.getLongitudePartida())
-                .pontoDestino(viagem.getPontoDestino())
-                .latitudeDestino(viagem.getLatitudeDestino())
-                .longitudeDestino(viagem.getLongitudeDestino())
-                .dataHoraPartida(viagem.getDataHoraPartida())
-                .vagas(viagem.getVagas())
-                .status(viagem.getStatus())
-                .observacoes(viagem.getObservacoes())
-                .passageiros(estudanteMapper.toDtos(viagem.getPassageiros()))
-                .vagasDisponiveis(viagem.getVagasDisponiveis())
-                .distanciaEstimadaKm(viagem.getDistanciaEstimadaKm())
-                .tempoEstimadoSegundos(viagem.getTempoEstimadoSegundos())
+                .id(carona.getId())
+                .motorista(perfilMotoristaMapper.toDto(carona.getMotorista()))
+                .pontoPartida(carona.getPontoPartida())
+                .latitudePartida(carona.getLatitudePartida())
+                .longitudePartida(carona.getLongitudePartida())
+                .pontoDestino(carona.getPontoDestino())
+                .latitudeDestino(carona.getLatitudeDestino())
+                .longitudeDestino(carona.getLongitudeDestino())
+                .dataHoraPartida(carona.getDataHoraPartida())
+                .vagas(carona.getVagas())
+                .status(carona.getStatus())
+                .observacoes(carona.getObservacoes())
+                .passageiros(estudanteMapper.toDtos(carona.getPassageiros()))
+                .vagasDisponiveis(carona.getVagasDisponiveis())
+                .distanciaEstimadaKm(carona.getDistanciaEstimadaKm())
+                .tempoEstimadoSegundos(carona.getTempoEstimadoSegundos())
                 .trajetorias(trajetoriasDto)
                 .trajetoriaPrincipal(trajetoriaPrincipal)
-                .dataCriacao(viagem.getDataCriacao())
-                .dataAtualizacao(viagem.getDataAtualizacao())
-                .criadoPor(viagem.getCriadoPor())
-                .atualizadoPor(viagem.getAtualizadoPor())
+                .dataCriacao(carona.getDataCriacao())
+                .dataAtualizacao(carona.getDataAtualizacao())
+                .criadoPor(carona.getCriadoPor())
+                .atualizadoPor(carona.getAtualizadoPor())
                 .build();
     }
 

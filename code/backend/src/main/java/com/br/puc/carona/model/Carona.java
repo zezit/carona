@@ -63,6 +63,9 @@ public class Carona extends AbstractEntity {
     @Column(nullable = false)
     private LocalDateTime dataHoraPartida;
     
+    @Column
+    private LocalDateTime dataHoraChegada;
+    
     @Column(nullable = false)
     private Integer vagas;
     
@@ -93,7 +96,7 @@ public class Carona extends AbstractEntity {
     
     @OneToMany(mappedBy = "carona", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Trajeto> trajetorias = new ArrayList<>();
+    private List<Trajeto> trajetos = new ArrayList<>();
     
     public boolean temVagasDisponiveis() {
         return this.passageiros.size() < this.vagas;
@@ -109,15 +112,15 @@ public class Carona extends AbstractEntity {
     
     public void adicionarTrajeto(final Trajeto trajeto) {
         trajeto.setCarona(this);
-        this.trajetorias.add(trajeto);
+        this.trajetos.add(trajeto);
     }
 
     public void removerTrajeto(final Trajeto trajeto) {
         trajeto.setCarona(null);
-        this.trajetorias.remove(trajeto);
+        this.trajetos.remove(trajeto);
     }
     
     public void removerTodosTrajetos() {
-        this.trajetorias.clear();
+        this.trajetos.clear();
     }
 }

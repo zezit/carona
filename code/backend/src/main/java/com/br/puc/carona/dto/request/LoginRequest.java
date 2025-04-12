@@ -1,5 +1,6 @@
 package com.br.puc.carona.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -13,14 +14,17 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "Dados para autenticação de usuário")
 public class LoginRequest {
-    
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email should be valid")
+
+    @Email(message = "{comum.atributos.email.invalido}")
+    @NotBlank(message = "{comum.atributos.email.obrigatorio}")
+    @Schema(description = "E-mail do usuário, utilizado como identificador único", example = "estudante@pucminas.br")
     private String email;
 
-    @NotBlank(message = "password is required")
+    @NotBlank(message = "{comum.atributos.senha.obrigatorio}")
     @Size(min = 32, max = 32, message = "comum.atributos.senha.tamanho_invalido")
     @Pattern(regexp = "^[a-fA-F0-9]{32}$", message = "senha.formato.invalido")
+    @Schema(description = "Senha do usuário", example = "S3nh@_S3gur@")
     private String password;
 }

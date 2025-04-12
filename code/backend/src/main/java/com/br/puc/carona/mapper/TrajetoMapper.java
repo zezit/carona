@@ -70,7 +70,7 @@ public class TrajetoMapper {
         trajeto.setDescricao(dto.getDescricao());
         trajeto.setDistanciaKm(dto.getDistanciaKm());
         trajeto.setTempoSegundos(dto.getTempoSegundos());
-        trajeto.setIsPrincipal(dto.getDescricao() != null && dto.getDescricao().equalsIgnoreCase("Principal"));
+        trajeto.setPrincipal(dto.getDescricao() != null && dto.getDescricao().equalsIgnoreCase("Principal"));
         
         try {
             // Converter List<List<Double>> para string JSON
