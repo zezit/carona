@@ -42,6 +42,6 @@ public class CaronaDto extends AbstractDto {
     private Double distanciaEstimadaKm;
     private Integer tempoEstimadoSegundos;
     @Builder.Default
-    private List<TrajetoDto> trajetorias = new ArrayList<>();
-    private TrajetoDto trajetoriaPrincipal;
+    private List<TrajetoDto> trajetos = new ArrayList<>();
+    private TrajetoDto trajetoPrincipal;
 }

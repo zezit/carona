@@ -2,13 +2,20 @@ package com.br.puc.carona.model;
 
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,33 +25,33 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @MappedSuperclass
-public abstract class AbstractEntity {
+public class AbstractEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_generator")
     private Long id;
-    
-    @Column(name = "data_criacao", updatable = false)
-    private LocalDateTime dataCriacao;
-    
-    @Column(name = "data_atualizacao")
-    private LocalDateTime dataAtualizacao;
 
-    @Column(name = "criado_por")
+    @CreatedBy
+    @Column(updatable = false, name = "criado_por")
     private String criadoPor;
 
+    @LastModifiedBy
     @Column(name = "atualizado_por")
     private String atualizadoPor;
-    
-    @PrePersist
-    protected void onCreate() {
-        dataCriacao = LocalDateTime.now();
-        dataAtualizacao = LocalDateTime.now();
-    }
-    
-    @PreUpdate
-    protected void onUpdate() {
-        dataAtualizacao = LocalDateTime.now();
+
+    @CreatedDate
+    @Column(name = "data_criacao", updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime dataCriacao;
+
+    @LastModifiedDate
+    @Column(name = "data_atualizacao")
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime dataAtualizacao;
+
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
+        this.dataAtualizacao = dataAtualizacao;
     }
 }

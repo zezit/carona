@@ -60,7 +60,7 @@ public class Carona extends AbstractEntity {
     @Column
     private Double longitudeDestino;
     
-    @Column(nullable = false)
+    @Column
     private LocalDateTime dataHoraPartida;
     
     @Column

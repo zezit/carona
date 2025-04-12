@@ -43,13 +43,13 @@ public class CaronaMapper {
         }
         
         // Converte todas as trajetórias para DTOs
-        final List<TrajetoDto> trajetoriasDto = trajetoMapper.toDto(carona.getTrajetos());
+        final List<TrajetoDto> trajetoDtos = trajetoMapper.toDto(carona.getTrajetos());
         
         // Identifica a trajetória principal (se existir)
-        final TrajetoDto trajetoriaPrincipal = trajetoriasDto.stream()
+        final TrajetoDto trajetoPrincipal = trajetoDtos.stream()
                 .filter(t -> t.getDescricao() != null && t.getDescricao().equalsIgnoreCase("Principal"))
                 .findFirst()
-                .orElse(trajetoriasDto.isEmpty() ? null : trajetoriasDto.get(0));
+                .orElse(trajetoDtos.isEmpty() ? null : trajetoDtos.get(0));
 
         return CaronaDto.builder()
                 .id(carona.getId())
@@ -68,8 +68,10 @@ public class CaronaMapper {
                 .vagasDisponiveis(carona.getVagasDisponiveis())
                 .distanciaEstimadaKm(carona.getDistanciaEstimadaKm())
                 .tempoEstimadoSegundos(carona.getTempoEstimadoSegundos())
-                .trajetorias(trajetoriasDto)
-                .trajetoriaPrincipal(trajetoriaPrincipal)
+                .trajetos(trajetoDtos.stream()
+                        .filter(t -> t.getDescricao() != null && !t.getDescricao().equalsIgnoreCase("Principal"))
+                        .toList())
+                .trajetoPrincipal(trajetoPrincipal)
                 .dataCriacao(carona.getDataCriacao())
                 .dataAtualizacao(carona.getDataAtualizacao())
                 .criadoPor(carona.getCriadoPor())

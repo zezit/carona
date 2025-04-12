@@ -67,7 +67,7 @@ class CaronaMapperTest {
         Assertions.assertEquals(carona.getObservacoes(), dto.getObservacoes());
         Assertions.assertEquals(carona.getDistanciaEstimadaKm(), dto.getDistanciaEstimadaKm());
         Assertions.assertEquals(carona.getTempoEstimadoSegundos(), dto.getTempoEstimadoSegundos());
-        Assertions.assertEquals(trajetosDto, dto.getTrajetorias());
+        Assertions.assertEquals(trajetosDto, dto.getTrajetos());
         
         Mockito.verify(trajetoriaMapper).toDto(carona.getTrajetos());
     }
@@ -185,7 +185,7 @@ class CaronaMapperTest {
         final CaronaDto dto = mapper.toDto(carona);
 
         // Then
-        Assertions.assertEquals(trajetoPrincipal, dto.getTrajetoriaPrincipal());
+        Assertions.assertEquals(trajetoPrincipal, dto.getTrajetoPrincipal());
     }
 
     @Test
@@ -212,7 +212,7 @@ class CaronaMapperTest {
         final CaronaDto dto = mapper.toDto(carona);
 
         // Then
-        Assertions.assertEquals(trajeto1, dto.getTrajetoriaPrincipal());
+        Assertions.assertEquals(trajeto1, dto.getTrajetoPrincipal());
     }
 
     @Test
@@ -229,6 +229,6 @@ class CaronaMapperTest {
         final CaronaDto dto = mapper.toDto(carona);
 
         // Then
-        Assertions.assertNull(dto.getTrajetoriaPrincipal());
+        Assertions.assertNull(dto.getTrajetoPrincipal());
     }
 }

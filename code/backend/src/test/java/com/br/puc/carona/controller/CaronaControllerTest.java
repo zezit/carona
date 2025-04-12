@@ -70,7 +70,7 @@ class CaronaControllerTest {
     private PerfilMotoristaDto perfilMotoristaDto;
     private Set<EstudanteDto> passageiros;
     private List<TrajetoDto> trajetorias;
-    private TrajetoDto trajetoriaPrincipal;
+    private TrajetoDto trajetoPrincipal;
 
     @BeforeEach
     void setUp() {
@@ -115,7 +115,7 @@ class CaronaControllerTest {
         coordenadas.add(Arrays.asList(-23.5550, -46.6400));
         coordenadas.add(Arrays.asList(-23.5605, -46.6450));
         
-        trajetoriaPrincipal = TrajetoDto.builder()
+        trajetoPrincipal = TrajetoDto.builder()
                 .descricao("Principal")
                 .distanciaKm(15.5)
                 .tempoSegundos(1200)
@@ -123,7 +123,7 @@ class CaronaControllerTest {
                 .build();
         
         trajetorias = new ArrayList<>();
-        trajetorias.add(trajetoriaPrincipal);
+        trajetorias.add(trajetoPrincipal);
 
         // Create sample CaronaDto using builder with proper format for dates
         LocalDateTime dataPartida = LocalDateTime.of(2025, 10, 1, 10, 0, 0);
@@ -147,8 +147,8 @@ class CaronaControllerTest {
                 .vagasDisponiveis(2)
                 .distanciaEstimadaKm(15.5)
                 .tempoEstimadoSegundos(1200)
-                .trajetorias(trajetorias)
-                .trajetoriaPrincipal(trajetoriaPrincipal)
+                .trajetos(trajetorias)
+                .trajetoPrincipal(trajetoPrincipal)
                 .build();
 
         // Create sample CaronaRequest using builder
@@ -400,8 +400,8 @@ class CaronaControllerTest {
                 .vagasDisponiveis(3)
                 .distanciaEstimadaKm(15.5)
                 .tempoEstimadoSegundos(1200)
-                .trajetorias(trajetorias)
-                .trajetoriaPrincipal(trajetoriaPrincipal)
+                .trajetos(trajetorias)
+                .trajetoPrincipal(trajetoPrincipal)
                 .build();
         
         when(caronaService.atualizarCarona(eq(caronaId), any(CaronaRequest.class)))
@@ -483,8 +483,8 @@ class CaronaControllerTest {
                 .vagasDisponiveis(2)
                 .distanciaEstimadaKm(15.5)
                 .tempoEstimadoSegundos(1200)
-                .trajetorias(trajetorias)
-                .trajetoriaPrincipal(trajetoriaPrincipal)
+                .trajetos(trajetorias)
+                .trajetoPrincipal(trajetoPrincipal)
                 .build();
         
         when(caronaService.alterarStatusCarona(caronaId, novoStatus))
