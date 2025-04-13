@@ -1,6 +1,13 @@
 package com.br.puc.carona.model;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import com.br.puc.carona.enums.Status;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -40,5 +47,14 @@ public class Estudante extends Usuario {
 
     public boolean isMotorista() {
         return perfilMotorista != null;
+    }
+
+    public boolean isAccountApproved() {
+        return Status.APROVADO.equals(getStatusCadastro());
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return isMotorista() ? List.of(new SimpleGrantedAuthority("ROLE_MOTORISTA")) : List.of(new SimpleGrantedAuthority("ROLE_PASSAGEIRO"));
     }
 }

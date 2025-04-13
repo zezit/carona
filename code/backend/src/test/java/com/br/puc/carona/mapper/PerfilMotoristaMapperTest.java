@@ -74,7 +74,7 @@ class PerfilMotoristaMapperTest {
                .thenReturn(carroDto);
 
         // When
-        final PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(perfilMotorista);
+        final PerfilMotoristaDto dto = perfilMotoristaMapper.toDto(perfilMotorista);
 
         // Then
         Assertions.assertNotNull(dto);
@@ -138,7 +138,7 @@ class PerfilMotoristaMapperTest {
     @DisplayName("Deve retornar null quando perfilMotorista for null")
     void deveRetornarNullQuandoPerfilMotoristaForNull() {
         // When
-        final PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(null);
+        final PerfilMotoristaDto dto = perfilMotoristaMapper.toDto(null);
         
         // Then
         Assertions.assertNull(dto);
@@ -165,7 +165,7 @@ class PerfilMotoristaMapperTest {
                 .build();
                 
         // When
-        final PerfilMotoristaDto dto = perfilMotoristaMapper.tDto(perfilSemCarro);
+        final PerfilMotoristaDto dto = perfilMotoristaMapper.toDto(perfilSemCarro);
         
         // Then
         Assertions.assertNotNull(dto);

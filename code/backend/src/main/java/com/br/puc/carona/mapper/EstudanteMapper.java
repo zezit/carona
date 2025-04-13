@@ -1,5 +1,8 @@
 package com.br.puc.carona.mapper;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 import com.br.puc.carona.dto.request.SignupEstudanteRequest;
@@ -36,7 +39,7 @@ public class EstudanteMapper {
         dto.setAtualizadoPor(estudante.getAtualizadoPor());
 
         if (estudante.getPerfilMotorista() != null) {
-            dto.setPerfilMotorista(perfilMotoristaMapper.tDto(estudante.getPerfilMotorista()));
+            dto.setPerfilMotorista(perfilMotoristaMapper.toDto(estudante.getPerfilMotorista()));
         }
 
         return dto;
@@ -59,5 +62,15 @@ public class EstudanteMapper {
         estudante.setTipoUsuario(TipoUsuario.ESTUDANTE);
         
         return estudante;
+    }
+
+    public Set<EstudanteDto> toDtos(final Set<Estudante> passageiros) {
+        if (passageiros == null) {
+            return null;
+        }
+        
+        return passageiros.stream()
+                .map(this::toDto)
+                .collect(Collectors.toSet());
     }
 }

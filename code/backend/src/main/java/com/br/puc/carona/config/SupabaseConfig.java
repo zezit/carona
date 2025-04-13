@@ -14,8 +14,8 @@ public class SupabaseConfig {
     @Value("${supabase.code}")
     private String supabaseCode;
 
-    @Bean
-    public WebClient webClient(WebClient.Builder builder) {
+    @Bean(name = "supabaseWebClient")
+    public WebClient supabaseWebClient(WebClient.Builder builder) {
         String baseUrl = "https://" + supabaseCode + ".supabase.co";
 
         return builder.baseUrl(baseUrl)

@@ -39,6 +39,11 @@ public class AdministradorService {
     public void reviewUserRegistration(final Long userId, final Status status) {
         log.info("Inicio revisão do registro do usuário com ID: {} e status: {}", userId, status);
 
+        // Verificar se o status é válido
+        if (status == null || status == Status.PENDENTE) {
+            throw new ErroDeCliente(MensagensResposta.STATUS_CADASTRO_INVALIDO);
+        }
+
         // Verificar se o usuário existe
         final Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID));

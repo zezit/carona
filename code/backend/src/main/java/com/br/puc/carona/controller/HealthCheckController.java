@@ -29,7 +29,7 @@ public class HealthCheckController {
     public ResponseEntity<Map<String, Object>> ping() {
         log.info("Recebida requisição de ping");
         
-        Map<String, Object> response = new HashMap<>();
+        final Map<String, Object> response = new HashMap<>();
         response.put("status", "UP");
         response.put("message", "Serviço funcionando normalmente");
         response.put("timestamp", LocalDateTime.now().toString());

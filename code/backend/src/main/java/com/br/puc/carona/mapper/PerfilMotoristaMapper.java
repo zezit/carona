@@ -29,7 +29,7 @@ public class PerfilMotoristaMapper {
         return perfilMotorista;
     }
 
-    public PerfilMotoristaDto tDto(final PerfilMotorista perfilMotorista) {
+    public PerfilMotoristaDto toDto(final PerfilMotorista perfilMotorista) {
         if (perfilMotorista == null) {
             return null;
         }

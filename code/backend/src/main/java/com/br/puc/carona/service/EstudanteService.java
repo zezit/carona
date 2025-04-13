@@ -84,7 +84,7 @@ public class EstudanteService {
         repository.save(estudante);
         log.info("Perfil de motorista criado com sucesso para estudante ID: {}", estudanteId);
 
-        return perfilMotoristaMapper.tDto(perfilMotorista);
+        return perfilMotoristaMapper.toDto(perfilMotorista);
     }
 
     public PerfilMotoristaDto buscarPerfilMotorista(final Long estudanteId) {
@@ -95,7 +95,7 @@ public class EstudanteService {
             throw new ErroDeCliente(MensagensResposta.ESTUDANTE_NAO_E_MOTORISTA);
         }
 
-        return perfilMotoristaMapper.tDto(estudante.getPerfilMotorista());
+        return perfilMotoristaMapper.toDto(estudante.getPerfilMotorista());
     }
 
     public Page<EstudanteDto> buscarTodosOsEstudantes(final Pageable pageable) {
@@ -220,7 +220,7 @@ public class EstudanteService {
         perfilMotoristaRepository.save(perfilMotorista);
         log.info("Perfil de motorista atualizado com sucesso para estudante ID: {}", estudanteId);
 
-        return perfilMotoristaMapper.tDto(perfilMotorista);
+        return perfilMotoristaMapper.toDto(perfilMotorista);
     }
     
     private void atualizarDadosCarro(final Carro carro, final CarroRequest carroRequest) {

@@ -24,7 +24,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-
 @Data
 @SuperBuilder
 @NoArgsConstructor
@@ -34,13 +33,13 @@ import java.util.List;
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "usuario")
 @SequenceGenerator(name = "seq_generator", sequenceName = "usuario_seq", allocationSize = 1)
-public class Usuario extends AbstractEntity implements UserDetails{
+public class Usuario extends AbstractEntity implements UserDetails {
     @Column(nullable = false)
     private String nome;
-    
+
     @Column(nullable = false, unique = true)
     private String email;
-    
+
     @Column(nullable = false)
     private String password;
 
@@ -58,9 +57,10 @@ public class Usuario extends AbstractEntity implements UserDetails{
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if(this.tipoUsuario == TipoUsuario.ADMINISTRADOR) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        else  return List.of(new SimpleGrantedAuthority("ROLE_USER"));
-
+        if (this.tipoUsuario != null && "ADMINISTRADOR".equals(this.tipoUsuario.name())) {
+            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_PASSAGEIRO"));
     }
 
     @Override

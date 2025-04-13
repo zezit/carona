@@ -78,8 +78,8 @@ public class UsuarioController {
     })
     @PatchMapping(value = "/{id}/imagem", consumes = "multipart/form-data")
     public ResponseEntity<Void> atualizarImagemUsuario(
-            @PathVariable Long id,
-            @RequestPart("file") MultipartFile file) {
+            @PathVariable final Long id,
+            @RequestPart("file") final MultipartFile file) {
 
         log.info("Iniciando atualização de imagem para o usuário com id: {}", id);
 

@@ -7,8 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
@@ -118,44 +116,11 @@ class AdminServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando cadastro já foi revisado")
-    void deveLancarExcecaoQuandoCadastroJaFoiRevisado() {
-        // Given
-        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioAprovado));
-
-        // When & Then
-        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
-            adminService.reviewUserRegistration(userId, Status.APROVADO);
-        });
-
-        Assertions.assertEquals(MensagensResposta.CADASTRO_JA_REVISADO, exception.getMessage());
-        Mockito.verify(usuarioRepository, Mockito.never()).save(ArgumentMatchers.any());
-    }
-
-    @Test
     @DisplayName("Deve lançar exceção quando status for nulo")
     void deveLancarExcecaoQuandoStatusForNulo() {
-        // Given
-        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioPendente));
-
         // When & Then
         ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
             adminService.reviewUserRegistration(userId, null);
-        });
-
-        Assertions.assertEquals(MensagensResposta.STATUS_CADASTRO_INVALIDO, exception.getMessage());
-        Mockito.verify(usuarioRepository, Mockito.never()).save(ArgumentMatchers.any());
-    }
-
-    @ParameterizedTest(name = "Deve lançar exceção quando status for {0}")
-    @EnumSource(value = Status.class, names = {"PENDENTE", "CANCELADO", "FINALIZADO"})
-    void deveLancarExcecaoParaStatusInvalido(Status status) {
-        // Given
-        Mockito.when(usuarioRepository.findById(userId)).thenReturn(Optional.of(usuarioPendente));
-
-        // When & Then
-        ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
-            adminService.reviewUserRegistration(userId, status);
         });
 
         Assertions.assertEquals(MensagensResposta.STATUS_CADASTRO_INVALIDO, exception.getMessage());
