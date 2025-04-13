@@ -18,6 +18,7 @@ import RidesPage from '../pages/RidesPage';
 import CreateDriverProfilePage from '../pages/CreateDriverProfilePage';
 import UpdateProfilePage from '../pages/UpdateProfilePage';
 import UpdateDriverProfilePage from '../pages/UpdateDriverProfilePage';
+import RegisterRidePage from '../pages/RegisterRidePage';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -126,6 +127,7 @@ const MainStack = () => (
     <Stack.Screen name="CreateDriverProfile" component={CreateDriverProfilePage} />
     <Stack.Screen name="UpdateProfile" component={UpdateProfilePage} />
     <Stack.Screen name="UpdateDriverProfile" component={UpdateDriverProfilePage} />
+    <Stack.Screen name="RegisterRide" component={RegisterRidePage}/>
   </Stack.Navigator>
 );
 
