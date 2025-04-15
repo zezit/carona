@@ -1,10 +1,8 @@
 package com.br.puc.carona.service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.br.puc.carona.exception.custom.ErroUploadImage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,7 +29,6 @@ import com.br.puc.carona.repository.PerfilMotoristaRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -40,8 +37,6 @@ public class EstudanteService {
 
     private final EstudanteRepository repository;
     private final PerfilMotoristaRepository perfilMotoristaRepository;
-
-    private final SupabaseStorageService supabaseStorageService;
 
     private final EstudanteMapper mapper;
     private final PerfilMotoristaMapper perfilMotoristaMapper;
