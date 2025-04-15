@@ -85,7 +85,7 @@ public class EstudanteController {
         return ResponseEntity.ok(estudante);
     }
 
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{id}")
     @Operation(summary = "Atualizar estudante", description = "Atualiza os dados de um estudante")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Estudante atualizado com sucesso"),
@@ -94,11 +94,10 @@ public class EstudanteController {
     })
     public ResponseEntity<EstudanteDto> atualizarEstudante(
             @PathVariable Long id,
-            @RequestPart("dados") @Valid EstudanteUpdateRequest request,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestBody @Valid EstudanteUpdateRequest request) {
 
         log.info("Atualizando estudante com ID: {}", id);
-        EstudanteDto estudanteAtualizado = estudanteService.atualizarEstudante(id, request, file);
+        EstudanteDto estudanteAtualizado = estudanteService.atualizarEstudante(id, request);
         return ResponseEntity.ok(estudanteAtualizado);
     }
 

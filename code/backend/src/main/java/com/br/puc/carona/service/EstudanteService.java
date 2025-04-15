@@ -114,7 +114,7 @@ public class EstudanteService {
     }
 
     @Transactional
-    public EstudanteDto atualizarEstudante(final Long id, final EstudanteUpdateRequest request, MultipartFile file) {
+    public EstudanteDto atualizarEstudante(final Long id, final EstudanteUpdateRequest request) {
         log.info("Atualizando estudante com ID: {}", id);
         Estudante estudante = repository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, id));
@@ -135,17 +135,6 @@ public class EstudanteService {
 
         if (request.getCurso() != null) {
             estudante.setCurso(request.getCurso());
-        }
-
-        if (file != null && !file.isEmpty()) {
-            try{
-                final String fileName = "profile_photo_student_" + id;
-                final String url = supabaseStorageService.uploadOrUpdateUserPhoto(file, fileName);
-                estudante.setImgUrl(url);
-            }catch (IOException e){
-                throw new ErroUploadImage("Erro ao fazer upload da imagem de perfil", e);
-            }
-
         }
 
         repository.save(estudante);
