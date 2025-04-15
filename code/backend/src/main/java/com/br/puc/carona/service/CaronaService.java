@@ -207,7 +207,7 @@ public class CaronaService {
             throw new ErroDeCliente(MensagensResposta.ALTERACAO_STATUS_CARONA_INVALIDA);
         }
 
-        if (StatusCarona.CANCELADA.equals(carona.getStatus()) || StatusCarona.CANCELADA.equals(status)) {
+        if (StatusCarona.CANCELADA.equals(carona.getStatus()) || StatusCarona.FINALIZADA.equals(carona.getStatus())) {
             // Não é permitido alterar o status de uma carona CANCELADA ou FINALIZADA
             throw new ErroDeCliente(MensagensResposta.ALTERACAO_STATUS_CARONA_INVALIDA);
         }

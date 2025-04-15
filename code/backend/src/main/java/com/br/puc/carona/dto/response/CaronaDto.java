@@ -44,4 +44,19 @@ public class CaronaDto extends AbstractDto {
     @Builder.Default
     private List<TrajetoDto> trajetos = new ArrayList<>();
     private TrajetoDto trajetoPrincipal;
+    
+    public String toStringBaseInfo() {
+        return new StringBuilder()
+                .append("CaronaDto{")
+                .append("id=").append(getId())
+                .append(", motorista=").append(motorista != null ? motorista.toStringBaseInfo() : null)
+                .append(", pontoPartida='").append(pontoPartida).append('\'')
+                .append(", pontoDestino='").append(pontoDestino).append('\'')
+                .append(", dataHoraPartida=").append(dataHoraPartida)
+                .append(", dataHoraChegada=").append(dataHoraChegada)
+                .append(", vagas=").append(vagas)
+                .append(", status=").append(status)
+                .append('}')
+                .toString();
+    }
 }

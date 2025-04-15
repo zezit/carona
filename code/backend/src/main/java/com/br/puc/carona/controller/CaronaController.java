@@ -216,7 +216,7 @@ public class CaronaController {
         public ResponseEntity<CaronaDto> buscarCarona(@PathVariable final Long id) {
                 log.info("Buscando carona com ID: {}", id);
                 final CaronaDto caronaDto = caronaService.buscarCaronaPorId(id);
-                log.info("Carona encontrada: {}", caronaDto);
+                log.info("Carona encontrada: {}", caronaDto.toStringBaseInfo());
                 return ResponseEntity.ok(caronaDto);
         }
 
