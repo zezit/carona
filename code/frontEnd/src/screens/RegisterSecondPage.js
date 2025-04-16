@@ -1,6 +1,6 @@
 import { Text, View, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Modal, Animated, Keyboard } from "react-native";
 import React, { useState, useEffect, useRef } from 'react';
-import { commonStyles } from '../styles/commonStyles';
+import { commonStyles } from '../theme/styles/commonStyles';
 import useAuth from '../hooks/useAuth';
 import { MaterialIcons } from '@expo/vector-icons'; // Make sure to install expo/vector-icons
 

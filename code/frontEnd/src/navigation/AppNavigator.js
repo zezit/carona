@@ -7,21 +7,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '../contexts/AuthContext';
 
 // Auth screens
-import LoginPage from '../pages/LoginPage';
-import RegisterPage from '../pages/RegisterPage';
-import RegisterSecondPage from '../pages/RegisterSecondPage';
+import LoginPage from '../screens/LoginPage';
+import RegisterPage from '../screens/RegisterPage';
+import RegisterSecondPage from '../screens/RegisterSecondPage';
 
 // Main app screens
-import HomePage from '../pages/HomePage';
-import ProfilePage from '../pages/ProfilePage';
-import RidesPage from '../pages/RidesPage';
-import CreateDriverProfilePage from '../pages/CreateDriverProfilePage';
-import UpdateProfilePage from '../pages/UpdateProfilePage';
-import UpdateDriverProfilePage from '../pages/UpdateDriverProfilePage';
-import RegisterRidePage from '../pages/RegisterRidePage';
-import RideDetailsPage from '../pages/RideDetailsPage';
-import RideModeSelectionPage from '../pages/RideModeSelectionPage';
-import RequestRidePage from '../pages/RequestRidePage';
+import HomePage from '../screens/HomePage';
+import ProfilePage from '../screens/ProfilePage';
+import RidesPage from '../screens/RidesPage';
+import CreateDriverProfilePage from '../screens/CreateDriverProfilePage';
+import UpdateProfilePage from '../screens/UpdateProfilePage';
+import UpdateDriverProfilePage from '../screens/UpdateDriverProfilePage';
+import RegisterRidePage from '../screens/RegisterRidePage';
+import RideDetailsPage from '../screens/RideDetailsPage';
+import RideModeSelectionPage from '../screens/RideModeSelectionPage';
+import RequestRidePage from '../screens/RequestRidePage';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

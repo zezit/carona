@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthContext } from '../contexts/AuthContext';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/api/apiClient';
 import { Ionicons } from '@expo/vector-icons';
 
 const UpdateProfilePage = ({ navigation, route }) => {

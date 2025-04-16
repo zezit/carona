@@ -14,7 +14,8 @@ import {
   View
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import { apiClient } from '../api/apiClient';
+import Reanimated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { apiClient } from '../services/api/apiClient';
 import RideFormBottomSheet from '../components/ride/RideFormBottomSheet';
 import { useAuthContext } from '../contexts/AuthContext';
 
@@ -43,8 +44,15 @@ const RegisterRidePage = () => {
   // Track the bottom sheet position/index
   const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
   
-  // Animated value for button opacity
-  const centerButtonOpacity = useRef(new Animated.Value(1)).current;
+  // Animated value for button opacity - changed from useRef(new Animated.Value(1)) to useSharedValue(1)
+  const centerButtonOpacity = useSharedValue(1);
+
+  // Define the animated style using Reanimated
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: centerButtonOpacity.value
+    };
+  });
 
   // State for route info display
   const [showRouteInfo, setShowRouteInfo] = useState(false);
@@ -70,17 +78,9 @@ const RegisterRidePage = () => {
   useEffect(() => {
     // Show button only when bottom sheet is at the first (smallest) position
     if (bottomSheetIndex === 0) {
-      Animated.timing(centerButtonOpacity, {
-        toValue: 1,
-        duration: 0.1,
-        useNativeDriver: true
-      }).start();
+      centerButtonOpacity.value = withTiming(1, { duration: 100 });
     } else {
-      Animated.timing(centerButtonOpacity, {
-        toValue: 0,
-        duration: 0.1,
-        useNativeDriver: true
-      }).start();
+      centerButtonOpacity.value = withTiming(0, { duration: 100 });
     }
   }, [bottomSheetIndex, centerButtonOpacity]);
 
@@ -459,19 +459,6 @@ const RegisterRidePage = () => {
       >
         <Ionicons name="arrow-back" size={24} color="#333" />
       </TouchableOpacity>
-      
-      <Animated.View style={[
-        styles.centerButtonContainer,
-        { opacity: centerButtonOpacity }
-      ]}>
-        <TouchableOpacity
-          style={styles.centerButton}
-          onPress={centerMapOnLocations}
-          disabled={bottomSheetIndex !== 0}
-        >
-          <Ionicons name="locate" size={24} color="#333" />
-        </TouchableOpacity>
-      </Animated.View>
       
       <RideFormBottomSheet
         ref={bottomSheetRef}

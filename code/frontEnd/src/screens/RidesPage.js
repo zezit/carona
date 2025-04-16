@@ -9,8 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '../contexts/AuthContext';
-import { apiClient } from '../api/apiClient';
-import commonStyles from '../styles/commonStyles';
+import { apiClient } from '../services/api/apiClient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const RidesPage = ({ route, navigation }) => {

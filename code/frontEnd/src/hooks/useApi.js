@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/api/apiClient';
 
 /**
  * Custom hook for handling API requests with loading and error states

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, Alert, TouchableOpacity, ActivityIndicator, Animated, Keyboard } from 'react-native';
-import { commonStyles } from '../styles/commonStyles';
+import { commonStyles } from '../theme/styles/commonStyles';
 import useAuth from '../hooks/useAuth';
 import * as crypto from 'crypto-js';
 

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '../contexts/AuthContext';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/api/apiClient';
 import { Image } from 'react-native';
 
 const ProfilePage = ({ navigation }) => {

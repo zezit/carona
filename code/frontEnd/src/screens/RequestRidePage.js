@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/api/apiClient';
 import { useAuthContext } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');

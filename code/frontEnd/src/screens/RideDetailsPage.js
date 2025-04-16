@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useAuthContext } from '../contexts/AuthContext';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/api/apiClient';
 import { BlurView } from 'expo-blur';
 
 const RideDetailsPage = ({ route, navigation }) => {

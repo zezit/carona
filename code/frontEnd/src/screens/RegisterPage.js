@@ -1,6 +1,6 @@
 import { Text, View, TextInput, TouchableOpacity, Alert, ScrollView, Animated, Keyboard } from "react-native";
 import React, { useState, useRef, useEffect } from 'react';
-import { commonStyles } from '../styles/commonStyles';
+import { commonStyles } from '../theme/styles/commonStyles';
 
 export default function RegisterPage({ navigation }) {
   const [username, setUsername] = useState("");

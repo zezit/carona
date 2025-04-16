@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as crypto from 'crypto-js';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/api/apiClient';
 
 // Create auth context
 const AuthContext = createContext(null);

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '../contexts/AuthContext';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/api/apiClient';
 
 const RideModeSelectionPage = ({ navigation }) => {
   const { user, authToken } = useAuthContext();
