@@ -1,11 +1,10 @@
 import axios from 'axios';
-import {API_BASE_URL} from '@env';
+import { API_BASE_URL } from '@env';
+import errorMessages from '../../constants/errors.json';
 
 // Determine the base URL based on environment
 const getBaseUrl = () => {
-  return API_BASE_URL;
-  // Fallback for development if needed
-  // return API_BASE_URL;;
+  return 'https://2801-189-71-58-174.ngrok-free.app/api';
 };
 
 const BASE_URL = getBaseUrl();
@@ -23,6 +22,22 @@ const axiosInstance = axios.create({
   headers: defaultHeaders
 });
 
+// Get user-friendly error message from error code
+const getUserFriendlyErrorMessage = (errorCode, statusCode) => {
+  // First try to get specific error message by code
+  if (errorCode && errorMessages.errors[errorCode]) {
+    return errorMessages.errors[errorCode];
+  }
+
+  // If no specific error message, try to get by status code
+  if (statusCode && errorMessages.statusCodes[statusCode]) {
+    return errorMessages.statusCodes[statusCode];
+  }
+
+  // Default error message
+  return 'Ocorreu um erro. Por favor, tente novamente.';
+};
+
 // Response wrapper
 const formatResponse = (response) => {
   return {
@@ -33,74 +48,65 @@ const formatResponse = (response) => {
   };
 };
 
-// Error wrapper
+// Error wrapper with improved error handling
 const formatError = (error) => {
+  // Log error details for debugging
   console.log('API Error:', {
     url: error.config?.url,
     method: error.config?.method,
     error: error.message,
-    body: error.response.data,
+    body: error.response?.data,
     status: error.response?.status,
   });
-  
+
   // Default error message
   let errorMessage = 'Erro de conexão com o servidor';
   let statusCode = 500;
-  
+  let errorCode = null;
+  let errorDetails = null;
+
   if (error.response) {
     // Server responded with an error status code
     statusCode = error.response.status;
-    
+
     // Try to get message from response body
     const errorData = error.response.data;
+
     if (errorData) {
-      if (typeof errorData === 'string') {
-        errorMessage = errorData;
-      } else if (errorData.message) {
-        errorMessage = errorData.message;
-      } else if (errorData.error) {
-        errorMessage = errorData.error;
+      // Handle specific error format from your API
+      if (errorData.codigo) {
+        errorCode = errorData.codigo;
+        errorDetails = errorData;
+      }
+      // Handle nested error objects
+      else if (errorData.body && errorData.body.codigo) {
+        errorCode = errorData.body.codigo;
+        errorDetails = errorData.body;
       }
     }
-    
-    // Fallback error messages based on status code
-    if (!errorMessage || errorMessage === '') {
-      switch (statusCode) {
-        case 400:
-          errorMessage = 'Requisição inválida';
-          break;
-        case 401:
-          errorMessage = 'Não autorizado';
-          break;
-        case 403:
-          errorMessage = 'Acesso negado';
-          break;
-        case 404:
-          errorMessage = 'Recurso não encontrado';
-          break;
-        case 422:
-          errorMessage = 'Dados inválidos';
-          break;
-        case 500:
-          errorMessage = 'Erro interno do servidor';
-          break;
-        default:
-          errorMessage = `Erro (${statusCode})`;
-      }
-    }
+
+    // Get user-friendly error message
+    errorMessage = getUserFriendlyErrorMessage(errorCode, statusCode);
+
   } else if (error.request) {
     // Request was made but no response was received
-    errorMessage = 'Sem resposta do servidor';
-  } else {
-    // Something happened in setting up the request
-    errorMessage = error.message || 'Erro ao processar requisição';
+    errorMessage = errorMessages.networkErrors.connection;
+  } else if (error.message) {
+    // Handle specific network errors
+    if (error.message.includes('timeout')) {
+      errorMessage = errorMessages.networkErrors.timeout;
+    } else if (error.message.includes('Network Error')) {
+      errorMessage = errorMessages.networkErrors.network;
+    }
   }
-  
+
   return {
     success: false,
     status: statusCode,
     error: {
       message: errorMessage,
+      code: errorCode,
+      details: errorDetails,
       original: error
     }
   };
@@ -117,7 +123,7 @@ export const apiClient = {
       return formatError(error);
     }
   },
-  
+
   // POST request
   post: async (endpoint, data = {}, options = {}) => {
     try {
@@ -129,14 +135,14 @@ export const apiClient = {
           ...options.headers
         }
       };
-      
+
       const response = await axiosInstance.post(endpoint, data, mergedOptions);
       return formatResponse(response);
     } catch (error) {
       return formatError(error);
     }
   },
-  
+
   // PUT request
   put: async (endpoint, data = {}, options = {}) => {
     try {
@@ -148,33 +154,35 @@ export const apiClient = {
           ...options.headers
         }
       };
-      
+
       const response = await axiosInstance.put(endpoint, data, mergedOptions);
       return formatResponse(response);
     } catch (error) {
       return formatError(error);
     }
   },
-  
+
   // PATCH request
   patch: async (endpoint, data = {}, options = {}) => {
     try {
-      // Ensure headers have content type
+      // Don't override Content-Type for multipart/form-data
+      const isFormData = data instanceof FormData;
+
       const mergedOptions = {
         ...options,
         headers: {
-          ...defaultHeaders,
+          ...(isFormData ? {} : defaultHeaders),
           ...options.headers
         }
       };
-      
+
       const response = await axiosInstance.patch(endpoint, data, mergedOptions);
       return formatResponse(response);
     } catch (error) {
       return formatError(error);
     }
   },
-  
+
   // DELETE request
   delete: async (endpoint, options = {}) => {
     try {
@@ -183,7 +191,18 @@ export const apiClient = {
     } catch (error) {
       return formatError(error);
     }
+  },
+
+  // Helper method to extract the most relevant error message
+  getErrorMessage: (error) => {
+    if (!error) return 'Erro desconhecido';
+
+    if (typeof error === 'string') return error;
+
+    if (error.message) return error.message;
+
+    if (error.error && error.error.message) return error.error.message;
+
+    return 'Ocorreu um erro. Tente novamente.';
   }
 };
-
-export default apiClient;

@@ -1,54 +1,43 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  StyleSheet, 
+import React, { useState } from 'react';
+import {
+  View,
   Alert,
-  ActivityIndicator,
   Animated,
-  Switch
+  Switch,
+  StyleSheet,
+  Text
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiClient } from '../services/api/apiClient';
-import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING, FONT_SIZE } from '../constants';
+import { commonStyles } from '../theme/styles/commonStyles';
+import { useFadeAnimation } from '../hooks/animations';
+
+// Import reusable components
+import FormCard from '../components/form/FormCard';
+import FormField from '../components/form/FormField';
+import ActionButton from '../components/common/ActionButton';
+import PageHeader from '../components/common/PageHeader';
 
 const CreateDriverProfilePage = ({ navigation }) => {
   // Driver info
   const [cnh, setCnh] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [showWhatsapp, setShowWhatsapp] = useState(false);
-  
+
   // Car info
   const [modelo, setModelo] = useState('');
   const [placa, setPlaca] = useState('');
   const [cor, setCor] = useState('');
   const [capacidade, setCapacidade] = useState('4');
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const { user, authToken } = useAuthContext();
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, []);
+  // Use our custom animation hook
+  const { animatedStyle } = useFadeAnimation({
+    duration: 100
+  });
 
   const validateForm = () => {
     if (!cnh || cnh.length < 5) {
@@ -89,7 +78,7 @@ const CreateDriverProfilePage = ({ navigation }) => {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       const driverData = {
         cnh,
@@ -102,27 +91,27 @@ const CreateDriverProfilePage = ({ navigation }) => {
           capacidadePassageiros: parseInt(capacidade)
         }
       };
-      
+
       const options = {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
       };
-      
+
       const response = await apiClient.post(
         `/estudante/${user.id}/motorista`,
         driverData,
         options
       );
-      
+
       if (response.success) {
         Alert.alert(
           "Sucesso",
           "Perfil de motorista criado com sucesso!",
           [
-            { 
-              text: "OK", 
+            {
+              text: "OK",
               onPress: () => {
                 // Force refresh when returning to profile page
                 navigation.goBack();
@@ -148,226 +137,133 @@ const CreateDriverProfilePage = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tornar-se Motorista</Text>
-        <View style={styles.placeholderView} />
-      </View>
+    <View style={commonStyles.container}>
+      <PageHeader
+        title="Tornar-se Motorista"
+        onBack={() => navigation.goBack()}
+      />
 
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent} 
-        keyboardShouldPersistTaps="handled"
+      <Animated.ScrollView
+        style={[{ flex: 1, marginTop: -50 }, animatedStyle]}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
       >
-        <Animated.View 
-          style={[
-            styles.content, 
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.subtitle}>Informações do Motorista</Text>
-          
-          <Text style={styles.label}>Número da CNH</Text>
-          <TextInput 
-            style={styles.input}
-            value={cnh}
-            onChangeText={setCnh}
-            placeholder="Ex: 12345678901"
-            keyboardType="number-pad"
-            maxLength={15}
-          />
-          
-          <Text style={styles.label}>WhatsApp (opcional)</Text>
-          <TextInput 
-            style={styles.input}
-            value={whatsapp}
-            onChangeText={setWhatsapp}
-            placeholder="Ex: +5531912345678"
-            keyboardType="phone-pad"
-          />
-          
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>Mostrar WhatsApp para passageiros</Text>
-            <Switch 
-              value={showWhatsapp}
-              onValueChange={setShowWhatsapp}
-              trackColor={{ false: "#767577", true: "#81b0ff" }}
-              thumbColor={showWhatsapp ? "#4285F4" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
+        <View style={{ paddingHorizontal: SPACING.lg }}>
+          <FormCard title="Informações do Motorista" icon="person-circle" iconColor={COLORS.primary}>
+            <FormField
+              label="Número da CNH"
+              value={cnh}
+              onChangeText={setCnh}
+              placeholder="Ex: 12345678901"
+              keyboardType="number-pad"
+              maxLength={15}
             />
-          </View>
-          
-          <View style={styles.sectionDivider} />
-          
-          <Text style={styles.subtitle}>Informações do Veículo</Text>
-          
-          <Text style={styles.label}>Modelo do Carro</Text>
-          <TextInput 
-            style={styles.input}
-            value={modelo}
-            onChangeText={setModelo}
-            placeholder="Ex: Gol 1.0"
-          />
-          
-          <Text style={styles.label}>Placa</Text>
-          <TextInput 
-            style={styles.input}
-            value={placa}
-            onChangeText={text => setPlaca(text.toUpperCase())}
-            placeholder="Ex: ABC1234"
-            autoCapitalize="characters"
-            maxLength={10}
-          />
-          
-          <Text style={styles.label}>Cor</Text>
-          <TextInput 
-            style={styles.input}
-            value={cor}
-            onChangeText={setCor}
-            placeholder="Ex: Prata"
-          />
-          
-          <Text style={styles.label}>Capacidade de Passageiros</Text>
-          <TextInput 
-            style={styles.input}
-            value={capacidade}
-            onChangeText={setCapacidade}
-            placeholder="Ex: 4"
-            keyboardType="number-pad"
-            maxLength={1}
-          />
-          
-          <TouchableOpacity 
-            style={[
-              styles.submitButton,
-              isLoading && styles.disabledButton
-            ]}
+
+            <FormField
+              label="WhatsApp (opcional)"
+              value={whatsapp}
+              onChangeText={setWhatsapp}
+              placeholder="Ex: +5531912345678"
+              keyboardType="phone-pad"
+            />
+
+            <View style={styles.switchContainer}>
+              <Text style={styles.switchLabel}>Mostrar WhatsApp para passageiros</Text>
+              <Switch
+                value={showWhatsapp}
+                onValueChange={setShowWhatsapp}
+                trackColor={{ false: "#767577", true: COLORS.primaryLight }}
+                thumbColor={showWhatsapp ? COLORS.primary : "#f4f3f4"}
+                ios_backgroundColor="#3e3e3e"
+              />
+            </View>
+          </FormCard>
+
+          <FormCard title="Informações do Veículo" icon="car" iconColor={COLORS.success}>
+            <FormField
+              label="Modelo do Carro"
+              value={modelo}
+              onChangeText={setModelo}
+              placeholder="Ex: Gol 1.0"
+            />
+
+            <FormField
+              label="Placa"
+              value={placa}
+              onChangeText={text => setPlaca(text.toUpperCase())}
+              placeholder="Ex: ABC1234"
+              autoCapitalize="characters"
+              maxLength={10}
+            />
+
+            <FormField
+              label="Cor"
+              value={cor}
+              onChangeText={setCor}
+              placeholder="Ex: Prata"
+            />
+
+            <FormField
+              label="Capacidade de Passageiros"
+              value={capacidade}
+              onChangeText={setCapacidade}
+              placeholder="Ex: 4"
+              keyboardType="number-pad"
+              maxLength={1}
+            />
+          </FormCard>
+
+          <ActionButton
+            title="Cadastrar como Motorista"
             onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.submitButtonText}>
-                Cadastrar como Motorista
-              </Text>
-            )}
-          </TouchableOpacity>
-          
+            isLoading={isLoading}
+            icon="car-sport"
+            style={styles.submitButton}
+          />
+
+          <ActionButton
+            title="Cancelar"
+            onPress={() => navigation.goBack()}
+            type="secondary"
+            icon="close-outline"
+          />
+
           <Text style={styles.disclaimer}>
             Ao se cadastrar como motorista, você concorda em oferecer caronas a outros estudantes
             da sua instituição de acordo com as regras do aplicativo.
           </Text>
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+        </View>
+      </Animated.ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionDivider: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 24,
-  },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.md,
   },
   switchLabel: {
-    fontSize: 16,
-    color: '#444',
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
     flex: 1,
-    marginRight: 10,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#4285F4',
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  placeholderView: {
-    width: 24, // Same as back button icon to center the title
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  subtitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#444',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    marginRight: SPACING.md,
   },
   submitButton: {
-    backgroundColor: '#34A853',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  disabledButton: {
-    backgroundColor: '#A0D9B4',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    backgroundColor: COLORS.success,
+    marginTop: SPACING.md,
   },
   disclaimer: {
-    fontSize: 12,
-    color: '#777',
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.text.tertiary,
     textAlign: 'center',
-    marginTop: 24,
-    paddingHorizontal: 16,
-  },
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+  }
 });
 
 export default CreateDriverProfilePage;

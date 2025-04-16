@@ -1,29 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  StyleSheet, 
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import {
+  View,
   Alert,
-  ActivityIndicator,
   Animated,
-  Switch
+  Switch,
+  StyleSheet,
+  Text
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiClient } from '../services/api/apiClient';
-import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING, FONT_SIZE } from '../constants';
+import { commonStyles } from '../theme/styles/commonStyles';
+import { useFadeAnimation } from '../hooks/animations';
+
+// Import reusable components
+import FormCard from '../components/form/FormCard';
+import FormField from '../components/form/FormField';
+import ActionButton from '../components/common/ActionButton';
+import PageHeader from '../components/common/PageHeader';
 
 const UpdateDriverProfilePage = ({ navigation, route }) => {
   const { driverProfile } = route.params || {};
-  
+
   // Driver info
   const [cnh, setCnh] = useState(driverProfile?.cnh || '');
   const [whatsapp, setWhatsapp] = useState(driverProfile?.whatsapp || '');
   const [showWhatsapp, setShowWhatsapp] = useState(driverProfile?.mostrarWhatsapp || false);
-  
+
   // Car info
   const [modelo, setModelo] = useState(driverProfile?.carro?.modelo || '');
   const [placa, setPlaca] = useState(driverProfile?.carro?.placa || '');
@@ -31,28 +35,25 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
   const [capacidade, setCapacidade] = useState(
     driverProfile?.carro?.capacidadePassageiros?.toString() || '4'
   );
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const { user, authToken } = useAuthContext();
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, []);
+  // Use our custom animation hook
+  const { animatedStyle } = useFadeAnimation({
+    duration: 600
+  });
+
+  // Add useFocusEffect to refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // No need to implement anything here since this is the update page
+      // We just want to make sure we're properly passing refresh params to the profile page
+      return () => {
+        // Cleanup if needed
+      };
+    }, [])
+  );
 
   const validateForm = () => {
     if (!cnh || cnh.length < 5) {
@@ -93,7 +94,7 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       const driverData = {
         cnh,
@@ -106,35 +107,46 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
           capacidadePassageiros: parseInt(capacidade)
         }
       };
-      
+
       const options = {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
       };
-      
+
+      console.log('Updating driver profile with data:', JSON.stringify(driverData));
+
       const response = await apiClient.put(
         `/estudante/${user.id}/motorista`,
         driverData,
         options
       );
-      
+
       if (response.success) {
+        console.log('Driver profile updated successfully');
+        
         Alert.alert(
           "Sucesso",
           "Perfil de motorista atualizado com sucesso!",
           [
-            { 
-              text: "OK", 
+            {
+              text: "OK",
               onPress: () => {
-                // Force refresh when returning to profile page
-                navigation.goBack();
+                // Fix: Navigate to TabNavigator first, then to Profile tab
+                navigation.navigate('TabNavigator', {
+                  screen: 'Profile',
+                  params: { 
+                    refresh: Date.now(),
+                    driverUpdated: true
+                  }
+                });
               }
             }
           ]
         );
       } else {
+        console.error("Error updating driver profile:", response.error);
         Alert.alert(
           "Erro",
           response.error?.message || "Não foi possível atualizar o perfil de motorista."
@@ -152,214 +164,120 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Atualizar Perfil de Motorista</Text>
-        <View style={styles.placeholderView} />
-      </View>
+    <View style={commonStyles.container}>
+      <PageHeader
+        title="Atualizar Perfil de Motorista"
+        onBack={() => navigation.goBack()}
+      />
 
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent} 
-        keyboardShouldPersistTaps="handled"
+      <Animated.ScrollView
+        style={[{ flex: 1, marginTop: -50 }, animatedStyle]}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
       >
-        <Animated.View 
-          style={[
-            styles.content, 
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.subtitle}>Informações do Motorista</Text>
-          
-          <Text style={styles.label}>Número da CNH</Text>
-          <TextInput 
-            style={styles.input}
-            value={cnh}
-            onChangeText={setCnh}
-            placeholder="Ex: 12345678901"
-            keyboardType="number-pad"
-            maxLength={15}
-          />
-          
-          <Text style={styles.label}>WhatsApp (opcional)</Text>
-          <TextInput 
-            style={styles.input}
-            value={whatsapp}
-            onChangeText={setWhatsapp}
-            placeholder="Ex: +5531912345678"
-            keyboardType="phone-pad"
-          />
-          
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>Mostrar WhatsApp para passageiros</Text>
-            <Switch 
-              value={showWhatsapp}
-              onValueChange={setShowWhatsapp}
-              trackColor={{ false: "#767577", true: "#81b0ff" }}
-              thumbColor={showWhatsapp ? "#4285F4" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
+        <View style={{ paddingHorizontal: SPACING.lg }}>
+          <FormCard title="Informações do Motorista" icon="person-circle" iconColor={COLORS.primary}>
+            <FormField
+              label="Número da CNH"
+              value={cnh}
+              onChangeText={setCnh}
+              placeholder="Ex: 12345678901"
+              keyboardType="number-pad"
+              maxLength={15}
             />
-          </View>
-          
-          <View style={styles.sectionDivider} />
-          
-          <Text style={styles.subtitle}>Informações do Veículo</Text>
-          
-          <Text style={styles.label}>Modelo do Carro</Text>
-          <TextInput 
-            style={styles.input}
-            value={modelo}
-            onChangeText={setModelo}
-            placeholder="Ex: Gol 1.0"
-          />
-          
-          <Text style={styles.label}>Placa</Text>
-          <TextInput 
-            style={styles.input}
-            value={placa}
-            onChangeText={text => setPlaca(text.toUpperCase())}
-            placeholder="Ex: ABC1234"
-            autoCapitalize="characters"
-            maxLength={10}
-          />
-          
-          <Text style={styles.label}>Cor</Text>
-          <TextInput 
-            style={styles.input}
-            value={cor}
-            onChangeText={setCor}
-            placeholder="Ex: Prata"
-          />
-          
-          <Text style={styles.label}>Capacidade de Passageiros</Text>
-          <TextInput 
-            style={styles.input}
-            value={capacidade}
-            onChangeText={setCapacidade}
-            placeholder="Ex: 4"
-            keyboardType="number-pad"
-            maxLength={1}
-          />
-          
-          <TouchableOpacity 
-            style={[
-              styles.submitButton,
-              isLoading && styles.disabledButton
-            ]}
+
+            <FormField
+              label="WhatsApp (opcional)"
+              value={whatsapp}
+              onChangeText={setWhatsapp}
+              placeholder="Ex: +5531912345678"
+              keyboardType="phone-pad"
+            />
+
+            <View style={styles.switchContainer}>
+              <Text style={styles.switchLabel}>Mostrar WhatsApp para passageiros</Text>
+              <Switch
+                value={showWhatsapp}
+                onValueChange={setShowWhatsapp}
+                trackColor={{ false: "#767577", true: COLORS.primaryLight }}
+                thumbColor={showWhatsapp ? COLORS.primary : "#f4f3f4"}
+                ios_backgroundColor="#3e3e3e"
+              />
+            </View>
+          </FormCard>
+
+          <FormCard title="Informações do Veículo" icon="car" iconColor={COLORS.success}>
+            <FormField
+              label="Modelo do Carro"
+              value={modelo}
+              onChangeText={setModelo}
+              placeholder="Ex: Gol 1.0"
+            />
+
+            <FormField
+              label="Placa"
+              value={placa}
+              onChangeText={text => setPlaca(text.toUpperCase())}
+              placeholder="Ex: ABC1234"
+              autoCapitalize="characters"
+              maxLength={10}
+            />
+
+            <FormField
+              label="Cor"
+              value={cor}
+              onChangeText={setCor}
+              placeholder="Ex: Prata"
+            />
+
+            <FormField
+              label="Capacidade de Passageiros"
+              value={capacidade}
+              onChangeText={setCapacidade}
+              placeholder="Ex: 4"
+              keyboardType="number-pad"
+              maxLength={1}
+            />
+          </FormCard>
+
+          <ActionButton
+            title="Salvar Alterações"
             onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.submitButtonText}>
-                Salvar Alterações
-              </Text>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+            isLoading={isLoading}
+            icon="save-outline"
+            style={styles.submitButton}
+          />
+
+          <ActionButton
+            title="Cancelar"
+            onPress={() => navigation.goBack()}
+            type="secondary"
+            icon="close-outline"
+          />
+        </View>
+      </Animated.ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#4285F4',
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  placeholderView: {
-    width: 24,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  subtitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#444',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.md,
   },
   switchLabel: {
-    fontSize: 16,
-    color: '#444',
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
     flex: 1,
-    marginRight: 10,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 24,
+    marginRight: SPACING.md,
   },
   submitButton: {
-    backgroundColor: '#FF9800',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  disabledButton: {
-    backgroundColor: '#FFCC80',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+    backgroundColor: COLORS.success,
+    marginTop: SPACING.md,
+  }
 });
 
 export default UpdateDriverProfilePage;

@@ -78,20 +78,48 @@ export const AuthProvider = ({ children }) => {
         await logout();
       } else {
         console.log("Token is valid");
-        console.debug("userEmail:", await AsyncStorage.getItem('userEmail'));
-        console.debug("userId:", await AsyncStorage.getItem('userId'));
-        console.debug("userName:", await AsyncStorage.getItem('userName'));
-        console.debug("photoUrl:", await AsyncStorage.getItem('photoUrl'));
-
-        // Update user email if different
-        if (result.data?.email && result.data.email !== user?.email) {
-          console.info("Updating user email in context");
-          console.debug("Result data:", result.data);
-          setUser({...user, email: result.data.email, id: result.data.userId, name: result.data.name, photoUrl: result.data.imgUrl});
-          await AsyncStorage.setItem('userEmail', result.data.email);
-          await AsyncStorage.setItem('userId', result.data?.userId?.toString());
-          await AsyncStorage.setItem('userName', result.data.name);
-          await AsyncStorage.setItem('photoUrl', result.data.imgUrl);
+        
+        // Get current stored values for comparison
+        const storedEmail = await AsyncStorage.getItem('userEmail');
+        const storedUserId = await AsyncStorage.getItem('userId');
+        
+        // Only update if we have new data and it's different
+        if (result.data?.email) {
+          const currentUser = user || {};
+          let shouldUpdateUser = false;
+          let updatedUser = {...currentUser};
+          
+          // Check each field for updates
+          if (result.data.email && result.data.email !== storedEmail) {
+            updatedUser.email = result.data.email;
+            await AsyncStorage.setItem('userEmail', result.data.email);
+            shouldUpdateUser = true;
+          }
+          
+          if (result.data.userId && result.data.userId.toString() !== storedUserId) {
+            updatedUser.id = result.data.userId;
+            await AsyncStorage.setItem('userId', result.data.userId.toString());
+            shouldUpdateUser = true;
+          }
+          
+          if (result.data.name && result.data.name !== currentUser.name) {
+            updatedUser.name = result.data.name;
+            await AsyncStorage.setItem('userName', result.data.name);
+            shouldUpdateUser = true;
+          }
+          
+          if (result.data.imgUrl && result.data.imgUrl !== currentUser.photoUrl) {
+            updatedUser.photoUrl = result.data.imgUrl;
+            await AsyncStorage.setItem('photoUrl', result.data.imgUrl);
+            shouldUpdateUser = true;
+          }
+          
+          // Only update the state if something changed
+          if (shouldUpdateUser) {
+            console.info("Updating user info in context");
+            console.debug("Updated user:", updatedUser);
+            setUser(updatedUser);
+          }
         }
       }
     } catch (e) {
@@ -177,12 +205,17 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log("Logging out...");
       // Clear all auth data from storage
-      await AsyncStorage.multiRemove(['authToken', 'userEmail', 'userId', 'userName']);
+      await AsyncStorage.multiRemove(['authToken', 'userEmail', 'userId', 'userName', 'photoUrl']);
       
       // Reset state
       setAuthToken(null);
       setIsAuthenticated(false);
       setUser(null);
+      
+      // Add delay to ensure state updates before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log("Logout complete");
       return true;
     } catch (e) {
       console.error("Error removing auth data:", e);
@@ -227,7 +260,7 @@ export const AuthProvider = ({ children }) => {
   const authContextValue = {
     isAuthenticated,
     user,
-    setUser, // Add setUser to the context
+    setUser,
     authToken,
     login,
     logout,

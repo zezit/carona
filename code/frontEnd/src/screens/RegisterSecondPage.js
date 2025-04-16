@@ -1,43 +1,37 @@
-import { Text, View, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Modal, Animated, Keyboard } from "react-native";
-import React, { useState, useEffect, useRef } from 'react';
-import { commonStyles } from '../theme/styles/commonStyles';
+import { Ionicons } from '@expo/vector-icons';
+import md5 from 'md5';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Keyboard, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING } from '../constants';
+import { useFadeSlideAnimation } from '../hooks/animations';
 import useAuth from '../hooks/useAuth';
-import { MaterialIcons } from '@expo/vector-icons'; // Make sure to install expo/vector-icons
+import { commonStyles } from '../theme/styles/commonStyles';
 
 export default function RegisterSecondPage({ navigation, route }) {
   const { username, email, password } = route.params;
-  const [birthDate, setBirthDate] = useState("");
-  const [registration, setRegistration] = useState("");
+  const [matricula, setMatricula] = useState("");
+  const [curso, setCurso] = useState("");
   const [showDateModal, setShowDateModal] = useState(false);
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
-  const { registerStudent, isLoading, error } = useAuth();
-  
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  
+  const [submissionAttempted, setSubmissionAttempted] = useState(false);
+  const { registerStudent, isLoading, error, clearError } = useAuth();
+
+  // Use our custom animation hook
+  const { animatedStyle } = useFadeSlideAnimation({
+    fadeStartValue: 0,
+    fadeEndValue: 1,
+    slideStartValue: 50,
+    slideEndValue: 0,
+    fadeDuration: 200,
+    slideDuration: 100
+  });
+
   // Animation for modal
   const modalScaleAnim = useRef(new Animated.Value(0.9)).current;
   const modalOpacityAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    // Start animation when component mounts
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, []);
-  
   // Animate modal when visible changes
   useEffect(() => {
     if (showDateModal) {
@@ -90,23 +84,19 @@ export default function RegisterSecondPage({ navigation, route }) {
     return `${year}-${month}-${day}`;
   };
 
-  const handleDateSelection = () => {
-    Keyboard.dismiss();
-    
+  // Validate date and return true if valid, false if not
+  const validateDate = () => {
     if (!day || !month || !year) {
-      Alert.alert("Erro", "Por favor, selecione dia, mês e ano.");
-      return;
+      return { valid: false, message: "Por favor, selecione dia, mês e ano." };
     }
-    
-    // Validate date
+
     try {
       // Check if it's a valid date
       const dateObj = new Date(`${year}-${month}-${day}`);
       if (dateObj.toString() === "Invalid Date") {
-        Alert.alert("Erro", "Data inválida. Por favor, verifique dia, mês e ano.");
-        return;
+        return { valid: false, message: "Data inválida. Por favor, verifique dia, mês e ano." };
       }
-      
+
       // Check if user is at least 16 years old
       const today = new Date();
       const birthDate = new Date(`${year}-${month}-${day}`);
@@ -114,20 +104,27 @@ export default function RegisterSecondPage({ navigation, route }) {
       const m = today.getMonth() - birthDate.getMonth();
       if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
         if (age - 1 < 16) {
-          Alert.alert("Erro", "Você deve ter pelo menos 16 anos para se cadastrar.");
-          return;
+          return { valid: false, message: "Você deve ter pelo menos 16 anos para se cadastrar." };
         }
       } else if (age < 16) {
-        Alert.alert("Erro", "Você deve ter pelo menos 16 anos para se cadastrar.");
-        return;
+        return { valid: false, message: "Você deve ter pelo menos 16 anos para se cadastrar." };
       }
+
+      return { valid: true };
     } catch (e) {
-      Alert.alert("Erro", "Data inválida. Por favor, verifique dia, mês e ano.");
+      return { valid: false, message: "Data inválida. Por favor, verifique dia, mês e ano." };
+    }
+  };
+
+  const handleDateSelection = () => {
+    Keyboard.dismiss();
+
+    const validation = validateDate();
+    if (!validation.valid) {
+      Alert.alert("Erro", validation.message);
       return;
     }
-    
-    setBirthDate(formatDateToDisplay());
-    
+
     // Close modal with animation
     Animated.parallel([
       Animated.timing(modalScaleAnim, {
@@ -147,9 +144,21 @@ export default function RegisterSecondPage({ navigation, route }) {
 
   const handleCadastro = async () => {
     Keyboard.dismiss();
-    
-    if (birthDate === "" || registration === "") {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+    setSubmissionAttempted(true);
+
+    // Clear any previous errors
+    if (clearError) clearError();
+
+    // Validate required fields
+    if (matricula === "") {
+      Alert.alert("Erro", "Por favor, preencha o campo de matrícula.");
+      return;
+    }
+
+    // Validate date
+    const dateValidation = validateDate();
+    if (!dateValidation.valid) {
+      Alert.alert("Erro", dateValidation.message);
       return;
     }
 
@@ -158,206 +167,201 @@ export default function RegisterSecondPage({ navigation, route }) {
       nome: username,
       email: email,
       tipoUsuario: "ESTUDANTE", // Fixed as student only
-      password: password, // Will be hashed in registerStudent
+      password: md5(password), // Hash the password with MD5 as required by API
       dataDeNascimento: formatDateToAPI(),
-      matricula: registration
+      matricula: matricula,
+      curso: curso || null // Optional field
     };
 
-    const result = await registerStudent(userData);
-    
-    if (result?.success) {
-      // Show success animation before alert
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0.5,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        })
-      ]).start(() => {
+    try {
+      const result = await registerStudent(userData);
+
+      if (result?.success) {
+        // Show success animation before alert
         Alert.alert("Sucesso", "Cadastro realizado com sucesso!", [
-          { 
-            text: "OK", 
+          {
+            text: "OK",
             onPress: () => {
               navigation.navigate('Login');
-            } 
+            }
           }
         ]);
-      });
+      }
+    } catch (err) {
+      // Error is handled by the useAuth hook and will be available in the error state
+      console.log("Registration error:", err);
     }
   };
 
+  // Handle API errors
   useEffect(() => {
-    if (error) {
+    if (error && submissionAttempted) {
       // Display specific errors based on error message
       let errorMessage = error;
-      
+      let errorTitle = "Erro no Cadastro";
+
       if (error.includes('email já está cadastrado')) {
         errorMessage = 'Este email já está cadastrado. Tente outro email ou faça login.';
+        // Navigate back to first registration page to change email
+        Alert.alert(errorTitle, errorMessage, [
+          {
+            text: "Voltar e Corrigir",
+            onPress: () => navigation.goBack()
+          },
+          {
+            text: "OK",
+            style: "cancel"
+          }
+        ]);
       } else if (error.includes('matrícula já está cadastrada')) {
         errorMessage = 'Esta matrícula já está cadastrada no sistema.';
+        Alert.alert(errorTitle, errorMessage);
+      } else if (error.includes('conexão') || error.includes('timeout')) {
+        errorTitle = "Erro de Conexão";
+        errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+        Alert.alert(errorTitle, errorMessage);
+      } else {
+        Alert.alert(errorTitle, errorMessage);
       }
-      
-      Alert.alert("Erro no Cadastro", errorMessage);
+
+      // Reset submission flag after showing error
+      setSubmissionAttempted(false);
     }
-  }, [error]);
+  }, [error, submissionAttempted]);
 
-  const animatedStyle = {
-    opacity: fadeAnim,
-    transform: [{ translateY: slideAnim }]
-  };
+  return (
+    <View style={commonStyles.container}>
+      <View style={commonStyles.headerView}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={COLORS.text.light} />
+        </TouchableOpacity>
 
-  // Create a custom date picker modal with improved styling
-  const renderDatePickerModal = () => {
-    const modalStyles = {
-      modalContainer: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20
-      },
-      modalWrapper: {
-        width: '100%',
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        maxHeight: '80%',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8
-      },
-      modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
-        paddingBottom: 15
-      },
-      modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333'
-      },
-      closeButtonText: {
-        fontSize: 16,
-        color: '#ff6b6b',
-        fontWeight: '600'
-      },
-      datePickerContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20
-      },
-      datePickerColumn: {
-        flex: 0.8,
-        marginHorizontal: 5
-      },
-      datePickerColumnMonth: {
-        flex: 1.4,
-        marginHorizontal: 5
-      },
-      datePickerLabel: {
-        textAlign: 'center',
-        fontSize: 16,
-        fontWeight: '600',
-        marginBottom: 10,
-        color: '#333'
-      },
-      datePickerScroll: {
-        height: 200,
-        borderRadius: 12,
-        backgroundColor: '#f8f8f8'
-      },
-      datePickerItem: {
-        padding: 12,
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee'
-      },
-      datePickerItemSelected: {
-        backgroundColor: '#e6f7ff',
-        borderRadius: 12
-      },
-      datePickerText: {
-        fontSize: 16,
-        color: '#666',
-        textAlign: 'center'
-      },
-      datePickerTextSelected: {
-        color: '#0066cc',
-        fontWeight: 'bold'
-      },
-      button: {
-        backgroundColor: '#0066cc',
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginTop: 10
-      },
-      buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold'
-      }
-    };
+        <Animated.Text style={[commonStyles.title, { opacity: animatedStyle.opacity }]}>
+          Carona?
+        </Animated.Text>
 
-    return (
+        <View style={{ width: 24 }}>
+          {/* Empty Text to avoid warning */}
+          <Text style={{ display: 'none' }}></Text>
+        </View>
+      </View>
+
+      <Animated.View style={[commonStyles.contentView, animatedStyle]}>
+        <Text style={commonStyles.subtitle}>Criar Conta</Text>
+
+        <View style={commonStyles.progressIndicator}>
+          {/* Replace View with Text components */}
+          <Text style={[styles.progressElement, commonStyles.progressDot]}></Text>
+          <Text style={[styles.progressElement, commonStyles.progressLine]}></Text>
+          <Text style={[styles.progressElement, commonStyles.progressDot, commonStyles.activeDot]}></Text>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.inputLabel}>Data de Nascimento</Text>
+          <TouchableOpacity
+            style={styles.datePickerButton}
+            onPress={() => setShowDateModal(true)}
+            accessibilityLabel="Seletor de data de nascimento"
+            accessibilityRole="button"
+          >
+            <Text style={day && month && year ? styles.dateText : styles.datePlaceholder}>
+              {day && month && year ? formatDateToDisplay() : "Selecione sua data de nascimento"}
+            </Text>
+            <Ionicons
+              name="calendar-outline"
+              size={24}
+              color={COLORS.primary}
+            />
+          </TouchableOpacity>
+          <Text style={styles.inputHintText}>
+            Você deve ter pelo menos 16 anos para se cadastrar
+          </Text>
+        </View>
+
+        <TextInput
+          style={commonStyles.textInput}
+          placeholder="Matrícula"
+          value={matricula}
+          onChangeText={setMatricula}
+          accessibilityLabel="Campo de matrícula"
+          keyboardType="numeric"
+        />
+
+        <TextInput
+          style={commonStyles.textInput}
+          placeholder="Curso (opcional)"
+          value={curso}
+          onChangeText={setCurso}
+          accessibilityLabel="Campo de curso"
+        />
+
+        <TouchableOpacity
+          style={[
+            commonStyles.button,
+            styles.registerButton,
+            isLoading && commonStyles.buttonDisabled
+          ]}
+          onPress={handleCadastro}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color={COLORS.text.light} size="small" />
+          ) : (
+            <Text style={commonStyles.buttonText}>Finalizar</Text>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+
       <Modal
         visible={showDateModal}
         transparent
         animationType="none"
         onRequestClose={() => setShowDateModal(false)}
       >
-        <View style={modalStyles.modalContainer}>
-          <Animated.View 
+        <View style={styles.modalContainer}>
+          <Animated.View
             style={[
-              modalStyles.modalWrapper, 
+              styles.modalWrapper,
               {
                 opacity: modalOpacityAnim,
                 transform: [{ scale: modalScaleAnim }]
               }
             ]}
           >
-            <View style={modalStyles.modalHeader}>
-              <Text style={modalStyles.modalTitle}>Data de Nascimento</Text>
-              <TouchableOpacity 
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Data de Nascimento</Text>
+              <TouchableOpacity
                 onPress={() => setShowDateModal(false)}
                 accessibilityLabel="Fechar seleção de data"
                 accessibilityRole="button"
               >
-                <Text style={modalStyles.closeButtonText}>Cancelar</Text>
+                <Text style={styles.closeButtonText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
-            
-            <View style={modalStyles.datePickerContainer}>
-              <View style={modalStyles.datePickerColumn}>
-                <Text style={modalStyles.datePickerLabel}>Dia</Text>
-                <ScrollView 
-                  style={modalStyles.datePickerScroll}
+
+            <View style={styles.datePickerContainer}>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>Dia</Text>
+                <ScrollView
+                  style={styles.datePickerScroll}
                   showsVerticalScrollIndicator={false}
                 >
                   {days.map(d => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={`day-${d}`}
                       style={[
-                        modalStyles.datePickerItem,
-                        day === d && modalStyles.datePickerItemSelected
+                        styles.datePickerItem,
+                        day === d && styles.datePickerItemSelected
                       ]}
                       onPress={() => setDay(d)}
                     >
-                      <Text 
+                      <Text
                         style={[
-                          modalStyles.datePickerText,
-                          day === d && modalStyles.datePickerTextSelected
+                          styles.datePickerText,
+                          day === d && styles.datePickerTextSelected
                         ]}
                       >
                         {d}
@@ -366,28 +370,28 @@ export default function RegisterSecondPage({ navigation, route }) {
                   ))}
                 </ScrollView>
               </View>
-              
-              <View style={modalStyles.datePickerColumnMonth}>
-                <Text style={modalStyles.datePickerLabel}>Mês</Text>
-                <ScrollView 
-                  style={modalStyles.datePickerScroll}
+
+              <View style={styles.datePickerColumnMonth}>
+                <Text style={styles.datePickerLabel}>Mês</Text>
+                <ScrollView
+                  style={styles.datePickerScroll}
                   showsVerticalScrollIndicator={false}
                 >
                   {months.map(m => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={`month-${m.value}`}
                       style={[
-                        modalStyles.datePickerItem,
-                        month === m.value && modalStyles.datePickerItemSelected
+                        styles.datePickerItem,
+                        month === m.value && styles.datePickerItemSelected
                       ]}
                       onPress={() => setMonth(m.value)}
                     >
-                      <Text 
+                      <Text
                         numberOfLines={1}
                         style={[
-                          modalStyles.datePickerText,
+                          styles.datePickerText,
                           { width: '100%' },
-                          month === m.value && modalStyles.datePickerTextSelected
+                          month === m.value && styles.datePickerTextSelected
                         ]}
                       >
                         {m.label}
@@ -396,26 +400,26 @@ export default function RegisterSecondPage({ navigation, route }) {
                   ))}
                 </ScrollView>
               </View>
-              
-              <View style={modalStyles.datePickerColumn}>
-                <Text style={modalStyles.datePickerLabel}>Ano</Text>
-                <ScrollView 
-                  style={modalStyles.datePickerScroll}
+
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>Ano</Text>
+                <ScrollView
+                  style={styles.datePickerScroll}
                   showsVerticalScrollIndicator={false}
                 >
                   {years.map(y => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={`year-${y}`}
                       style={[
-                        modalStyles.datePickerItem,
-                        year === y && modalStyles.datePickerItemSelected
+                        styles.datePickerItem,
+                        year === y && styles.datePickerItemSelected
                       ]}
                       onPress={() => setYear(y)}
                     >
-                      <Text 
+                      <Text
                         style={[
-                          modalStyles.datePickerText,
-                          year === y && modalStyles.datePickerTextSelected
+                          styles.datePickerText,
+                          year === y && styles.datePickerTextSelected
                         ]}
                       >
                         {y}
@@ -425,150 +429,160 @@ export default function RegisterSecondPage({ navigation, route }) {
                 </ScrollView>
               </View>
             </View>
-            
-            <TouchableOpacity 
-              style={modalStyles.button} 
+
+            <TouchableOpacity
+              style={styles.confirmButton}
               onPress={handleDateSelection}
               accessibilityLabel="Confirmar data"
               accessibilityRole="button"
             >
-              <Text style={modalStyles.buttonText}>Confirmar</Text>
+              <Text style={styles.confirmButtonText}>Confirmar</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
       </Modal>
-    );
-  };
-
-  const enhancedInputStyle = {
-    textInput: {
-      ...commonStyles.textInput,
-      borderWidth: 1,
-      borderColor: '#ddd',
-      borderRadius: 12,
-      paddingVertical: 15,
-      paddingHorizontal: 16,
-      fontSize: 16,
-      backgroundColor: '#f9f9f9',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 1
-    },
-    dateInputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderWidth: 1,
-      borderColor: '#ddd',
-      borderRadius: 12,
-      backgroundColor: '#f9f9f9'
-    },
-    dateInputText: {
-      flex: 1,
-      fontSize: 16,
-      color: '#333'
-    },
-    calendarIcon: {
-      marginLeft: 10
-    },
-    placeholderText: {
-      color: '#999',
-      fontSize: 16
-    },
-    selectedText: {
-      color: '#333',
-      fontSize: 16
-    }
-  };
-
-  return (
-    <ScrollView 
-      contentContainerStyle={{ flexGrow: 1 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={commonStyles.container}>
-        <View style={commonStyles.headerView}>
-          <Animated.Text style={[commonStyles.title, { opacity: fadeAnim }]}>
-            Carona?
-          </Animated.Text>
-        </View>
-
-        <Animated.View style={[commonStyles.contentView, animatedStyle]}>
-          <Text style={commonStyles.subtitle}>Mais Informações</Text>
-          
-          <View style={commonStyles.progressIndicator}>
-            <View style={commonStyles.progressDot} />
-            <View style={commonStyles.progressLine} />
-            <View style={[commonStyles.progressDot, commonStyles.activeDot]} />
-          </View>
-          
-          <View style={commonStyles.formGroup}>
-            <Text style={commonStyles.inputLabel}>Data de Nascimento</Text>
-            <TouchableOpacity 
-              style={enhancedInputStyle.dateInputContainer} 
-              onPress={() => setShowDateModal(true)}
-              accessibilityLabel="Seletor de data de nascimento"
-              accessibilityRole="button"
-            >
-              <Text style={birthDate ? enhancedInputStyle.selectedText : enhancedInputStyle.placeholderText}>
-                {birthDate ? birthDate : "Selecione sua data de nascimento"}
-              </Text>
-              <MaterialIcons 
-                name="date-range" 
-                size={24} 
-                color="#666" 
-                style={enhancedInputStyle.calendarIcon} 
-              />
-            </TouchableOpacity>
-          </View>
-          
-          <View style={commonStyles.formGroup}>
-            <Text style={commonStyles.inputLabel}>Matrícula</Text>
-            <TextInput
-              style={enhancedInputStyle.textInput}
-              placeholder="Seu número de matrícula"
-              value={registration}
-              onChangeText={(text) => setRegistration(text)}
-              accessibilityLabel="Campo de matrícula"
-              keyboardType="numeric"
-            />
-            <Text style={commonStyles.inputHintText}>
-              Apenas estudantes podem se cadastrar pelo aplicativo
-            </Text>
-          </View>
-        </Animated.View>
-
-        <Animated.View style={[commonStyles.footerView, { opacity: fadeAnim }]}>
-          <View style={commonStyles.buttonContainer}>
-            <TouchableOpacity 
-              style={[
-                commonStyles.button, 
-                { 
-                  backgroundColor: '#0066cc', 
-                  borderRadius: 12,
-                  paddingVertical: 15
-                },
-                isLoading && commonStyles.buttonDisabled
-              ]} 
-              onPress={handleCadastro}
-              disabled={isLoading}
-              accessibilityLabel="Botão de finalizar cadastro"
-              accessibilityRole="button"
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={[commonStyles.buttonText, { fontSize: 16, fontWeight: 'bold' }]}>Finalizar</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </View>
-      
-      {renderDatePickerModal()}
-    </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  backButton: {
+    position: 'absolute',
+    left: SPACING.lg,
+    zIndex: 10,
+    padding: SPACING.xs,
+  },
+  registerButton: {
+    marginTop: SPACING.xl,
+    alignSelf: 'center',
+  },
+  progressElement: {
+    fontSize: 0,
+    color: 'transparent',
+  },
+  formGroup: {
+    marginBottom: SPACING.md,
+  },
+  inputLabel: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+    fontWeight: FONT_WEIGHT.medium,
+  },
+  inputHintText: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.text.tertiary,
+    marginTop: SPACING.xs,
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    backgroundColor: '#f9f9f9',
+    marginBottom: SPACING.sm,
+  },
+  dateText: {
+    color: COLORS.text.primary,
+    fontSize: FONT_SIZE.md,
+  },
+  datePlaceholder: {
+    color: COLORS.text.tertiary,
+    fontSize: FONT_SIZE.md,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: SPACING.lg,
+  },
+  modalWrapper: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingBottom: SPACING.md,
+  },
+  modalTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.text.primary,
+  },
+  closeButtonText: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.danger,
+    fontWeight: FONT_WEIGHT.semiBold,
+  },
+  datePickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.lg,
+  },
+  datePickerColumn: {
+    flex: 0.8,
+    marginHorizontal: SPACING.xs,
+  },
+  datePickerColumnMonth: {
+    flex: 1.4,
+    marginHorizontal: SPACING.xs,
+  },
+  datePickerLabel: {
+    textAlign: 'center',
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.medium,
+    marginBottom: SPACING.sm,
+    color: COLORS.text.secondary,
+  },
+  datePickerScroll: {
+    height: 200,
+    borderRadius: RADIUS.md,
+    backgroundColor: '#f8f8f8',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  datePickerItem: {
+    padding: SPACING.md,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  datePickerItemSelected: {
+    backgroundColor: '#e6efff',
+  },
+  datePickerText: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.secondary,
+  },
+  datePickerTextSelected: {
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHT.semiBold,
+  },
+  confirmButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    marginTop: SPACING.sm,
+  },
+  confirmButtonText: {
+    color: COLORS.text.light,
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.semiBold,
+  },
+});

@@ -21,7 +21,6 @@ import UpdateDriverProfilePage from '../screens/UpdateDriverProfilePage';
 import RegisterRidePage from '../screens/RegisterRidePage';
 import RideDetailsPage from '../screens/RideDetailsPage';
 import RideModeSelectionPage from '../screens/RideModeSelectionPage';
-import RequestRidePage from '../screens/RequestRidePage';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -113,7 +112,6 @@ const MainStack = () => (
     <Stack.Screen name="UpdateProfile" component={UpdateProfilePage} />
     <Stack.Screen name="UpdateDriverProfile" component={UpdateDriverProfilePage} />
     <Stack.Screen name="RegisterRide" component={RegisterRidePage} />
-    <Stack.Screen name="RequestRide" component={RequestRidePage} />
     <Stack.Screen
       name="RidesPage"
       component={RidesPage}

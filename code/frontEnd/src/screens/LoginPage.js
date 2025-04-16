@@ -1,33 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Alert, TouchableOpacity, ActivityIndicator, Animated, Keyboard } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Alert, TouchableOpacity, ActivityIndicator, Keyboard } from 'react-native';
 import { commonStyles } from '../theme/styles/commonStyles';
 import useAuth from '../hooks/useAuth';
 import * as crypto from 'crypto-js';
+import { useFadeSlideAnimation } from '../hooks/animations';
+import { Animated } from 'react-native';
 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading, error } = useAuth();
-  
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  
-  useEffect(() => {
-    // Start animation when component mounts
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, []);
+
+  const { animatedStyle } = useFadeSlideAnimation({
+    fadeStartValue: 0,
+    fadeEndValue: 1,
+    slideStartValue: 50,
+    slideEndValue: 0,
+    fadeDuration: 400,
+    slideDuration: 300
+  });
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,7 +27,7 @@ const LoginPage = ({ navigation }) => {
 
   const handleLogin = async () => {
     Keyboard.dismiss();
-    
+
     if (email === '' || password === '') {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
@@ -47,57 +38,45 @@ const LoginPage = ({ navigation }) => {
       return;
     }
 
-    // Hash the password with MD5 as required by the API spec
     const hashedPassword = crypto.MD5(password).toString();
-
     await login(email, hashedPassword);
-
-    // No need to manually navigate - the AuthContext will update isAuthenticated
-    // and AppNavigator will automatically switch to the Main stack
   };
 
   useEffect(() => {
     if (error) {
-      // Customize error message based on error type
       let errorMessage = error;
-      
+
       if (error.includes('Email ou senha incorretos')) {
         errorMessage = 'Email ou senha incorretos. Por favor, tente novamente.';
       } else if (error.includes('Tempo limite')) {
         errorMessage = 'O servidor não respondeu a tempo. Verifique sua conexão e tente novamente.';
-      } else if (error.includes('Erro de conexão')){
+      } else if (error.includes('Erro de conexão')) {
         errorMessage = 'Ocorreu um erro ao comunicar com o servidor. Verifique sua conexão.';
       } else {
         errorMessage = 'Ocorreu um erro inesperado. Por favor, tente novamente.';
       }
-      
+
       Alert.alert('Erro de Login', errorMessage);
     }
   }, [error]);
 
-  const animatedStyle = {
-    opacity: fadeAnim,
-    transform: [{ translateY: slideAnim }]
-  };
-
   return (
     <View style={commonStyles.container}>
       <View style={commonStyles.headerView}>
-        <Animated.Text style={[commonStyles.title, { opacity: fadeAnim }]}>
+        <Animated.Text style={[commonStyles.title, { opacity: animatedStyle.opacity }]}>
           Carona?
         </Animated.Text>
       </View>
 
       <Animated.View style={[commonStyles.contentView, animatedStyle]}>
         <Text style={commonStyles.subtitle}>Login</Text>
-        
+
         <View style={commonStyles.linkContainer}>
           <Text style={commonStyles.normalText}>
             Novo Usuário?{' '}
-            <Text 
-              style={commonStyles.linkText} 
+            <Text
+              style={commonStyles.linkText}
               onPress={() => {
-                // Use navigation animation
                 navigation.navigate('Registrar');
               }}
             >
@@ -105,32 +84,32 @@ const LoginPage = ({ navigation }) => {
             </Text>
           </Text>
         </View>
-        
-        <TextInput 
-          style={commonStyles.textInput} 
-          placeholder="Email" 
-          value={email} 
-          onChangeText={(text) => setEmail(text)} 
+
+        <TextInput
+          style={commonStyles.textInput}
+          placeholder="Email"
+          value={email}
+          onChangeText={(text) => setEmail(text)}
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
           textContentType="emailAddress"
           accessibilityLabel="Campo de email"
         />
-        
-        <TextInput 
-          style={commonStyles.textInput} 
-          placeholder="Senha" 
-          value={password} 
-          onChangeText={(text) => setPassword(text)} 
+
+        <TextInput
+          style={commonStyles.textInput}
+          placeholder="Senha"
+          value={password}
+          onChangeText={(text) => setPassword(text)}
           secureTextEntry
           autoCapitalize="none"
           textContentType="password"
           accessibilityLabel="Campo de senha"
         />
-        
-        <TouchableOpacity 
-          style={commonStyles.forgotPasswordContainer} 
+
+        <TouchableOpacity
+          style={commonStyles.forgotPasswordContainer}
           onPress={() => Alert.alert("Redefinir senha", "Função de recuperação de senha será implementada em breve.")}
         >
           <Text style={commonStyles.forgotPasswordText}>Esqueceu sua senha?</Text>
@@ -139,11 +118,11 @@ const LoginPage = ({ navigation }) => {
 
       <View style={[commonStyles.footerView, { paddingBottom: 0 }]}>
         <View style={commonStyles.buttonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              commonStyles.button, 
+              commonStyles.button,
               isLoading && commonStyles.buttonDisabled
-            ]} 
+            ]}
             onPress={handleLogin}
             disabled={isLoading}
             accessibilityLabel="Botão de login"
@@ -158,9 +137,11 @@ const LoginPage = ({ navigation }) => {
         </View>
       </View>
 
-      <View style={[commonStyles.footerView, { flex: 0 }]} />
+      <View style={[commonStyles.footerView, { flex: 0 }]}>
+        <Text style={{ display: 'none' }}></Text>
+      </View>
     </View>
   );
 };
 
-export default LoginPage;
+export default React.memo(LoginPage);

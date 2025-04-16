@@ -1,497 +1,545 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
+import { useFadeAnimation } from '../hooks/animations';
 import { apiClient } from '../services/api/apiClient';
-import { Image } from 'react-native';
+import { commonStyles } from '../theme/styles/commonStyles';
 
-const ProfilePage = ({ navigation }) => {
+const ProfilePage = ({ navigation, route }) => {
   const { user, logout, authToken } = useAuthContext();
   const [userDetails, setUserDetails] = useState(null);
   const [isDriverProfile, setIsDriverProfile] = useState(false);
   const [driverProfile, setDriverProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Animation values
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  // Use our custom animation hook
+  const { animatedStyle } = useFadeAnimation({
+    duration: 100
+  });
 
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
+  // Simplified API fetch with clearer logging
+  const fetchUserDetails = useCallback(async () => {
+    if (!user || !user.id) return;
 
-    fetchUserDetails();
-  }, []);
-
-  // Update after navigation back
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchUserDetails();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  const fetchUserDetails = async () => {
-    setLoading(true);
     try {
-      if (!user?.id) {
-        console.log("No user ID available to fetch profile");
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
+      console.log('Fetching user details for ID:', user.id);
 
-      const options = {
+      // Get user profile data
+      const response = await apiClient.get(`/estudante/${user.id}`, {
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      };
-
-      // Fetch student details
-      const response = await apiClient.get(`/estudante/${user.id}`, options);
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (response.success) {
+        console.log('Successfully fetched user details, updating state');
         setUserDetails(response.data);
-
-        // Check if user has driver profile
-        try {
-          const driverResponse = await apiClient.get(`/estudante/${user.id}/motorista`, options);
-          if (driverResponse.success) {
-            setIsDriverProfile(true);
-            setDriverProfile(driverResponse.data);
-          } else {
-            setIsDriverProfile(false);
-            setDriverProfile(null);
-          }
-        } catch (err) {
-          console.log("User doesn't have a driver profile yet or there was an error:", err.message);
-
-          // Check if the error is because the user is not a driver (HTTP 400 with specific message)
-          if (err.response && err.response.status === 400 &&
-            (err.response.data?.message?.includes('não é motorista') ||
-              err.response.data?.error?.includes('não é motorista'))) {
-            console.log("User is not a driver yet");
-          } else {
-            console.error("Error fetching driver profile:", err);
-          }
-
-          setIsDriverProfile(false);
-          setDriverProfile(null);
-        }
       } else {
-        console.error("Failed to fetch user details");
+        console.error('Failed to fetch user details:', response.error);
+      }
+
+      // Get driver profile data (if exists)
+      const driverResponse = await apiClient.get(`/estudante/${user.id}/motorista`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (driverResponse.success) {
+        console.log('Successfully fetched driver profile, updating state');
+        setIsDriverProfile(true);
+        setDriverProfile(driverResponse.data);
+      } else {
+        console.log('No driver profile found or error:', driverResponse.error);
+        setIsDriverProfile(false);
+        setDriverProfile(null);
       }
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      console.error('Error fetching profile data:', error);
+      Alert.alert('Erro', 'Não foi possível carregar os detalhes do usuário.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, authToken]);
 
-  const handleCreateDriverProfile = () => {
-    navigation.navigate('CreateDriverProfile');
-  };
+  // Clearer, more reliable focus effect
+  useFocusEffect(
+    useCallback(() => {
+      const timestamp = route?.params?.refresh || Date.now();
+      console.log('Profile screen focused with timestamp:', timestamp);
+      fetchUserDetails();
 
-  const handleUpdateDriverProfile = () => {
-    navigation.navigate('UpdateDriverProfile', { driverProfile });
-  };
+      return () => {
+        // No cleanup needed
+      };
+    }, [fetchUserDetails, route?.params?.refresh])
+  );
 
-  const handleUpdateProfile = () => {
-    navigation.navigate('UpdateProfile', { userDetails });
-  };
+  const handleLogout = useCallback(async () => {
+    try {
+      const success = await logout();
+      if (success) {
+        // Logout successful, navigation will be handled by AppNavigator
+      } else {
+        Alert.alert('Erro', 'Não foi possível sair da conta. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao tentar sair da conta.');
+    }
+  }, [logout]);
 
-  const handleLogout = async () => {
+  const confirmLogout = useCallback(() => {
     Alert.alert(
-      "Sair da conta",
-      "Tem certeza que deseja sair?",
+      'Sair',
+      'Tem certeza que deseja sair da sua conta?',
       [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Sair",
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-          }
-        }
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair', style: 'destructive', onPress: handleLogout }
       ]
     );
-  };
+  }, [handleLogout]);
 
-  // Check if user has completed their basic profile
-  const isProfileComplete = () => {
-    return userDetails &&
-      userDetails.nome &&
-      userDetails.matricula &&
-      userDetails.curso;
+  const navigateToUpdateProfile = useCallback(() => {
+    navigation.navigate('UpdateProfile', { userDetails });
+  }, [navigation, userDetails]);
+
+  const navigateToCreateDriverProfile = useCallback(() => {
+    navigation.navigate('CreateDriverProfile');
+  }, [navigation]);
+
+  const navigateToUpdateDriverProfile = useCallback(() => {
+    navigation.navigate('UpdateDriverProfile', { driverProfile });
+  }, [navigation, driverProfile]);
+
+  const navigateToRidesPage = useCallback(() => {
+    navigation.navigate('RidesPage', { mode: 'my-rides' });
+  }, [navigation]);
+
+  // Function to render account status badge
+  const renderAccountStatusBadge = () => {
+    if (!userDetails || !userDetails.statusCadastro) return null;
+
+    let badgeStyle = {};
+    let badgeTextStyle = {};
+    let statusText = '';
+    let statusIcon = null;
+
+    switch (userDetails.statusCadastro) {
+      case 'APROVADO':
+        badgeStyle = styles.approvedBadge;
+        badgeTextStyle = styles.approvedBadgeText;
+        statusText = 'Aprovado';
+        statusIcon = <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />;
+        break;
+      case 'PENDENTE':
+        badgeStyle = styles.pendingBadge;
+        badgeTextStyle = styles.pendingBadgeText;
+        statusText = 'Pendente';
+        statusIcon = <Ionicons name="time" size={16} color={COLORS.warning} />;
+        break;
+      case 'REJEITADO':
+        badgeStyle = styles.rejectedBadge;
+        badgeTextStyle = styles.rejectedBadgeText;
+        statusText = 'Rejeitado';
+        statusIcon = <Ionicons name="close-circle" size={16} color={COLORS.danger} />;
+        break;
+      default:
+        return null;
+    }
+
+    return (
+      <View style={badgeStyle}>
+        {statusIcon}
+        <Text style={badgeTextStyle}>{statusText}</Text>
+      </View>
+    );
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Perfil</Text>
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4285F4" />
-          <Text style={styles.loadingText}>Carregando perfil...</Text>
+      <SafeAreaView style={commonStyles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Perfil</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={commonStyles.container}>
+      <LinearGradient
+        colors={[COLORS.primary, COLORS.primaryDark]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.5 }}
+        style={{ height: 150, paddingTop: SPACING.lg }}
+      >
+        <View style={{ paddingHorizontal: SPACING.lg }}>
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: COLORS.text.light }}>Perfil</Text>
+        </View>
+      </LinearGradient>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {userDetails ? (
-            <>
-              <View style={styles.profileHeader}>
-                <View style={styles.avatarContainer}>
-                  {userDetails.imgUrl ? (
-                    <Image
-                      source={{ uri: userDetails.imgUrl }}
-                      style={styles.avatarImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <Text style={styles.avatarText}>
-                      {userDetails.nome ? userDetails.nome[0].toUpperCase() : "?"}
-                    </Text>
-                  )}
-                </View>
-
-                <Text style={styles.userName}>{userDetails.nome}</Text>
-                <Text style={styles.userEmail}>{userDetails.email}</Text>
+      <Animated.ScrollView
+        style={[{ flex: 1, marginTop: -50 }, animatedStyle]}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Start of content */}
+        <View style={[commonStyles.profileCard, {
+          marginHorizontal: SPACING.lg,
+          paddingVertical: SPACING.lg,
+          marginBottom: SPACING.lg,
+        }]}>
+          <View style={{ alignItems: 'center' }}>
+            {user?.photoUrl ? (
+              <Image
+                source={{ uri: user.photoUrl }}
+                style={commonStyles.profileImage}
+                // Add key to force re-render when photoUrl changes
+                key={user.photoUrl}
+              />
+            ) : (
+              <View style={commonStyles.avatarPlaceholder}>
+                <Ionicons name="person" size={40} color="#FFF" />
               </View>
+            )}
+            <Text style={commonStyles.userNameText}>{userDetails?.nome || user?.name || 'Usuário'}</Text>
+            <Text style={commonStyles.userEmailText}>{userDetails?.email || user?.email}</Text>
 
-              <View style={styles.infoSection}>
-                <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Matrícula:</Text>
-                  <Text style={styles.infoValue}>{userDetails.matricula || 'Não informado'}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Curso:</Text>
-                  <Text style={styles.infoValue}>{userDetails.curso || 'Não informado'}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Status:</Text>
-                  <Text style={[styles.infoValue,
-                  userDetails.statusCadastro === 'APROVADO' ? styles.statusApproved :
-                    userDetails.statusCadastro === 'PENDENTE' ? styles.statusPending :
-                      styles.statusRejected]}>
-                    {userDetails.statusCadastro || 'PENDENTE'}
-                  </Text>
-                </View>
+            {/* Account Status Badge */}
+            {renderAccountStatusBadge()}
+
+            <TouchableOpacity
+              style={commonStyles.profileButton}
+              onPress={navigateToUpdateProfile}
+            >
+              <Ionicons name="create-outline" size={18} color={COLORS.primary} />
+              <Text style={commonStyles.profileButtonText}>Atualizar Perfil</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={{ paddingHorizontal: SPACING.lg }}>
+          <Text style={commonStyles.sectionTitle}>Informações Pessoais</Text>
+
+          <View style={commonStyles.profileCard}>
+            <View style={commonStyles.infoListItem}>
+              <View style={commonStyles.infoIcon}>
+                <Ionicons name="school-outline" size={24} color={COLORS.primary} />
               </View>
-
-              {isDriverProfile && driverProfile ? (
-                <View style={styles.infoSection}>
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Perfil de Motorista</Text>
-                    <TouchableOpacity
-                      style={styles.editButton}
-                      onPress={handleUpdateDriverProfile}
-                    >
-                      <Ionicons name="pencil" size={18} color="#4285F4" />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>CNH:</Text>
-                    <Text style={styles.infoValue}>{driverProfile.cnh || 'Não informado'}</Text>
-                  </View>
-
-                  {driverProfile.whatsapp && (
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>WhatsApp:</Text>
-                      <Text style={styles.infoValue}>{driverProfile.whatsapp}</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Mostrar WhatsApp:</Text>
-                    <Text style={styles.infoValue}>{driverProfile.mostrarWhatsapp ? 'Sim' : 'Não'}</Text>
-                  </View>
-
-                  <View style={styles.sectionSubtitle}>
-                    <Text style={styles.sectionSubtitleText}>Informações do Veículo</Text>
-                  </View>
-
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Modelo:</Text>
-                    <Text style={styles.infoValue}>{driverProfile.carro?.modelo || 'Não informado'}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Placa:</Text>
-                    <Text style={styles.infoValue}>{driverProfile.carro?.placa || 'Não informado'}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Cor:</Text>
-                    <Text style={styles.infoValue}>{driverProfile.carro?.cor || 'Não informado'}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Capacidade:</Text>
-                    <Text style={styles.infoValue}>{driverProfile.carro?.capacidadePassageiros || '4'} passageiros</Text>
-                  </View>
-                </View>
-              ) : (
-                userDetails && userDetails.statusCadastro === 'APROVADO' && (
-                  <TouchableOpacity
-                    style={styles.createDriverButton}
-                    onPress={handleCreateDriverProfile}
-                  >
-                    <Ionicons name="car-outline" size={24} color="#fff" style={styles.buttonIcon} />
-                    <Text style={styles.createDriverButtonText}>Tornar-se Motorista</Text>
-                  </TouchableOpacity>
-                )
-              )}
-
-              {/* Show profile button based on completion status */}
-              {userDetails && (
-                <TouchableOpacity
-                  style={styles.updateProfileButton}
-                  onPress={handleUpdateProfile}
-                >
-                  <Ionicons name="person-outline" size={22} color="#fff" style={styles.buttonIcon} />
-                  <Text style={styles.updateProfileButtonText}>
-                    {isProfileComplete() ? "Atualizar Perfil" : "Completar Perfil"}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </>
-          ) : (
-            <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>Não foi possível carregar os dados do perfil</Text>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={fetchUserDetails}
-              >
-                <Text style={styles.retryButtonText}>Tentar novamente</Text>
-              </TouchableOpacity>
+              <View style={commonStyles.infoTextContainer}>
+                <Text style={commonStyles.infoLabel}>Matrícula</Text>
+                <Text style={commonStyles.infoValue}>{userDetails?.matricula || 'Não informado'}</Text>
+              </View>
             </View>
-          )}
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+
+            <View style={commonStyles.divider} />
+
+            <View style={commonStyles.infoListItem}>
+              <View style={commonStyles.infoIcon}>
+                <Ionicons name="book-outline" size={24} color={COLORS.primary} />
+              </View>
+              <View style={commonStyles.infoTextContainer}>
+                <Text style={commonStyles.infoLabel}>Curso</Text>
+                <Text style={commonStyles.infoValue}>{userDetails?.curso || 'Não informado'}</Text>
+              </View>
+            </View>
+
+            {userDetails?.avaliacaoMedia && (
+              <>
+                <View style={commonStyles.divider} />
+
+                <View style={commonStyles.infoListItem}>
+                  <View style={commonStyles.infoIcon}>
+                    <Ionicons name="star" size={24} color={COLORS.warning} />
+                  </View>
+                  <View style={commonStyles.infoTextContainer}>
+                    <Text style={commonStyles.infoLabel}>Avaliação Média</Text>
+                    <Text style={commonStyles.infoValue}>
+                      {userDetails.avaliacaoMedia.toFixed(1)} / 5.0
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {isDriverProfile ? (
+          <View style={{ paddingHorizontal: SPACING.lg }}>
+            <View style={styles.sectionHeaderContainer}>
+              <Text style={commonStyles.sectionTitle}>Perfil de Motorista</Text>
+
+              <TouchableOpacity
+                style={styles.editDriverButton}
+                onPress={navigateToUpdateDriverProfile}
+              >
+                <Ionicons name="create-outline" size={16} color={COLORS.primary} />
+                <Text style={styles.editDriverButtonText}>Editar</Text>
+              </TouchableOpacity>
+
+              {/* Driver Profile Status Badge */}
+              {driverProfile?.statusCadastro && 
+                <View style={
+                  driverProfile.statusCadastro === 'APROVADO' ? styles.approvedBadge :
+                  driverProfile.statusCadastro === 'PENDENTE' ? styles.pendingBadge :
+                  styles.rejectedBadge
+                }>
+                  <Ionicons
+                    name={
+                      driverProfile.statusCadastro === 'APROVADO' ? "checkmark-circle" :
+                      driverProfile.statusCadastro === 'PENDENTE' ? "time" :
+                      "close-circle"
+                    }
+                    size={16}
+                    color={
+                      driverProfile.statusCadastro === 'APROVADO' ? COLORS.success :
+                      driverProfile.statusCadastro === 'PENDENTE' ? COLORS.warning :
+                      COLORS.danger
+                    }
+                  />
+                  <Text style={
+                    driverProfile.statusCadastro === 'APROVADO' ? styles.approvedBadgeText :
+                    driverProfile.statusCadastro === 'PENDENTE' ? styles.pendingBadgeText :
+                    styles.rejectedBadgeText
+                  }>
+                    {driverProfile.statusCadastro === 'APROVADO' ? 'Aprovado' :
+                     driverProfile.statusCadastro === 'PENDENTE' ? 'Pendente' :
+                     'Rejeitado'}
+                  </Text>
+                </View>
+              }
+            </View>
+
+            <View style={commonStyles.profileCard}>
+              <View style={commonStyles.infoListItem}>
+                <View style={commonStyles.infoIcon}>
+                  <Ionicons name="car-outline" size={24} color={COLORS.success} />
+                </View>
+                <View style={commonStyles.infoTextContainer}>
+                  <Text style={commonStyles.infoLabel}>Veículo</Text>
+                  <Text style={commonStyles.infoValue}>
+                    {driverProfile?.carro?.modelo} ({driverProfile?.carro?.cor})
+                  </Text>
+                </View>
+              </View>
+
+              <View style={commonStyles.divider} />
+
+              <View style={commonStyles.infoListItem}>
+                <View style={commonStyles.infoIcon}>
+                  <Ionicons name="speedometer-outline" size={24} color={COLORS.success} />
+                </View>
+                <View style={commonStyles.infoTextContainer}>
+                  <Text style={commonStyles.infoLabel}>Placa</Text>
+                  <Text style={commonStyles.infoValue}>{driverProfile?.carro?.placa}</Text>
+                </View>
+              </View>
+
+              <View style={commonStyles.divider} />
+
+              <View style={commonStyles.infoListItem}>
+                <View style={commonStyles.infoIcon}>
+                  <Ionicons name="people-outline" size={24} color={COLORS.success} />
+                </View>
+                <View style={commonStyles.infoTextContainer}>
+                  <Text style={commonStyles.infoLabel}>Capacidade</Text>
+                  <Text style={commonStyles.infoValue}>{driverProfile?.carro?.capacidadePassageiros} passageiros</Text>
+                </View>
+              </View>
+
+              {driverProfile?.whatsapp && (
+                <>
+                  <View style={commonStyles.divider} />
+
+                  <View style={commonStyles.infoListItem}>
+                    <View style={commonStyles.infoIcon}>
+                      <Ionicons name="logo-whatsapp" size={24} color={COLORS.success} />
+                    </View>
+                    <View style={commonStyles.infoTextContainer}>
+                      <Text style={commonStyles.infoLabel}>WhatsApp</Text>
+                      <Text style={commonStyles.infoValue}>{driverProfile?.whatsapp}</Text>
+                    </View>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {/* Show message if driver profile is pending or rejected */}
+            {driverProfile?.statusCadastro && driverProfile.statusCadastro !== 'APROVADO' && (
+              <View style={styles.statusMessageContainer}>
+                <Ionicons
+                  name={driverProfile.statusCadastro === 'PENDENTE' ? "information-circle" : "alert-circle"}
+                  size={24}
+                  color={driverProfile.statusCadastro === 'PENDENTE' ? COLORS.warning : COLORS.danger}
+                />
+                <Text style={styles.statusMessageText}>
+                  {driverProfile.statusCadastro === 'PENDENTE'
+                    ? 'Seu perfil de motorista está em análise. Você poderá oferecer caronas assim que for aprovado.'
+                    : 'Seu perfil de motorista foi rejeitado. Entre em contato com o suporte para mais informações.'}
+                </Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          <View style={[commonStyles.profileCard, {
+            marginHorizontal: SPACING.lg,
+            alignItems: 'center',
+            padding: SPACING.lg
+          }]}>
+            <Ionicons name="car-outline" size={40} color={COLORS.text.secondary} />
+            <Text style={{
+              fontSize: 18,
+              fontWeight: 'bold',
+              color: COLORS.text.primary,
+              marginTop: SPACING.md,
+              marginBottom: SPACING.sm
+            }}>
+              Torne-se um Motorista
+            </Text>
+            <Text style={{
+              fontSize: 14,
+              color: COLORS.text.secondary,
+              textAlign: 'center',
+              marginBottom: SPACING.lg
+            }}>
+              Cadastre-se como motorista para poder oferecer caronas para outros estudantes.
+            </Text>
+            <TouchableOpacity
+              style={[commonStyles.secondaryButton, { width: '100%' }]}
+              onPress={navigateToCreateDriverProfile}
+              disabled={userDetails?.statusCadastro !== 'APROVADO'}
+            >
+              <Text style={commonStyles.secondaryButtonText}>Cadastrar como Motorista</Text>
+            </TouchableOpacity>
+
+            {/* Show message if user account is not approved */}
+            {userDetails?.statusCadastro && userDetails.statusCadastro !== 'APROVADO' && (
+              <View style={styles.statusMessageContainer}>
+                <Ionicons
+                  name={userDetails.statusCadastro === 'PENDENTE' ? "information-circle" : "alert-circle"}
+                  size={20}
+                  color={userDetails.statusCadastro === 'PENDENTE' ? COLORS.warning : COLORS.danger}
+                />
+                <Text style={[styles.statusMessageText, { fontSize: 12 }]}>
+                  {userDetails.statusCadastro === 'PENDENTE'
+                    ? 'Sua conta precisa ser aprovada antes de se cadastrar como motorista.'
+                    : 'Sua conta foi rejeitada. Entre em contato com o suporte.'}
+                </Text>
+              </View>
+            )}
+          </View>
+        )
+        }
+
+        <TouchableOpacity
+          style={[commonStyles.dangerButton, {
+            marginHorizontal: SPACING.lg,
+            marginTop: SPACING.lg
+          }]}
+          onPress={confirmLogout}
+        >
+          <Ionicons name="log-out-outline" size={20} color={COLORS.text.light} />
+          <Text style={commonStyles.dangerButtonText}>Sair da Conta</Text>
+        </TouchableOpacity>
+      </Animated.ScrollView >
+    </SafeAreaView >
   );
 };
 
+// Add new styles for status badges and messages
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#4285F4',
+  approvedBadge: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  logoutButton: {
-    padding: 8,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#666',
-  },
-  profileHeader: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#4285F4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 50,
-  },
-  avatarText: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  userEmail: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 4,
-  },
-  infoSection: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(75, 181, 67, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    marginTop: 8,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  infoLabel: {
-    width: '40%',
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#666',
-  },
-  infoValue: {
-    width: '60%',
-    fontSize: 15,
-    color: '#333',
-  },
-  statusApproved: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-  },
-  statusPending: {
-    color: '#FF9800',
-    fontWeight: 'bold',
-  },
-  statusRejected: {
-    color: '#F44336',
-    fontWeight: 'bold',
-  },
-  createDriverButton: {
-    backgroundColor: '#4285F4',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  createDriverButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  approvedBadgeText: {
+    color: COLORS.success,
+    fontSize: 12,
     fontWeight: '600',
+    marginLeft: 4,
   },
-  updateProfileButton: {
-    backgroundColor: '#34A853',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+  pendingBadge: {
     flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  updateProfileButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  noDataContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 50,
+    backgroundColor: 'rgba(255, 191, 0, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginTop: 8,
   },
-  noDataText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
+  pendingBadgeText: {
+    color: COLORS.warning,
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
-  retryButton: {
-    backgroundColor: '#4285F4',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  rejectedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(235, 87, 87, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginTop: 8,
   },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+  rejectedBadgeText: {
+    color: COLORS.danger,
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
-  sectionSubtitle: {
-    marginTop: 12,
+  sectionHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 4,
   },
-  sectionSubtitleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#555',
-  },
-  sectionHeader: {
+  statusMessageContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
     marginBottom: 16,
   },
-  editButton: {
-    padding: 8,
+  statusMessageText: {
+    color: COLORS.text.secondary,
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
   },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  updateDriverButton: {
-    backgroundColor: '#FF9800',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  editDriverButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.sm,
+    marginTop: SPACING.sm,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    marginLeft: SPACING.md,
   },
-  updateDriverButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  editDriverButtonText: {
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHT.medium,
+    fontSize: FONT_SIZE.xs,
+    marginLeft: 2,
+  }
 });
 
-export default ProfilePage;
+export default React.memo(ProfilePage);
