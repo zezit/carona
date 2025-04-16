@@ -72,6 +72,7 @@ public class SupabaseStorageService {
             return updateImage(file, fileName, this.userPhotosBucketName);
 
         } catch (Exception e) {
+            e.printStackTrace();
             log.info("Arquivo '{}' não encontrado no bucket '{}'. Realizando upload...", fileName,
                     userPhotosBucketName);
             return uploadImage(file, fileName, this.userPhotosBucketName);
@@ -93,6 +94,7 @@ public class SupabaseStorageService {
                             + fileName)
                     .block();
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("Erro ao atualizar a imagem no Supabase: {}", e.getMessage());
             throw new ErroUploadImage(MensagensResposta.ERRO_ATUALIZACAO_ARQUIVO, e);
         }
