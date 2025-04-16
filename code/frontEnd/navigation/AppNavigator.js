@@ -19,6 +19,9 @@ import CreateDriverProfilePage from '../pages/CreateDriverProfilePage';
 import UpdateProfilePage from '../pages/UpdateProfilePage';
 import UpdateDriverProfilePage from '../pages/UpdateDriverProfilePage';
 import RegisterRidePage from '../pages/RegisterRidePage';
+import RideDetailsPage from '../pages/RideDetailsPage';
+import RideModeSelectionPage from '../pages/RideModeSelectionPage';
+import RequestRidePage from '../pages/RequestRidePage';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -26,31 +29,24 @@ const Tab = createBottomTabNavigator();
 // Animation configurations
 const screenOptions = {
   headerShown: false,
-  cardStyleInterpolator: ({ current, layouts }) => {
-    return {
-      cardStyle: {
-        transform: [
-          {
-            translateX: current.progress.interpolate({
-              inputRange: [0, 1],
-              outputRange: [layouts.screen.width, 0],
-            }),
-          },
-        ],
-      },
-    };
-  },
+  cardStyle: { backgroundColor: '#fff' },
+  cardStyleInterpolator: ({ current: { progress } }) => ({
+    cardStyle: {
+      opacity: progress,
+    },
+  }),
+  gestureEnabled: true,
 };
 
-const fadeConfig = {
-  animation: 'timing',
-  config: {
-    duration: 300,
-  },
-};
+// Loading screen component
+const LoadingScreen = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ActivityIndicator size="large" color="#4285F4" />
+  </View>
+);
 
-// Main App Tab Navigator
-const MainTabs = () => (
+// Tab Navigator
+const TabNavigator = () => (
   <Tab.Navigator
     screenOptions={({ route }) => ({
       headerShown: false, // Hide the header from tab navigator
@@ -77,19 +73,19 @@ const MainTabs = () => (
       }
     })}
   >
-    <Tab.Screen 
-      name="Home" 
-      component={HomePage} 
+    <Tab.Screen
+      name="Home"
+      component={HomePage}
       options={{ title: 'Início' }}
     />
-    <Tab.Screen 
-      name="Rides" 
-      component={RidesPage} 
+    <Tab.Screen
+      name="Rides"
+      component={RideModeSelectionPage}
       options={{ title: 'Caronas' }}
     />
-    <Tab.Screen 
-      name="Profile" 
-      component={ProfilePage} 
+    <Tab.Screen
+      name="Profile"
+      component={ProfilePage}
       options={{ title: 'Perfil' }}
     />
   </Tab.Navigator>
@@ -97,46 +93,48 @@ const MainTabs = () => (
 
 // Auth Navigator
 const AuthStack = () => (
-  <Stack.Navigator 
+  <Stack.Navigator
     screenOptions={{
       ...screenOptions,
       gestureEnabled: true,
-      transitionSpec: {
-        open: fadeConfig,
-        close: fadeConfig,
-      },
     }}
   >
     <Stack.Screen name="Login" component={LoginPage} />
     <Stack.Screen name="Registrar" component={RegisterPage} />
-    <Stack.Screen name="Mais informações" component={RegisterSecondPage} />
+    <Stack.Screen name="RegisterSecond" component={RegisterSecondPage} />
   </Stack.Navigator>
 );
 
-// Loading screen component
-const LoadingScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-    <ActivityIndicator size="large" color="#4285F4" />
-  </View>
-);
-
-// Main App Stack with Tabs
+// Main Navigator (after authentication)
 const MainStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="MainTabs" component={MainTabs} />
+  <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Screen name="TabNavigator" component={TabNavigator} />
     <Stack.Screen name="CreateDriverProfile" component={CreateDriverProfilePage} />
     <Stack.Screen name="UpdateProfile" component={UpdateProfilePage} />
     <Stack.Screen name="UpdateDriverProfile" component={UpdateDriverProfilePage} />
-    <Stack.Screen name="RegisterRide" component={RegisterRidePage}/>
+    <Stack.Screen name="RegisterRide" component={RegisterRidePage} />
+    <Stack.Screen name="RequestRide" component={RequestRidePage} />
+    <Stack.Screen
+      name="RidesPage"
+      component={RidesPage}
+      options={({ route }) => ({
+        title: route.params?.mode === 'pickup' ? 'Caronas Disponíveis' : 'Minhas Caronas'
+      })}
+    />
+    <Stack.Screen
+      name="RideDetails"
+      component={RideDetailsPage}
+      options={({ route }) => ({
+        title: route.params?.mode === 'pickup' ? 'Detalhes da Carona' : 'Detalhes da Minha Carona'
+      })}
+    />
   </Stack.Navigator>
 );
 
 // Root Navigator
 const AppNavigator = () => {
-  // Use the context hook instead of the regular hook
   const { isAuthenticated, isLoading } = useAuthContext();
-  
-  // Show loading screen while checking authentication
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -144,7 +142,7 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        screenOptions={{ 
+        screenOptions={{
           headerShown: false,
           gestureEnabled: false,
         }}

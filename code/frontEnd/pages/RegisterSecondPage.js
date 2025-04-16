@@ -2,6 +2,7 @@ import { Text, View, TextInput, TouchableOpacity, Alert, ScrollView, ActivityInd
 import React, { useState, useEffect, useRef } from 'react';
 import { commonStyles } from '../styles/commonStyles';
 import useAuth from '../hooks/useAuth';
+import { MaterialIcons } from '@expo/vector-icons'; // Make sure to install expo/vector-icons
 
 export default function RegisterSecondPage({ navigation, route }) {
   const { username, email, password } = route.params;
@@ -61,13 +62,27 @@ export default function RegisterSecondPage({ navigation, route }) {
 
   // Generate arrays for day, month, and year options
   const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
-  const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+  const months = [
+    { value: '01', label: 'Janeiro' },
+    { value: '02', label: 'Fevereiro' },
+    { value: '03', label: 'Março' },
+    { value: '04', label: 'Abril' },
+    { value: '05', label: 'Maio' },
+    { value: '06', label: 'Junho' },
+    { value: '07', label: 'Julho' },
+    { value: '08', label: 'Agosto' },
+    { value: '09', label: 'Setembro' },
+    { value: '10', label: 'Outubro' },
+    { value: '11', label: 'Novembro' },
+    { value: '12', label: 'Dezembro' }
+  ];
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 1919 }, (_, i) => (currentYear - i).toString());
+  const years = Array.from({ length: 80 }, (_, i) => (currentYear - i).toString());
 
   const formatDateToDisplay = () => {
     if (!day || !month || !year) return "";
-    return `${day}/${month}/${year}`;
+    const monthName = months.find(m => m.value === month)?.label || month;
+    return `${day} de ${monthName} de ${year}`;
   };
 
   const formatDateToAPI = () => {
@@ -89,6 +104,21 @@ export default function RegisterSecondPage({ navigation, route }) {
       const dateObj = new Date(`${year}-${month}-${day}`);
       if (dateObj.toString() === "Invalid Date") {
         Alert.alert("Erro", "Data inválida. Por favor, verifique dia, mês e ano.");
+        return;
+      }
+      
+      // Check if user is at least 16 years old
+      const today = new Date();
+      const birthDate = new Date(`${year}-${month}-${day}`);
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        if (age - 1 < 16) {
+          Alert.alert("Erro", "Você deve ter pelo menos 16 anos para se cadastrar.");
+          return;
+        }
+      } else if (age < 16) {
+        Alert.alert("Erro", "Você deve ter pelo menos 16 anos para se cadastrar.");
         return;
       }
     } catch (e) {
@@ -135,7 +165,7 @@ export default function RegisterSecondPage({ navigation, route }) {
 
     const result = await registerStudent(userData);
     
-    if (result.success) {
+    if (result?.success) {
       // Show success animation before alert
       Animated.sequence([
         Animated.timing(fadeAnim, {
@@ -153,6 +183,7 @@ export default function RegisterSecondPage({ navigation, route }) {
           { 
             text: "OK", 
             onPress: () => {
+              navigation.navigate('Login');
             } 
           }
         ]);
@@ -180,8 +211,105 @@ export default function RegisterSecondPage({ navigation, route }) {
     transform: [{ translateY: slideAnim }]
   };
 
-  // Create a custom date picker modal
+  // Create a custom date picker modal with improved styling
   const renderDatePickerModal = () => {
+    const modalStyles = {
+      modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
+      },
+      modalWrapper: {
+        width: '100%',
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 20,
+        maxHeight: '80%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8
+      },
+      modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        paddingBottom: 15
+      },
+      modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333'
+      },
+      closeButtonText: {
+        fontSize: 16,
+        color: '#ff6b6b',
+        fontWeight: '600'
+      },
+      datePickerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 20
+      },
+      datePickerColumn: {
+        flex: 0.8,
+        marginHorizontal: 5
+      },
+      datePickerColumnMonth: {
+        flex: 1.4,
+        marginHorizontal: 5
+      },
+      datePickerLabel: {
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 10,
+        color: '#333'
+      },
+      datePickerScroll: {
+        height: 200,
+        borderRadius: 12,
+        backgroundColor: '#f8f8f8'
+      },
+      datePickerItem: {
+        padding: 12,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee'
+      },
+      datePickerItemSelected: {
+        backgroundColor: '#e6f7ff',
+        borderRadius: 12
+      },
+      datePickerText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center'
+      },
+      datePickerTextSelected: {
+        color: '#0066cc',
+        fontWeight: 'bold'
+      },
+      button: {
+        backgroundColor: '#0066cc',
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 10
+      },
+      buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold'
+      }
+    };
+
     return (
       <Modal
         visible={showDateModal}
@@ -189,44 +317,47 @@ export default function RegisterSecondPage({ navigation, route }) {
         animationType="none"
         onRequestClose={() => setShowDateModal(false)}
       >
-        <View style={commonStyles.modalContainer}>
+        <View style={modalStyles.modalContainer}>
           <Animated.View 
             style={[
-              commonStyles.modalWrapper, 
+              modalStyles.modalWrapper, 
               {
                 opacity: modalOpacityAnim,
                 transform: [{ scale: modalScaleAnim }]
               }
             ]}
           >
-            <View style={commonStyles.modalHeader}>
-              <Text style={commonStyles.modalTitle}>Selecione sua Data de Nascimento</Text>
+            <View style={modalStyles.modalHeader}>
+              <Text style={modalStyles.modalTitle}>Data de Nascimento</Text>
               <TouchableOpacity 
                 onPress={() => setShowDateModal(false)}
                 accessibilityLabel="Fechar seleção de data"
                 accessibilityRole="button"
               >
-                <Text style={commonStyles.closeButtonText}>Cancelar</Text>
+                <Text style={modalStyles.closeButtonText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
             
-            <View style={commonStyles.datePickerContainer}>
-              <View style={commonStyles.datePickerColumn}>
-                <Text style={commonStyles.datePickerLabel}>Dia</Text>
-                <ScrollView style={commonStyles.datePickerScroll}>
+            <View style={modalStyles.datePickerContainer}>
+              <View style={modalStyles.datePickerColumn}>
+                <Text style={modalStyles.datePickerLabel}>Dia</Text>
+                <ScrollView 
+                  style={modalStyles.datePickerScroll}
+                  showsVerticalScrollIndicator={false}
+                >
                   {days.map(d => (
                     <TouchableOpacity 
                       key={`day-${d}`}
                       style={[
-                        commonStyles.datePickerItem,
-                        day === d && commonStyles.datePickerItemSelected
+                        modalStyles.datePickerItem,
+                        day === d && modalStyles.datePickerItemSelected
                       ]}
                       onPress={() => setDay(d)}
                     >
                       <Text 
                         style={[
-                          commonStyles.datePickerText,
-                          day === d && commonStyles.datePickerTextSelected
+                          modalStyles.datePickerText,
+                          day === d && modalStyles.datePickerTextSelected
                         ]}
                       >
                         {d}
@@ -236,47 +367,55 @@ export default function RegisterSecondPage({ navigation, route }) {
                 </ScrollView>
               </View>
               
-              <View style={commonStyles.datePickerColumn}>
-                <Text style={commonStyles.datePickerLabel}>Mês</Text>
-                <ScrollView style={commonStyles.datePickerScroll}>
+              <View style={modalStyles.datePickerColumnMonth}>
+                <Text style={modalStyles.datePickerLabel}>Mês</Text>
+                <ScrollView 
+                  style={modalStyles.datePickerScroll}
+                  showsVerticalScrollIndicator={false}
+                >
                   {months.map(m => (
                     <TouchableOpacity 
-                      key={`month-${m}`}
+                      key={`month-${m.value}`}
                       style={[
-                        commonStyles.datePickerItem,
-                        month === m && commonStyles.datePickerItemSelected
+                        modalStyles.datePickerItem,
+                        month === m.value && modalStyles.datePickerItemSelected
                       ]}
-                      onPress={() => setMonth(m)}
+                      onPress={() => setMonth(m.value)}
                     >
                       <Text 
+                        numberOfLines={1}
                         style={[
-                          commonStyles.datePickerText,
-                          month === m && commonStyles.datePickerTextSelected
+                          modalStyles.datePickerText,
+                          { width: '100%' },
+                          month === m.value && modalStyles.datePickerTextSelected
                         ]}
                       >
-                        {m}
+                        {m.label}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
               </View>
               
-              <View style={commonStyles.datePickerColumn}>
-                <Text style={commonStyles.datePickerLabel}>Ano</Text>
-                <ScrollView style={commonStyles.datePickerScroll}>
+              <View style={modalStyles.datePickerColumn}>
+                <Text style={modalStyles.datePickerLabel}>Ano</Text>
+                <ScrollView 
+                  style={modalStyles.datePickerScroll}
+                  showsVerticalScrollIndicator={false}
+                >
                   {years.map(y => (
                     <TouchableOpacity 
                       key={`year-${y}`}
                       style={[
-                        commonStyles.datePickerItem,
-                        year === y && commonStyles.datePickerItemSelected
+                        modalStyles.datePickerItem,
+                        year === y && modalStyles.datePickerItemSelected
                       ]}
                       onPress={() => setYear(y)}
                     >
                       <Text 
                         style={[
-                          commonStyles.datePickerText,
-                          year === y && commonStyles.datePickerTextSelected
+                          modalStyles.datePickerText,
+                          year === y && modalStyles.datePickerTextSelected
                         ]}
                       >
                         {y}
@@ -288,12 +427,12 @@ export default function RegisterSecondPage({ navigation, route }) {
             </View>
             
             <TouchableOpacity 
-              style={commonStyles.button} 
+              style={modalStyles.button} 
               onPress={handleDateSelection}
               accessibilityLabel="Confirmar data"
               accessibilityRole="button"
             >
-              <Text style={commonStyles.buttonText}>Confirmar</Text>
+              <Text style={modalStyles.buttonText}>Confirmar</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -301,8 +440,55 @@ export default function RegisterSecondPage({ navigation, route }) {
     );
   };
 
+  const enhancedInputStyle = {
+    textInput: {
+      ...commonStyles.textInput,
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 12,
+      paddingVertical: 15,
+      paddingHorizontal: 16,
+      fontSize: 16,
+      backgroundColor: '#f9f9f9',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 1
+    },
+    dateInputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 12,
+      backgroundColor: '#f9f9f9'
+    },
+    dateInputText: {
+      flex: 1,
+      fontSize: 16,
+      color: '#333'
+    },
+    calendarIcon: {
+      marginLeft: 10
+    },
+    placeholderText: {
+      color: '#999',
+      fontSize: 16
+    },
+    selectedText: {
+      color: '#333',
+      fontSize: 16
+    }
+  };
+
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <ScrollView 
+      contentContainerStyle={{ flexGrow: 1 }}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={commonStyles.container}>
         <View style={commonStyles.headerView}>
           <Animated.Text style={[commonStyles.title, { opacity: fadeAnim }]}>
@@ -322,25 +508,32 @@ export default function RegisterSecondPage({ navigation, route }) {
           <View style={commonStyles.formGroup}>
             <Text style={commonStyles.inputLabel}>Data de Nascimento</Text>
             <TouchableOpacity 
-              style={[commonStyles.textInput, { paddingVertical: 12, justifyContent: 'center' }]} 
+              style={enhancedInputStyle.dateInputContainer} 
               onPress={() => setShowDateModal(true)}
               accessibilityLabel="Seletor de data de nascimento"
               accessibilityRole="button"
             >
-              <Text style={birthDate ? commonStyles.selectedText : commonStyles.placeholderText}>
+              <Text style={birthDate ? enhancedInputStyle.selectedText : enhancedInputStyle.placeholderText}>
                 {birthDate ? birthDate : "Selecione sua data de nascimento"}
               </Text>
+              <MaterialIcons 
+                name="date-range" 
+                size={24} 
+                color="#666" 
+                style={enhancedInputStyle.calendarIcon} 
+              />
             </TouchableOpacity>
           </View>
           
           <View style={commonStyles.formGroup}>
             <Text style={commonStyles.inputLabel}>Matrícula</Text>
             <TextInput
-              style={commonStyles.textInput}
+              style={enhancedInputStyle.textInput}
               placeholder="Seu número de matrícula"
               value={registration}
               onChangeText={(text) => setRegistration(text)}
               accessibilityLabel="Campo de matrícula"
+              keyboardType="numeric"
             />
             <Text style={commonStyles.inputHintText}>
               Apenas estudantes podem se cadastrar pelo aplicativo
@@ -353,6 +546,11 @@ export default function RegisterSecondPage({ navigation, route }) {
             <TouchableOpacity 
               style={[
                 commonStyles.button, 
+                { 
+                  backgroundColor: '#0066cc', 
+                  borderRadius: 12,
+                  paddingVertical: 15
+                },
                 isLoading && commonStyles.buttonDisabled
               ]} 
               onPress={handleCadastro}
@@ -363,7 +561,7 @@ export default function RegisterSecondPage({ navigation, route }) {
               {isLoading ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text style={commonStyles.buttonText}>Finalizar</Text>
+                <Text style={[commonStyles.buttonText, { fontSize: 16, fontWeight: 'bold' }]}>Finalizar</Text>
               )}
             </TouchableOpacity>
           </View>

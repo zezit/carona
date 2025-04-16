@@ -29,7 +29,6 @@ public class SignupEstudanteRequest extends SignupUsuarioRequest {
     @Schema(description = "Número de matrícula do estudante na instituição", example = "20230123456")
     private String matricula;
     
-    @NotBlank(message = "{comum.atributos.curso.obrigatorio}")
     @Schema(description = "Nome do curso que o estudante está matriculado", example = "Engenharia de Software")
     private String curso;
 }

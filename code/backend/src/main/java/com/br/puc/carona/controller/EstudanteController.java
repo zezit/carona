@@ -3,9 +3,15 @@ package com.br.puc.carona.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.br.puc.carona.dto.request.EstudanteUpdateRequest;
 import com.br.puc.carona.dto.request.PerfilMotoristaRequest;
@@ -20,7 +26,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/estudante")
@@ -60,11 +65,11 @@ public class EstudanteController {
         return ResponseEntity.ok(perfilMotorista);
     }
 
-    @GetMapping()
-    @Operation(summary = "Busca perfil de motorista", description = "Busca o perfil de motorista de um estudante")
+    @GetMapping
+    @Operation(summary = "Busca todos os estudantes", description = "Recupera todos os estudantes cadastrados")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Perfil de motorista encontrado"),
-            @ApiResponse(responseCode = "404", description = "Estudante não encontrado ou não possui perfil de motorista")
+        @ApiResponse(responseCode = "200", description = "Lista de estudantes encontrada"),
+        @ApiResponse(responseCode = "404", description = "Nenhum estudante encontrado")
     })
     public ResponseEntity<Page<EstudanteDto>> buscarTodosOsEstudantes(Pageable pageable){
         log.info("Buscando todos os estudantes com paginação");

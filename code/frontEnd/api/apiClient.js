@@ -3,9 +3,9 @@ import {API_BASE_URL} from '@env';
 
 // Determine the base URL based on environment
 const getBaseUrl = () => {
-  // return API_BASE_URL;
-  // return 'https://fdcb-189-71-58-174.ngrok-free.app/api';
-  return ' https://6e27-191-185-84-176.ngrok-free.app/api';
+  return API_BASE_URL;
+  // Fallback for development if needed
+  // return API_BASE_URL;;
 };
 
 const BASE_URL = getBaseUrl();
@@ -35,7 +35,13 @@ const formatResponse = (response) => {
 
 // Error wrapper
 const formatError = (error) => {
-  console.log('API Error:', error);
+  console.log('API Error:', {
+    url: error.config?.url,
+    method: error.config?.method,
+    error: error.message,
+    body: error.response.data,
+    status: error.response?.status,
+  });
   
   // Default error message
   let errorMessage = 'Erro de conexão com o servidor';
