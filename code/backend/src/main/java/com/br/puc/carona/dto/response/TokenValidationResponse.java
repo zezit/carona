@@ -11,4 +11,6 @@ public class TokenValidationResponse {
     private boolean valid;
     private String email;
     private Long userId;
+    private String name;
+    private String imgUrl;
 }

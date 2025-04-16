@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { 
   View, 
@@ -25,7 +25,7 @@ const UpdateProfilePage = ({ navigation, route }) => {
   const [matricula, setMatricula] = useState(userDetails?.matricula || '');
   const [curso, setCurso] = useState(userDetails?.curso || '');
   const [isLoading, setIsLoading] = useState(false);
-  const { user, authToken } = useAuthContext();
+  const { user, authToken, setUser } = useAuthContext();
   const [image, setImage] = useState(null);
   
   // Animation values
@@ -84,7 +84,6 @@ const UpdateProfilePage = ({ navigation, route }) => {
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
-      // Aqui você pode chamar a função de upload passando o `result.assets[0]`
       try {
         const formData = new FormData();
         formData.append('file', {
@@ -95,8 +94,8 @@ const UpdateProfilePage = ({ navigation, route }) => {
 
         const options = {
           headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'multipart/form-data',
           },
         };
 
@@ -107,6 +106,18 @@ const UpdateProfilePage = ({ navigation, route }) => {
         );
 
         if (response.success) {
+          // Update the user photoUrl in context
+          const updatedUser = {
+            ...user,
+            photoUrl: result.assets[0].uri
+          };
+          
+          // Update user context
+          setUser(updatedUser);
+          
+          // Update AsyncStorage
+          await AsyncStorage.setItem('photoUrl', result.assets[0].uri);
+          
           Alert.alert("Sucesso", "Imagem de perfil atualizada com sucesso!");
         } else {
           Alert.alert("Erro", response.error?.message || "Não foi possível atualizar a imagem.");
@@ -144,6 +155,18 @@ const UpdateProfilePage = ({ navigation, route }) => {
       );
       
       if (response.success) {
+        // Update the user in AuthContext
+        const updatedUser = {
+          ...user,
+          name: nome
+        };
+        
+        // Update user context
+        setUser(updatedUser);
+        
+        // Update AsyncStorage
+        await AsyncStorage.setItem('userName', nome);
+        
         Alert.alert(
           "Sucesso",
           "Perfil atualizado com sucesso!",
@@ -155,13 +178,14 @@ const UpdateProfilePage = ({ navigation, route }) => {
           ]
         );
       } else {
+        console.error("Erro ao atualizar perfil:", JSON.stringify(response.error));
         Alert.alert(
           "Erro",
           response.error?.message || "Não foi possível atualizar o perfil."
         );
       }
     } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
+      console.error("Erro ao atualizar perfil throw:", error);
       Alert.alert(
         "Erro",
         "Ocorreu um erro ao atualizar o perfil. Tente novamente."

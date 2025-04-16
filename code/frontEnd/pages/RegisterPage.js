@@ -50,7 +50,7 @@ export default function RegisterPage({ navigation }) {
       return;
     }
     
-    navigation.navigate('Mais informações', { username, email, password });
+    navigation.navigate('RegisterSecond', { username, email, password });
   };
 
   const animatedStyle = {

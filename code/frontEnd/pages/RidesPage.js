@@ -1,167 +1,227 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Animated } from "react-native";
-import { TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useEffect,useState } from "react";
-import { apiClient } from "../api/apiClient";
-import { useAuthContext } from "../contexts/AuthContext";
-const RidesPage = ({ navigation }) => {
-  // Animation values
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const { user, logout, authToken } = useAuthContext();
-  const [userDetails, setUserDetails] = useState(null);
-  const [isDriverProfile, setIsDriverProfile] = useState(false);
-   const [loading, setLoading] = useState(true);
-  
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuthContext } from '../contexts/AuthContext';
+import { apiClient } from '../api/apiClient';
+import commonStyles from '../styles/commonStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-  React.useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+const RidesPage = ({ route, navigation }) => {
+  const { mode = 'my-rides' } = route.params || {};
+  const { user, authToken } = useAuthContext();
+  const [rides, setRides] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
+    loadRides();
+  }, [mode]);
 
-    fetchUserDetails();
-  }, []);
-
-  // Update after navigation back
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      fetchUserDetails();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  const fetchUserDetails = async () => {
+  const loadRides = async () => {
     try {
-      if (!user?.id) {
-        console.log("No user ID available to fetch profile");
-        setLoading(false);
-        return;
+      setLoading(true);
+      setError(null);
+      let response;
+
+      if (mode === 'my-rides') {
+        response = await apiClient.get(`/carona/motorista/${user.id}`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } else {
+        response = await apiClient.get('/carona');
       }
-
-      const options = {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-      };
-
-      // Fetch student details
-      const response = await apiClient.get(`/estudante/${user.id}`, options);
 
       if (response.success) {
-        setUserDetails(response.data);
-
-        try {
-          const driverResponse = await apiClient.get(`/estudante/${user.id}/motorista`, options);
-
-          if (driverResponse.success) {
-            setIsDriverProfile(true);
-          } else {
-            setIsDriverProfile(false);
-          }
-        } catch (err) {
-          console.log(
-            "User doesn't have a driver profile yet or there was an error:",
-            err.message
-          );
-
-          // Check if the error is because the user is not a driver (HTTP 400 with specific message)
-          if (
-            err.response &&
-            err.response.status === 400 &&
-            (err.response.data?.message?.includes("não é motorista") ||
-              err.response.data?.error?.includes("não é motorista"))
-          ) {
-            console.log("User is not a driver yet");
-          } else {
-            console.error("Error fetching driver profile:", err);
-          }
-
-          setIsDriverProfile(false);
-         
-        }
+        setRides(response.data.content || []);
+      } else {
+        setError('Erro ao carregar as caronas. Tente novamente.');
       }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+    } catch (err) {
+      setError('Erro ao carregar as caronas. Tente novamente.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
- 
-  const  handleRegisterCarpool = () => {
-    navigation.navigate('RegisterRide');
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'AGENDADA':
+        return '#E3F2FD';
+      case 'EM_ANDAMENTO':
+        return '#E8F5E9';
+      case 'FINALIZADA':
+        return '#EEEEEE';
+      case 'CANCELADA':
+        return '#FFEBEE';
+      default:
+        return '#E3F2FD';
+    }
   };
+
+  const getStatusTextColor = (status) => {
+    switch (status) {
+      case 'AGENDADA':
+        return '#0D47A1';
+      case 'EM_ANDAMENTO':
+        return '#1B5E20';
+      case 'FINALIZADA':
+        return '#424242';
+      case 'CANCELADA':
+        return '#B71C1C';
+      default:
+        return '#0D47A1';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'AGENDADA':
+        return 'Agendada';
+      case 'EM_ANDAMENTO':
+        return 'Em andamento';
+      case 'FINALIZADA':
+        return 'Finalizada';
+      case 'CANCELADA':
+        return 'Cancelada';
+      default:
+        return status;
+    }
+  };
+
+  const renderRideItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.rideCard}
+      onPress={() => navigation.navigate('RideDetails', { rideId: item.id })}
+    >
+      <View style={styles.rideHeader}>
+        <Text style={styles.rideDate}>
+          {new Date(item.dataHoraPartida).toLocaleDateString()}
+        </Text>
+        <Text style={styles.rideTime}>
+          {new Date(item.dataHoraPartida).toLocaleTimeString()}
+        </Text>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.rideInfo}>
+        <View style={styles.locationInfo}>
+          <View style={styles.locationIconContainer}>
+            <Ionicons name="location" size={16} color="#4285F4" />
+          </View>
+          <Text style={styles.locationText} numberOfLines={1}>
+            {item.pontoPartida}
+          </Text>
+        </View>
+        <View style={styles.locationInfo}>
+          <View style={styles.locationIconContainer}>
+            <Ionicons name="location" size={16} color="#34A853" />
+          </View>
+          <Text style={styles.locationText} numberOfLines={1}>
+            {item.pontoDestino}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.rideFooter}>
+        <View style={styles.seats}>
+          <Ionicons name="people" size={16} color="#666" />
+          <Text style={styles.seatsText}>
+            {item.vagasDisponiveis} vagas disponíveis
+          </Text>
+        </View>
+        <View style={[
+          styles.status,
+          {
+            backgroundColor: getStatusColor(item.status),
+            borderColor: getStatusTextColor(item.status)
+          }
+        ]}>
+          <Text style={[
+            styles.statusText,
+            { color: getStatusTextColor(item.status) }
+          ]}>
+            {getStatusLabel(item.status)}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#4285F4" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadRides}>
+          <Text style={styles.retryText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Caronas</Text>
-      </View>
-      {isDriverProfile&& <View style={styles.caronaCard}>
-      <View style={styles.textView}>
-       <Text style={styles.tituloCard}>Motorista?</Text>
-       <Text style={styles.subtitle}>Espaço extra no carro? Ofereça uma carona e garanta já uma rendinha extra!</Text>
-       </View>
-        
-        <View style={styles.buttonView}>
-        <TouchableOpacity style={styles.createRideButton}
-        onPress={handleRegisterCarpool}>
-          
-          <Ionicons
-            name="car-outline"
-            size={24}
-            color="#fff"
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.createRideButtonText}>
-            Registrar nova carona
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {mode === 'my-rides' ? 'Minhas Caronas' : 'Caronas Disponíveis'}
           </Text>
-          
-        </TouchableOpacity>
+          {mode === 'my-rides' && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigation.navigate('RegisterRide')}
+            >
+              <Ionicons name="add-circle" size={28} color="#4285F4" />
+            </TouchableOpacity>
+          )}
         </View>
-      
-      </View>}
 
-      <View style={styles.caronaCard}>
-      <View style={styles.textView}>
-       <Text style={styles.tituloCard}>Passageiro?</Text>
-       <Text style={styles.subtitle}>Precisando de carona? Solicite uma viagem!</Text>
-       </View>
-        
-        <View style={styles.buttonView}>
-        <TouchableOpacity style={styles.askRideButton}>
-          
-          <Ionicons
-            name="car-outline"
-            size={24}
-            color="#fff"
-            style={styles.buttonIcon}
+        {rides.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="car-outline" size={72} color="#666" />
+            </View>
+            <Text style={styles.emptyText}>
+              {mode === 'my-rides'
+                ? 'Você ainda não possui caronas registradas'
+                : 'Não há caronas disponíveis no momento'}
+            </Text>
+            <TouchableOpacity style={styles.refreshButton} onPress={loadRides}>
+              <Ionicons name="refresh" size={16} color="#FFF" />
+              <Text style={styles.refreshText}>Atualizar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={rides}
+            renderItem={renderRideItem}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            refreshing={loading}
+            onRefresh={loadRides}
           />
-          <Text style={styles.createRideButtonText}>
-            Solicitar viagem
-          </Text>
-          
-        </TouchableOpacity>
-       
-      
-      </View>
-      </View>
-        {
-          !isDriverProfile &&<View style={styles.viewVazia}></View>
-        }
+        )}
     </SafeAreaView>
   );
 };
@@ -169,97 +229,167 @@ const RidesPage = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: "#4285F4",
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
+    elevation: 2,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#333",
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
+  addButton: {
+    padding: 8,
   },
-  createRideButton: {
-    backgroundColor: "#4285F4",
-    width: "full",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 20,
-    flexDirection: "row",
-    justifyContent: "center",
-    margin:10,
+  list: {
+    padding: 16,
   },
-  askRideButton:{
-    backgroundColor: '#34A853',
-    width: "full",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 20,
-    flexDirection: "row",
-    justifyContent: "center",
-    margin:10,
-  },
-  createRideButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-    
-  },
-  caronaCard:{
-    flex:1,
+  rideCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    marginBottom: 20,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+  },
+  rideHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  rideDate: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  rideTime: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#555',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e1e1e1',
+    marginVertical: 10,
+  },
+  rideInfo: {
+    marginVertical: 4,
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  locationIconContainer: {
+    width: 24,
+    alignItems: 'center',
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 8,
+    flex: 1,
+  },
+  rideFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  seats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  seatsText: {
+    fontSize: 14,
+    color: '#555',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  status: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#d32f2f',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#4285F4',
+    borderRadius: 8,
     elevation: 2,
-    marginHorizontal:20,
-    
-    
   },
-  tituloCard:{
-   margin:10,
-    width:"full",
-    fontSize:24,
+  retryText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
   },
-  subtitle:{
-    margin:10,
-    fontSize:15,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  textView:{
-    flex:1,
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f2f2f2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  buttonView:{
-  flex:1,
-  justifyContent:"flex-end"
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
   },
-  viewVazia:{
-    flex:1,
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4285F4',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    elevation: 2,
+  },
+  refreshText: {
+    color: '#FFF',
+    fontWeight: '500',
+    marginLeft: 8,
   }
 });
 

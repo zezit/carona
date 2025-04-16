@@ -21,7 +21,9 @@ export const AuthProvider = ({ children }) => {
         console.log("Checking for auth token...");
         const token = await AsyncStorage.getItem('authToken');
         const userEmail = await AsyncStorage.getItem('userEmail');
+        const userName = await AsyncStorage.getItem('userName');
         const userId = await AsyncStorage.getItem('userId');
+        const photoUrl = await AsyncStorage.getItem('photoUrl');
         
         if (token) {
           console.log("Found token:", token.substring(0, 10) + "...");
@@ -33,7 +35,9 @@ export const AuthProvider = ({ children }) => {
           if (userEmail) {
             setUser({ 
               email: userEmail,
-              id: userId || null
+              name: userName || null,
+              id: userId || null,
+              photoUrl: photoUrl || null
             });
           }
           
@@ -65,6 +69,8 @@ export const AuthProvider = ({ children }) => {
       
       // Use a simple endpoint to verify token validity
       const result = await apiClient.get('/auth/validate', options);
+
+      console.debug("Token validation result:", result);
       
       if (!result.success) {
         console.log("Token validation failed");
@@ -72,11 +78,20 @@ export const AuthProvider = ({ children }) => {
         await logout();
       } else {
         console.log("Token is valid");
+        console.debug("userEmail:", await AsyncStorage.getItem('userEmail'));
+        console.debug("userId:", await AsyncStorage.getItem('userId'));
+        console.debug("userName:", await AsyncStorage.getItem('userName'));
+        console.debug("photoUrl:", await AsyncStorage.getItem('photoUrl'));
+
         // Update user email if different
         if (result.data?.email && result.data.email !== user?.email) {
-          setUser({...user, email: result.data.email, id: result.data.id});
+          console.info("Updating user email in context");
+          console.debug("Result data:", result.data);
+          setUser({...user, email: result.data.email, id: result.data.userId, name: result.data.name, photoUrl: result.data.imgUrl});
           await AsyncStorage.setItem('userEmail', result.data.email);
-          await AsyncStorage.setItem('userId', result.data.id.toString());
+          await AsyncStorage.setItem('userId', result.data?.userId?.toString());
+          await AsyncStorage.setItem('userName', result.data.name);
+          await AsyncStorage.setItem('photoUrl', result.data.imgUrl);
         }
       }
     } catch (e) {
@@ -97,7 +112,7 @@ export const AuthProvider = ({ children }) => {
         email: strippedEmail, 
         password 
       });
-      
+
       if (!result.success) {
         setError(result.error.message);
         return false;
@@ -106,12 +121,16 @@ export const AuthProvider = ({ children }) => {
       if (result.data?.token) {
         console.log("Login successful, saving token");
         
-        // Extract user ID from token (assuming JWT contains user ID)
+        // Extract user ID and name from token if available
         let userId = null;
+        let userName = null;
+        let photoUrl = null;
         try {
           // This is a simple extraction, in real world you'd properly decode the JWT
           const tokenPayload = JSON.parse(atob(result.data.token.split('.')[1]));
           userId = tokenPayload.userId || tokenPayload.id || tokenPayload.sub;
+          userName = tokenPayload.name || null;
+          photoUrl = tokenPayload.photoUrl || null;
         } catch (e) {
           console.warn("Could not extract user ID from token");
         }
@@ -119,16 +138,26 @@ export const AuthProvider = ({ children }) => {
         // Store token and user info persistently
         await AsyncStorage.setItem('authToken', result.data.token);
         await AsyncStorage.setItem('userEmail', strippedEmail);
+        await AsyncStorage.setItem('userName', userName);
+        await AsyncStorage.setItem('photoUrl', photoUrl || '');
         if (userId) {
           await AsyncStorage.setItem('userId', userId.toString());
         }
+
+        console.debug("User ID:", userId);
+        console.debug("User Name:", userName);
+        console.debug("User Email:", strippedEmail);
+        console.debug("User Photo URL:", photoUrl);
+        console.debug("Token:", result.data.token.substring(0, 10) + "...");
         
         // Update state
         setAuthToken(result.data.token);
         setIsAuthenticated(true);
         setUser({ 
           email: strippedEmail,
-          id: userId
+          id: userId,
+          name: userName,
+          photoUrl: photoUrl
         });
         return true;
       } else {
@@ -148,7 +177,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log("Logging out...");
       // Clear all auth data from storage
-      await AsyncStorage.multiRemove(['authToken', 'userEmail', 'userId']);
+      await AsyncStorage.multiRemove(['authToken', 'userEmail', 'userId', 'userName']);
       
       // Reset state
       setAuthToken(null);
@@ -185,6 +214,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, data: result.data };
     } catch (e) {
+      console.error("Error in student registration:", e);
       const errorMsg = 'Erro no cadastro de estudante';
       setError(errorMsg);
       return { success: false, error: errorMsg };
@@ -197,6 +227,7 @@ export const AuthProvider = ({ children }) => {
   const authContextValue = {
     isAuthenticated,
     user,
+    setUser, // Add setUser to the context
     authToken,
     login,
     logout,
