@@ -167,6 +167,7 @@ public class EstudanteService {
     @Transactional
     public PerfilMotoristaDto atualizarPerfilMotorista(final Long estudanteId, final PerfilMotoristaRequest request) {
         log.info("Atualizando perfil de motorista para estudante ID: {}", estudanteId);
+        log.debug("Dados do request: {}", request);
         final Estudante estudante = repository.findById(estudanteId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId));
 

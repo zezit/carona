@@ -90,6 +90,7 @@ public class UsuarioService {
 
     @Transactional
     public void atualizarImagemUsuario(Long id, MultipartFile file) {
+        log.info("atualizarImagemUsuario: id: {}, file: {}", id, file.getOriginalFilename());
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontrada("Usuário não encontrado com id: " + id));
 
@@ -98,10 +99,12 @@ public class UsuarioService {
             final String url = supabaseStorageService.uploadOrUpdateUserPhoto(file, fileName);
             usuario.setImgUrl(url);
         }catch (IOException e){
+            e.printStackTrace();
             throw new ErroUploadImage("Erro ao fazer upload da imagem de perfil", e);
         }
 
         usuarioRepository.save(usuario);
+        log.info("Imagem de perfil atualizada com sucesso para o usuário com id: {}", id);
     }
 
 }
