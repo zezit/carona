@@ -134,6 +134,7 @@ export const AuthProvider = ({ children }) => {
         console.debug("User Email:", strippedEmail);
         console.debug("User Photo URL:", photoUrl);
         console.debug("Token:", result.data.token.substring(0, 10) + "...");
+        
         // Update state
         setAuthToken(result.data.token);
         setIsAuthenticated(true);
@@ -212,6 +213,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loadUser = async () => {
+    if (user) return user;
+
+    const token = await AsyncStorage.getItem('authToken');
+    if (!token) {
+      await logoutUser();
+      return null;
+    }
+
+    validateToken(token);
+
+    return user;
+  }
+
   // Value object with all the context data and functions
   const authContextValue = {
     isAuthenticated,
@@ -222,7 +237,8 @@ export const AuthProvider = ({ children }) => {
     logoutUser,
     registerStudent,
     isLoading,
-    error
+    error,
+    loadUser
   };
 
   return (

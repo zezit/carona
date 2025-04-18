@@ -466,7 +466,7 @@ const RegisterRidePage = () => {
             <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
           </TouchableOpacity>
           
-          <Text style={styles.titleText}>Registrar Carona</Text>
+          <Text style={styles.titleText}>Criar Carona</Text>
         </View>
 
         {/* Location edit button */}
@@ -493,7 +493,7 @@ const RegisterRidePage = () => {
               </Text>
             </View>
             <View style={styles.locationEditIcon}>
-              <Ionicons name="pencil" size={16} color={COLORS.primary} />
+              <Ionicons name="pencil" size={18} color={COLORS.primary} />
             </View>
           </View>
         </TouchableOpacity>
@@ -543,16 +543,6 @@ const RegisterRidePage = () => {
             </View>
           </Animated.View>
         )}
-        
-        {/* Center map button */}
-        <Reanimated.View style={[styles.centerButtonContainer, animatedStyle]}>
-          <TouchableOpacity
-            style={styles.centerButton}
-            onPress={centerMapOnLocations}
-          >
-            <Ionicons name="locate" size={24} color={COLORS.primary} />
-          </TouchableOpacity>
-        </Reanimated.View>
       </View>
       
       <RideFormBottomSheet
@@ -683,16 +673,19 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   locationTexts: {
+    height: '100%',
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   locationEditText: {
     fontSize: 14,
     color: COLORS.text.primary,
     marginVertical: 2,
+    textAlign: 'left',
+    paddingVertical: 2,
   },
   locationEditIcon: {
-    padding: 6,
+    padding: 5,
   },
   routeInfoContainer: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,21 +7,93 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
-  TextInput
+  TextInput,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '../constants';
 import { commonStyles } from '../theme/styles/commonStyles';
-import { AddressSearchInput } from '../components/common';
+import { SuggestionsPanel } from '../components/ride';
 
 const LocationSelectionPage = ({ navigation }) => {
   const [departure, setDeparture] = useState('');
   const [arrival, setArrival] = useState('');
   const [departureLocation, setDepartureLocation] = useState(null);
   const [arrivalLocation, setArrivalLocation] = useState(null);
-  const [activeInput, setActiveInput] = useState('departure'); // Track which input is active
+  const [activeInput, setActiveInput] = useState('departure');
+  const [loadingCurrentLocation, setLoadingCurrentLocation] = useState(true);
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
+
+  // Load current location on startup
+  useEffect(() => {
+    const loadCurrentLocation = async () => {
+      try {
+        setLoadingCurrentLocation(true);
+        
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Location permission denied');
+          setLocationPermissionDenied(true);
+          setTimeout(() => {
+            setLoadingCurrentLocation(false);
+          }, 500); // Small delay for better UX
+          return;
+        }
+
+        const location = await Promise.race([
+          Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 5000)
+          )
+        ]);
+
+        const { latitude, longitude } = location.coords;
+
+        const reverseGeocode = await Location.reverseGeocodeAsync({
+          latitude,
+          longitude
+        });
+
+        if (reverseGeocode && reverseGeocode[0]) {
+          const addressObj = reverseGeocode[0];
+          const addressParts = [
+            addressObj.name,
+            addressObj.street,
+            addressObj.streetNumber,
+            addressObj.district,
+            addressObj.city,
+            addressObj.region
+          ].filter(Boolean);
+          
+          const address = addressParts.join(', ');
+          setDeparture(address);
+          setDepartureLocation({
+            latitude,
+            longitude
+          });
+        }
+      } catch (error) {
+        console.error('Error getting current location on startup:', error);
+        // Don't show error if it's just a timeout
+        if (error.message !== 'Timeout') {
+          Alert.alert(
+            'Não foi possível obter sua localização',
+            'Tente buscar manualmente ou verifique as permissões de localização.'
+          );
+        }
+      } finally {
+        setLoadingCurrentLocation(false);
+      }
+    };
+
+    loadCurrentLocation();
+  }, []);
 
   const handleSelectDepartureAddress = (address) => {
     setDeparture(address.endereco);
@@ -67,7 +139,9 @@ const LocationSelectionPage = ({ navigation }) => {
 
   // Handle focus on departure input
   const handleFocusDeparture = () => {
-    setActiveInput('departure');
+    if (!loadingCurrentLocation) {
+      setActiveInput('departure');
+    }
   };
 
   // Handle focus on arrival input
@@ -129,21 +203,31 @@ const LocationSelectionPage = ({ navigation }) => {
               <TouchableOpacity 
                 style={[
                   styles.inputWrapper, 
-                  activeInput === 'departure' && styles.activeInputWrapper
+                  activeInput === 'departure' && styles.activeInputWrapper,
+                  loadingCurrentLocation && styles.inputDisabled
                 ]}
                 onPress={handleFocusDeparture}
                 activeOpacity={0.7}
+                disabled={loadingCurrentLocation}
               >
                 <Text style={styles.inputLabel}>Local de Partida</Text>
                 <View style={styles.inputContainer}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="De onde você está saindo?"
-                    value={departure}
-                    onChangeText={setDeparture}
-                    onFocus={handleFocusDeparture}
-                    placeholderTextColor={COLORS.text.tertiary}
-                  />
+                  {loadingCurrentLocation ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                      <Text style={styles.loadingText}>Obtendo sua localização...</Text>
+                    </View>
+                  ) : (
+                    <TextInput
+                      style={styles.input}
+                      placeholder="De onde você está saindo?"
+                      value={departure}
+                      onChangeText={setDeparture}
+                      onFocus={handleFocusDeparture}
+                      placeholderTextColor={COLORS.text.tertiary}
+                      editable={!loadingCurrentLocation}
+                    />
+                  )}
                 </View>
               </TouchableOpacity>
 
@@ -191,25 +275,15 @@ const LocationSelectionPage = ({ navigation }) => {
         </View>
 
         {/* Suggestions Panel */}
-        {activeInput !== 'none' && (
+        {activeInput !== 'none' && !loadingCurrentLocation && (
           <View style={styles.suggestionsPanel}>
-            {activeInput === 'departure' ? (
-              <AddressSearchInput
-                value={departure}
-                onChangeText={setDeparture}
-                onSelectAddress={handleSelectDepartureAddress}
-                hideInput={true} // Don't show another input, just suggestions
-                autoFocus={false}
-              />
-            ) : (
-              <AddressSearchInput
-                value={arrival}
-                onChangeText={setArrival}
-                onSelectAddress={handleSelectArrivalAddress}
-                hideInput={true} // Don't show another input, just suggestions
-                autoFocus={false}
-              />
-            )}
+            <SuggestionsPanel
+              searchValue={activeInput === 'departure' ? departure : arrival}
+              onSelectAddress={activeInput === 'departure' 
+                ? handleSelectDepartureAddress 
+                : handleSelectArrivalAddress}
+              includeCurrentLocation={activeInput === 'departure'}
+            />
           </View>
         )}
       </KeyboardAvoidingView>
@@ -259,7 +333,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     marginTop: -50,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
   },
   unifiedPanel: {
     backgroundColor: COLORS.card,
@@ -330,6 +404,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xs,
     borderRadius: RADIUS.md,
   },
+  inputDisabled: {
+    opacity: 0.8,
+  },
   activeInputWrapper: {
     backgroundColor: COLORS.primaryLight + '15', // very light primary color
   },
@@ -341,6 +418,16 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 30,
+  },
+  loadingText: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
+    marginLeft: SPACING.sm,
   },
   input: {
     flex: 1,

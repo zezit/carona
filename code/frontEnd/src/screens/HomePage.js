@@ -31,20 +31,22 @@ const HomePage = ({ navigation }) => {
       >
         <View style={styles.userInfo}>
           <View>
-            <Text style={styles.welcomeText}>Bem-vindo(a),</Text>
-            <Text style={styles.userName}>{user?.nome || 'Estudante'}</Text>
+            <Text style={styles.welcomeText}>Bem-vindo(a){user?.name ? ',' : ''}</Text>
+            {user?.name && (
+              <Text style={styles.userName}>{user?.name}</Text>
+            )}
           </View>
-          
+
           <View style={styles.headerButtons}>
-            <TouchableOpacity 
-              style={styles.logoutButton} 
+            <TouchableOpacity
+              style={styles.logoutButton}
               onPress={handleLogout}
               hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
             >
               <Ionicons name="log-out-outline" size={24} color="#fff" />
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.profileButton}
               onPress={() => navigation.navigate('Profile')}
             >
@@ -61,16 +63,16 @@ const HomePage = ({ navigation }) => {
         </View>
       </LinearGradient>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.quickActions}>
           <Text style={styles.sectionTitle}>Ações Rápidas</Text>
-          
+
           <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('Rides')}
             >
@@ -79,8 +81,8 @@ const HomePage = ({ navigation }) => {
               </View>
               <Text style={styles.actionButtonText}>Caronas</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('Profile')}
             >

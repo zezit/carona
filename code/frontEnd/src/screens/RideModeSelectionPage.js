@@ -26,7 +26,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
   // Memoized API call for driver status check
   const checkDriverStatus = useCallback(async () => {
     try {
-      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
+      const response = await apiClient.get(`/estudante/${user?.id}/motorista`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -72,16 +72,13 @@ const RideModeSelectionPage = ({ navigation, route }) => {
   }, [navigation]);
 
   const handleHistoryRide = useCallback((mode) => {
-    navigation.navigate('RidesPage', { mode });
+    // TODO:  navigation.navigate('RidesPage', { mode });
+    Alert.alert('Em breve!', 'Essa funcionalidade ainda está em desenvolvimento.');
   }, [navigation]);
 
   const handleSearchRide = useCallback(() => {
-    navigation.navigate('RidesPage', { mode: 'available-rides' });
-  }, [navigation]);
-
-  // Memoized handler for driver registration
-  const handleRegisterAsDriver = useCallback(() => {
-    navigation.navigate('CreateDriverProfile');
+    // TODO: navigation.navigate('RidesPage', { mode: 'available-rides' });
+    Alert.alert('Em breve!', 'Essa funcionalidade ainda não está disponível.');
   }, [navigation]);
 
   if (loading) {
@@ -123,7 +120,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
         </View>
 
         <View style={{ paddingHorizontal: SPACING.lg }}>
-          {isDriver ? (
+          {isDriver && (
             <View>
               <OptionButton
                 title="Oferecer Carona"
@@ -140,25 +137,6 @@ const RideModeSelectionPage = ({ navigation, route }) => {
                 color={COLORS.secondary}
                 onPress={() => handleHistoryRide('my-rides')}
               />
-            </View>
-          ) : (
-            <View style={[commonStyles.profileCard, { marginBottom: SPACING.md }]}>
-              <View style={styles.notDriverContainer}>
-                <Ionicons name="car-outline" size={48} color={COLORS.primary} />
-                <Text style={styles.notDriverTitle}>Torne-se um Motorista</Text>
-                <Text style={styles.notDriverText}>
-                  Para oferecer caronas, você precisa se cadastrar como motorista.
-                  Isso permitirá que você registre seu veículo e compartilhe caronas.
-                </Text>
-                <TouchableOpacity
-                  style={[commonStyles.primaryButton, { marginTop: SPACING.md }]}
-                  onPress={handleRegisterAsDriver}
-                >
-                  <Text style={commonStyles.primaryButtonText}>
-                    Cadastrar-se como Motorista
-                  </Text>
-                </TouchableOpacity>
-              </View>
             </View>
           )}
 

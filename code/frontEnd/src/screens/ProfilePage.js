@@ -64,7 +64,7 @@ const ProfilePage = ({ navigation, route }) => {
     
     try {
       setIsCheckingDriver(true);
-      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
+      const response = await apiClient.get(`/estudante/${user?.id}/motorista`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
