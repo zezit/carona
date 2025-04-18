@@ -40,7 +40,12 @@ const RideFormBottomSheet = forwardRef(({
     loading,
     duration,
     hasValidRoute,
-    onSheetChange
+    onSheetChange,
+    routes = [],
+    selectedRoute,
+    onSelectRoute,
+    formatDuration,
+    formatDistance
 }, ref) => {
     const snapPoints = useMemo(() => ['25%', '50%', '80%'], []);
     const scrollViewRef = useRef(null);
@@ -60,6 +65,25 @@ const RideFormBottomSheet = forwardRef(({
         if (!departureDate || !duration) return new Date();
         return new Date(departureDate.getTime() + (duration * 1000));
     };
+
+    // Default formatters if not provided
+    const formatDurationText = formatDuration || ((seconds) => {
+        if (!seconds) return '0 min';
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}min`;
+        } else {
+            return `${minutes} min`;
+        }
+    });
+
+    const formatDistanceText = formatDistance || ((meters) => {
+        if (!meters) return '0 km';
+        const km = meters / 1000;
+        return `${km.toFixed(1)} km`;
+    });
     
     return (
         <BottomSheet
@@ -88,6 +112,53 @@ const RideFormBottomSheet = forwardRef(({
                         style={styles.content}
                         keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 0}
                     >
+                        {/* Route Info Section - New */}
+                        {hasValidRoute && selectedRoute && (
+                            <FormSection title="Rota" icon="map">
+                                <View style={styles.routeInfoContainer}>
+                                    <View style={styles.routeInfoHeader}>
+                                        <Text style={styles.routeInfoTitle}>
+                                            {selectedRoute.descricao || 'Rota Principal'}
+                                        </Text>
+                                        {routes.length > 1 && (
+                                            <TouchableOpacity 
+                                                style={styles.routeInfoSwitch}
+                                                onPress={() => {
+                                                    const nextRouteIndex = routes.findIndex(r => r === selectedRoute) === 0 ? 1 : 0;
+                                                    if (routes[nextRouteIndex] && onSelectRoute) {
+                                                        onSelectRoute(routes[nextRouteIndex]);
+                                                    }
+                                                }}
+                                            >
+                                                <Ionicons 
+                                                    name="swap-horizontal" 
+                                                    size={20} 
+                                                    color={COLORS.primary}
+                                                />
+                                                <Text style={styles.routeInfoSwitchText}>
+                                                    Alternar rota
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                    <View style={styles.routeInfoDetails}>
+                                        <View style={styles.routeInfoDetail}>
+                                            <Ionicons name="time-outline" size={16} color={COLORS.text.secondary} />
+                                            <Text style={styles.routeInfoText}>
+                                                {formatDurationText(selectedRoute.duracaoSegundos)}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.routeInfoDetail}>
+                                            <Ionicons name="navigate-outline" size={16} color={COLORS.text.secondary} />
+                                            <Text style={styles.routeInfoText}>
+                                                {formatDistanceText(selectedRoute.distanciaMetros)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </FormSection>
+                        )}
+
                         {/* Time Section with toggle */}
                         <FormSection title="Horário" icon="time">
                             <View style={styles.timeTabsContainer}>
@@ -342,6 +413,50 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZE.md,
         fontWeight: FONT_WEIGHT.semiBold,
         marginLeft: SPACING.sm,
+    },
+    // Route info styles
+    routeInfoContainer: {
+        backgroundColor: COLORS.background,
+        borderRadius: RADIUS.md,
+        padding: SPACING.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    routeInfoHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: SPACING.sm,
+    },
+    routeInfoTitle: {
+        fontSize: FONT_SIZE.md,
+        fontWeight: FONT_WEIGHT.semiBold,
+        color: COLORS.text.primary,
+    },
+    routeInfoSwitch: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    routeInfoSwitchText: {
+        fontSize: FONT_SIZE.sm,
+        marginLeft: 4,
+        fontWeight: FONT_WEIGHT.medium,
+        color: COLORS.primary,
+    },
+    routeInfoDetails: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    routeInfoDetail: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: SPACING.md,
+        marginBottom: SPACING.xs,
+    },
+    routeInfoText: {
+        fontSize: FONT_SIZE.sm,
+        color: COLORS.text.secondary,
+        marginLeft: 4,
     },
 });
 

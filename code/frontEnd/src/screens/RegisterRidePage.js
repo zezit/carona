@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
   Alert,
   Animated,
@@ -11,15 +11,32 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Dimensions
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
+import Reanimated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  interpolate,
+  useDerivedValue
+} from 'react-native-reanimated';
 import { apiClient } from '../services/api/apiClient';
 import RideFormBottomSheet from '../components/ride/RideFormBottomSheet';
 import { useAuthContext } from '../contexts/AuthContext';
 import { COLORS, SPACING, RADIUS } from '../constants';
 import { commonStyles } from '../theme/styles/commonStyles';
+
+// Get the screen dimensions
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Bottom sheet heights for different positions (approximate)
+const BOTTOM_SHEET_HEIGHTS = {
+  COLLAPSED: 120,
+  HALF: 300,
+  EXPANDED: 500
+};
 
 const RegisterRidePage = () => {
   const navigation = useNavigation();
@@ -33,7 +50,8 @@ const RegisterRidePage = () => {
     departureLocation: initialDepartureLocation, 
     departure: initialDeparture,
     arrivalLocation: initialArrivalLocation,
-    arrival: initialArrival 
+    arrival: initialArrival,
+    comingFromRegisterRide
   } = route.params || {};
 
   // Form state - initialize with data from LocationSelectionPage
@@ -51,17 +69,41 @@ const RegisterRidePage = () => {
   const [duration, setDuration] = useState(0);
   const [mapHeight, setMapHeight] = useState('100%');
   const [activeAutocomplete, setActiveAutocomplete] = useState(null);
+  const [mapRegion, setMapRegion] = useState(null);
+  const [routeInfoPosition, setRouteInfoPosition] = useState('top');
   
   // Track the bottom sheet position/index
   const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
   
+  // Calculated bottom sheet height based on index
+  const bottomSheetHeight = useMemo(() => {
+    switch(bottomSheetIndex) {
+      case 0: return BOTTOM_SHEET_HEIGHTS.COLLAPSED;
+      case 1: return BOTTOM_SHEET_HEIGHTS.HALF;
+      case 2: return BOTTOM_SHEET_HEIGHTS.EXPANDED;
+      default: return BOTTOM_SHEET_HEIGHTS.COLLAPSED;
+    }
+  }, [bottomSheetIndex]);
+  
   // Animated value for button opacity
   const centerButtonOpacity = useSharedValue(1);
+  
+  // Add animated value for location button
+  const locationButtonHeight = useSharedValue(80);
+  const locationButtonOpacity = useSharedValue(1);
 
   // Define the animated style using Reanimated
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: centerButtonOpacity.value
+    };
+  });
+  
+  // Define animated style for location button
+  const locationButtonStyle = useAnimatedStyle(() => {
+    return {
+      height: locationButtonHeight.value,
+      opacity: locationButtonOpacity.value,
     };
   });
 
@@ -92,15 +134,25 @@ const RegisterRidePage = () => {
     }
   }, []);
 
-  // Control center button visibility based on bottom sheet position
+  // Control button visibility based on bottom sheet position
   useEffect(() => {
-    // Show button only when bottom sheet is at the first (smallest) position
     if (bottomSheetIndex === 0) {
-      centerButtonOpacity.value = withTiming(1, { duration: 100 });
-    } else {
+      // When bottom sheet is collapsed, show both buttons normally
+      centerButtonOpacity.value = withTiming(1, { duration: 150 });
+      locationButtonHeight.value = withTiming(80, { duration: 200 });
+      locationButtonOpacity.value = withTiming(1, { duration: 150 });
+    } else if (bottomSheetIndex === 1) {
+      // When bottom sheet is at half position, hide center button and make location button compact
       centerButtonOpacity.value = withTiming(0, { duration: 100 });
+      locationButtonHeight.value = withTiming(60, { duration: 200 });
+      locationButtonOpacity.value = withTiming(0.9, { duration: 150 });
+    } else {
+      // When bottom sheet is fully expanded, hide center button and minimize location button
+      centerButtonOpacity.value = withTiming(0, { duration: 100 });
+      locationButtonHeight.value = withTiming(40, { duration: 200 });
+      locationButtonOpacity.value = withTiming(0.7, { duration: 150 });
     }
-  }, [bottomSheetIndex, centerButtonOpacity]);
+  }, [bottomSheetIndex, centerButtonOpacity, locationButtonHeight, locationButtonOpacity]);
 
   // Watch for changes to both locations and center the map accordingly
   useEffect(() => {
@@ -110,6 +162,24 @@ const RegisterRidePage = () => {
     }
   }, [departureLocation, arrivalLocation]);
 
+  // Dynamically update route info position based on map region and bottom sheet index
+  useEffect(() => {
+    if (!mapRegion || !showRouteInfo) return;
+
+    // Check if we're zoomed in close enough to show on the side
+    const isZoomedIn = mapRegion.latitudeDelta < 0.05;
+    
+    // Default positioning logic
+    if (isZoomedIn && bottomSheetIndex === 0) {
+      // If zoomed in and bottom sheet collapsed, position on side
+      setRouteInfoPosition('side');
+    } else {
+      // Otherwise, position on top
+      setRouteInfoPosition('top');
+    }
+
+  }, [mapRegion, bottomSheetIndex, showRouteInfo]);
+
   // Handle change locations button press
   const handleChangeLocations = () => {
     navigation.navigate('LocationSelection', {
@@ -117,7 +187,13 @@ const RegisterRidePage = () => {
       departureLocation,
       arrival,
       arrivalLocation,
+      comingFromRegisterRide: true  // Flag to indicate we're coming from RegisterRidePage
     });
+  };
+
+  // Handle map region change
+  const handleRegionChange = (region) => {
+    setMapRegion(region);
   };
 
   // Handle touch on map to dismiss autocomplete panels
@@ -147,7 +223,12 @@ const RegisterRidePage = () => {
       mapRef.current.fitToCoordinates(
         [departureLocation, arrivalLocation],
         {
-          edgePadding: { top: 50, right: 50, bottom: 250, left: 50 },
+          edgePadding: { 
+            top: 70, 
+            right: 50, 
+            bottom: bottomSheetHeight + 50, 
+            left: 50 
+          },
           animated: true
         }
       );
@@ -301,7 +382,12 @@ const RegisterRidePage = () => {
     if (!coordinates || coordinates.length === 0 || !mapRef.current) return;
     
     mapRef.current.fitToCoordinates(coordinates, {
-      edgePadding: { top: 50, right: 50, bottom: 250, left: 50 },
+      edgePadding: { 
+        top: 70, 
+        right: 50, 
+        bottom: bottomSheetHeight + 50, 
+        left: 50 
+      },
       animated: true
     });
   };
@@ -412,6 +498,11 @@ const RegisterRidePage = () => {
     }
   };
 
+  // Center the map button handler
+  const handleCenterMap = () => {
+    centerMapOnLocations();
+  };
+
   return (
     <SafeAreaView style={commonStyles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -428,6 +519,7 @@ const RegisterRidePage = () => {
             longitudeDelta: 0.0421,
           }}
           onPress={handleMapPress}
+          onRegionChangeComplete={handleRegionChange}
         >
           {departureLocation && (
             <Marker
@@ -467,82 +559,46 @@ const RegisterRidePage = () => {
           </TouchableOpacity>
           
           <Text style={styles.titleText}>Criar Carona</Text>
+          
+          <TouchableOpacity
+            style={styles.centerMapButton}
+            onPress={handleCenterMap}
+          >
+            <Ionicons name="locate" size={22} color={COLORS.text.primary} />
+          </TouchableOpacity>
         </View>
 
         {/* Location edit button */}
-        <TouchableOpacity
-          style={styles.locationEditButton}
-          onPress={handleChangeLocations}
-        >
-          <View style={styles.locationEditContent}>
-            <View style={styles.locationIcons}>
-              <View style={[styles.locationIcon, styles.departureIcon]}>
-                <Ionicons name="location" size={14} color="#FFFFFF" />
-              </View>
-              <View style={styles.locationConnector} />
-              <View style={[styles.locationIcon, styles.arrivalIcon]}>
-                <Ionicons name="navigate" size={14} color="#FFFFFF" />
-              </View>
-            </View>
-            <View style={styles.locationTexts}>
-              <Text numberOfLines={1} style={styles.locationEditText}>
-                {departure || 'Selecionar partida'}
-              </Text>
-              <Text numberOfLines={1} style={styles.locationEditText}>
-                {arrival || 'Selecionar destino'}
-              </Text>
-            </View>
-            <View style={styles.locationEditIcon}>
-              <Ionicons name="pencil" size={18} color={COLORS.primary} />
-            </View>
-          </View>
-        </TouchableOpacity>
-        
-        {/* Route info panel */}
-        {showRouteInfo && selectedRoute && (
-          <Animated.View style={[styles.routeInfoContainer, {
-            transform: [
-              {
-                translateY: interpolate(bottomSheetIndex, [0, 1, 2], [0, -50, -100]),
-              },
-            ],
-          }]}>
-            <View style={styles.routeInfoContent}>
-              <View style={styles.routeInfoHeader}>
-                <Text style={styles.routeInfoTitle}>{selectedRoute.descricao || 'Rota Principal'}</Text>
-                <TouchableOpacity 
-                  style={styles.routeInfoSwitch}
-                  onPress={() => {
-                    const nextRouteIndex = routes.findIndex(r => r === selectedRoute) === 0 ? 1 : 0;
-                    if (routes[nextRouteIndex]) {
-                      handleSelectRoute(routes[nextRouteIndex]);
-                    }
-                  }}
-                  disabled={routes.length <= 1}
-                >
-                  <Ionicons name="swap-horizontal" size={20} color={routes.length > 1 ? COLORS.primary : "#B0BEC5"} />
-                  <Text style={[styles.routeInfoSwitchText, {color: routes.length > 1 ? COLORS.primary : "#B0BEC5"}]}>
-                    {routes.length > 1 ? "Alternar rota" : "Rota única"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.routeInfoDetails}>
-                <View style={styles.routeInfoDetail}>
-                  <Ionicons name="time-outline" size={16} color={COLORS.text.secondary} />
-                  <Text style={styles.routeInfoText}>
-                    {formatDuration(selectedRoute.duracaoSegundos)}
-                  </Text>
+        <Reanimated.View style={[styles.locationEditButton, locationButtonStyle]}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleChangeLocations}
+            style={{flex: 1}}
+          >
+            <View style={styles.locationEditContent}>
+              <View style={styles.locationIcons}>
+                <View style={[styles.locationIcon, styles.departureIcon]}>
+                  <Ionicons name="location" size={14} color="#FFFFFF" />
                 </View>
-                <View style={styles.routeInfoDetail}>
-                  <Ionicons name="navigate-outline" size={16} color={COLORS.text.secondary} />
-                  <Text style={styles.routeInfoText}>
-                    {formatDistance(selectedRoute.distanciaMetros)}
-                  </Text>
+                <View style={styles.locationConnector} />
+                <View style={[styles.locationIcon, styles.arrivalIcon]}>
+                  <Ionicons name="navigate" size={14} color="#FFFFFF" />
                 </View>
               </View>
+              <View style={styles.locationTexts}>
+                <Text numberOfLines={1} style={styles.locationEditText}>
+                  {departure || 'Selecionar partida'}
+                </Text>
+                <Text numberOfLines={1} style={styles.locationEditText}>
+                  {arrival || 'Selecionar destino'}
+                </Text>
+              </View>
+              <View style={styles.locationEditIcon}>
+                <Ionicons name="pencil" size={16} color={COLORS.primary} />
+              </View>
             </View>
-          </Animated.View>
-        )}
+          </TouchableOpacity>
+        </Reanimated.View>
       </View>
       
       <RideFormBottomSheet
@@ -569,6 +625,11 @@ const RegisterRidePage = () => {
         onInputFocus={handleInputFocus}
         onSheetChange={handleSheetChanges}
         onChangeLocations={handleChangeLocations}
+        routes={routes}
+        selectedRoute={selectedRoute}
+        onSelectRoute={handleSelectRoute}
+        formatDuration={formatDuration}
+        formatDistance={formatDistance}
       />
     </SafeAreaView>
   );
@@ -589,9 +650,29 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     zIndex: 10,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  centerMapButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -616,11 +697,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text.primary,
-    marginRight: 40, // To balance with back button
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
+    marginHorizontal: 10,
   },
   locationEditButton: {
     position: 'absolute',
@@ -629,9 +710,10 @@ const styles = StyleSheet.create({
     right: 16,
     backgroundColor: COLORS.card,
     borderRadius: RADIUS.md,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     zIndex: 9,
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -649,14 +731,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   locationIcons: {
-    width: 30,
+    width: 24,
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 6,
   },
   locationIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -668,97 +750,25 @@ const styles = StyleSheet.create({
   },
   locationConnector: {
     width: 2,
-    height: 14,
+    height: 10,
     backgroundColor: COLORS.border,
-    marginVertical: 2,
+    marginVertical: 1,
   },
   locationTexts: {
-    height: '100%',
     flex: 1,
+    height: '90%',
     justifyContent: 'space-between',
   },
   locationEditText: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.text.primary,
-    marginVertical: 2,
+    marginVertical: 1,
     textAlign: 'left',
     paddingVertical: 2,
+    flexShrink: 1,
   },
   locationEditIcon: {
-    padding: 5,
-  },
-  routeInfoContainer: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 230 : 220, // Increased from 170/160 to avoid overlap
-    left: 16,
-    right: 16,
-    zIndex: 5, // Reduced z-index to be below the location edit button
-  },
-  routeInfoContent: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  routeInfoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  routeInfoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-  },
-  routeInfoSwitch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  routeInfoSwitchText: {
-    fontSize: 12,
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  routeInfoDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  routeInfoDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  routeInfoText: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginLeft: 4,
-  },
-  centerButtonContainer: {
-    position: 'absolute',
-    bottom: '45%',
-    right: 16,
-    zIndex: 7,
-  },
-  centerButton: {
-    backgroundColor: COLORS.card,
-    padding: 12,
-    borderRadius: RADIUS.round,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    padding: 4,
   },
 });
 
