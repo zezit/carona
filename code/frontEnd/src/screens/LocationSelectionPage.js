@@ -19,81 +19,107 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '../constants';
 import { commonStyles } from '../theme/styles/commonStyles';
 import { SuggestionsPanel } from '../components/ride';
 
-const LocationSelectionPage = ({ navigation }) => {
-  const [departure, setDeparture] = useState('');
-  const [arrival, setArrival] = useState('');
-  const [departureLocation, setDepartureLocation] = useState(null);
-  const [arrivalLocation, setArrivalLocation] = useState(null);
-  const [activeInput, setActiveInput] = useState('departure');
-  const [loadingCurrentLocation, setLoadingCurrentLocation] = useState(true);
+const LocationSelectionPage = ({ navigation, route }) => {
+  // Get params from route if they exist (when coming from RegisterRidePage)
+  const {
+    departure: initialDeparture,
+    departureLocation: initialDepartureLocation,
+    arrival: initialArrival,
+    arrivalLocation: initialArrivalLocation,
+  } = route.params || {};
+
+  const [departure, setDeparture] = useState(initialDeparture || '');
+  const [arrival, setArrival] = useState(initialArrival || '');
+  const [departureLocation, setDepartureLocation] = useState(initialDepartureLocation || null);
+  const [arrivalLocation, setArrivalLocation] = useState(initialArrivalLocation || null);
+  const [activeInput, setActiveInput] = useState(initialDepartureLocation && initialArrivalLocation ? 'none' : 'departure');
+  const [loadingCurrentLocation, setLoadingCurrentLocation] = useState(!initialDepartureLocation);
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
-  // Load current location on startup
+  // Load current location on startup only if we don't have departure location already
   useEffect(() => {
-    const loadCurrentLocation = async () => {
-      try {
-        setLoadingCurrentLocation(true);
-        
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          console.log('Location permission denied');
-          setLocationPermissionDenied(true);
-          setTimeout(() => {
-            setLoadingCurrentLocation(false);
-          }, 500); // Small delay for better UX
-          return;
-        }
+    console.debug('LocationSelectionPage mounted with params:', {
+      initialDeparture,
+      initialDepartureLocation,
+      initialArrival,
+      initialArrivalLocation,
+      departure,
+      arrival,
+      departureLocation,
+      arrivalLocation,
+      activeInput,
+      loadingCurrentLocation,
+      locationPermissionDenied,
+    });
 
-        const location = await Promise.race([
-          Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 5000)
-          )
-        ]);
+    if (!departureLocation) {
+      loadCurrentLocation();
+    } else {
+      setLoadingCurrentLocation(false);
+    }
+  }, [initialDeparture, initialDepartureLocation, initialArrival, initialArrivalLocation]);
 
-        const { latitude, longitude } = location.coords;
+  const loadCurrentLocation = async () => {
+    try {
+      setLoadingCurrentLocation(true);
 
-        const reverseGeocode = await Location.reverseGeocodeAsync({
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Location permission denied');
+        setLocationPermissionDenied(true);
+        setTimeout(() => {
+          setLoadingCurrentLocation(false);
+        }, 500); // Small delay for better UX
+        return;
+      }
+
+      const location = await Promise.race([
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 5000)
+        )
+      ]);
+
+      const { latitude, longitude } = location.coords;
+
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude
+      });
+
+      if (reverseGeocode && reverseGeocode[0]) {
+        const addressObj = reverseGeocode[0];
+        const addressParts = [
+          addressObj.name,
+          addressObj.street,
+          addressObj.streetNumber,
+          addressObj.district,
+          addressObj.city,
+          addressObj.region
+        ].filter(Boolean);
+
+        const address = addressParts.join(', ');
+        setDeparture(address);
+        setDepartureLocation({
           latitude,
           longitude
         });
-
-        if (reverseGeocode && reverseGeocode[0]) {
-          const addressObj = reverseGeocode[0];
-          const addressParts = [
-            addressObj.name,
-            addressObj.street,
-            addressObj.streetNumber,
-            addressObj.district,
-            addressObj.city,
-            addressObj.region
-          ].filter(Boolean);
-          
-          const address = addressParts.join(', ');
-          setDeparture(address);
-          setDepartureLocation({
-            latitude,
-            longitude
-          });
-        }
-      } catch (error) {
-        console.error('Error getting current location on startup:', error);
-        // Don't show error if it's just a timeout
-        if (error.message !== 'Timeout') {
-          Alert.alert(
-            'Não foi possível obter sua localização',
-            'Tente buscar manualmente ou verifique as permissões de localização.'
-          );
-        }
-      } finally {
-        setLoadingCurrentLocation(false);
       }
-    };
-
-    loadCurrentLocation();
-  }, []);
+    } catch (error) {
+      console.error('Error getting current location on startup:', error);
+      // Don't show error if it's just a timeout
+      if (error.message !== 'Timeout') {
+        Alert.alert(
+          'Não foi possível obter sua localização',
+          'Tente buscar manualmente ou verifique as permissões de localização.'
+        );
+      }
+    } finally {
+      setLoadingCurrentLocation(false);
+    }
+  };
 
   const handleSelectDepartureAddress = (address) => {
     setDeparture(address.endereco);
@@ -152,7 +178,7 @@ const LocationSelectionPage = ({ navigation }) => {
   return (
     <SafeAreaView style={commonStyles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      
+
       <LinearGradient
         colors={[COLORS.primary, COLORS.primaryDark]}
         start={{ x: 0, y: 0 }}
@@ -160,7 +186,7 @@ const LocationSelectionPage = ({ navigation }) => {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
@@ -170,7 +196,7 @@ const LocationSelectionPage = ({ navigation }) => {
         </View>
       </LinearGradient>
 
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
@@ -200,9 +226,9 @@ const LocationSelectionPage = ({ navigation }) => {
             {/* Inputs on the right */}
             <View style={styles.addressInputs}>
               {/* Departure Input */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.inputWrapper, 
+                  styles.inputWrapper,
                   activeInput === 'departure' && styles.activeInputWrapper,
                   loadingCurrentLocation && styles.inputDisabled
                 ]}
@@ -234,9 +260,9 @@ const LocationSelectionPage = ({ navigation }) => {
               <View style={styles.inputDivider} />
 
               {/* Arrival Input */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.inputWrapper, 
+                  styles.inputWrapper,
                   activeInput === 'arrival' && styles.activeInputWrapper
                 ]}
                 onPress={handleFocusArrival}
@@ -258,7 +284,7 @@ const LocationSelectionPage = ({ navigation }) => {
           </View>
 
           {/* Switch button inside the panel */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
               styles.switchButton,
               (!departure || !arrival) && styles.switchButtonDisabled
@@ -266,9 +292,9 @@ const LocationSelectionPage = ({ navigation }) => {
             onPress={handleSwitchLocations}
             disabled={!departure || !arrival}
           >
-            <Ionicons 
-              name="swap-vertical" 
-              size={22} 
+            <Ionicons
+              name="swap-vertical"
+              size={22}
               color={departure && arrival ? COLORS.primary : COLORS.disabled}
             />
           </TouchableOpacity>
@@ -279,8 +305,8 @@ const LocationSelectionPage = ({ navigation }) => {
           <View style={styles.suggestionsPanel}>
             <SuggestionsPanel
               searchValue={activeInput === 'departure' ? departure : arrival}
-              onSelectAddress={activeInput === 'departure' 
-                ? handleSelectDepartureAddress 
+              onSelectAddress={activeInput === 'departure'
+                ? handleSelectDepartureAddress
                 : handleSelectArrivalAddress}
               includeCurrentLocation={activeInput === 'departure'}
             />
@@ -298,10 +324,10 @@ const LocationSelectionPage = ({ navigation }) => {
           disabled={!isNextButtonEnabled}
         >
           <Text style={styles.nextButtonText}>Próximo</Text>
-          <Ionicons 
-            name="arrow-forward" 
-            size={20} 
-            color={COLORS.text.light} 
+          <Ionicons
+            name="arrow-forward"
+            size={20}
+            color={COLORS.text.light}
             style={styles.nextButtonIcon}
           />
         </TouchableOpacity>

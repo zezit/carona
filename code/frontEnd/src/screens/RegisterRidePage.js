@@ -116,7 +116,7 @@ const RegisterRidePage = () => {
       departure,
       departureLocation,
       arrival,
-      arrivalLocation
+      arrivalLocation,
     });
   };
 
