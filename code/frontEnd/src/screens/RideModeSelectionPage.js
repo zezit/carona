@@ -1,8 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { Animated, StyleSheet, Text, TouchableOpacity, Alert, View } from 'react-native';
+import { Alert, Animated, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -11,11 +10,12 @@ import { apiClient } from '../services/api/apiClient';
 import { commonStyles } from '../theme/styles/commonStyles';
 
 // Import reusable components
-import { LoadingIndicator, OptionButton, EmptyState } from '../components/ui';
+import { LoadingIndicator, OptionButton } from '../components/ui';
 
 const RideModeSelectionPage = ({ navigation, route }) => {
   const { user, authToken } = useAuthContext();
   const [isDriver, setIsDriver] = React.useState(false);
+  const [driverDetails, setDriverDetails] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
   // Use our custom animation hook
@@ -38,6 +38,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
       // Check if driver is approved
       if (response.success && response.data) {
         setIsDriver(true);
+        setDriverDetails(response.data);
       } else {
         setIsDriver(false);
       }
@@ -68,8 +69,13 @@ const RideModeSelectionPage = ({ navigation, route }) => {
 
   // Memoized handlers for navigation
   const handleStartDrive = useCallback(() => {
-    navigation.navigate('RegisterRide');
-  }, [navigation]);
+    // Log the driver details to verify the property name
+    console.debug('Driver car details:', driverDetails?.carro);
+    
+    navigation.navigate('RegisterRide', {
+      carAvailableSeats: driverDetails?.carro?.capacidadePassageiros,
+    });
+  }, [navigation, driverDetails]);
 
   const handleHistoryRide = useCallback((mode) => {
     // TODO:  navigation.navigate('RidesPage', { mode });

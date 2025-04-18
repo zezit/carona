@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Animated,
   Keyboard,
   Platform,
   SafeAreaView,
@@ -11,25 +10,19 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Dimensions
+  View
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import Reanimated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
-  interpolate,
-  useDerivedValue
+import Reanimated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming
 } from 'react-native-reanimated';
-import { apiClient } from '../services/api/apiClient';
 import RideFormBottomSheet from '../components/ride/RideFormBottomSheet';
+import { COLORS, RADIUS } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
-import { COLORS, SPACING, RADIUS } from '../constants';
+import { apiClient } from '../services/api/apiClient';
 import { commonStyles } from '../theme/styles/commonStyles';
-
-// Get the screen dimensions
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Bottom sheet heights for different positions (approximate)
 const BOTTOM_SHEET_HEIGHTS = {
@@ -38,21 +31,28 @@ const BOTTOM_SHEET_HEIGHTS = {
   EXPANDED: 500
 };
 
-const RegisterRidePage = () => {
+const RegisterRidePage = ({ route }) => {
   const navigation = useNavigation();
-  const route = useRoute();
   const { authToken, user } = useAuthContext();
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null);
 
   // Get location data from route params
-  const { 
-    departureLocation: initialDepartureLocation, 
+  const {
+    departureLocation: initialDepartureLocation,
     departure: initialDeparture,
     arrivalLocation: initialArrivalLocation,
     arrival: initialArrival,
-    comingFromRegisterRide
+    carAvailableSeats: initialCarAvailableSeats,
   } = route.params || {};
+
+  console.debug('Initial params:', {
+    initialDepartureLocation,
+    initialDeparture,
+    initialArrivalLocation,
+    initialArrival,
+    initialCarAvailableSeats
+  });
 
   // Form state - initialize with data from LocationSelectionPage
   const [departure, setDeparture] = useState(initialDeparture || '');
@@ -61,7 +61,7 @@ const RegisterRidePage = () => {
   const [arrivalLocation, setArrivalLocation] = useState(initialArrivalLocation || null);
   const [departureDate, setDepartureDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [seats, setSeats] = useState('3');
+  const [seats, setSeats] = useState(initialCarAvailableSeats?.toString() || '4');
   const [observations, setObservations] = useState('');
   const [loading, setLoading] = useState(false);
   const [routes, setRoutes] = useState([]);
@@ -70,35 +70,27 @@ const RegisterRidePage = () => {
   const [mapHeight, setMapHeight] = useState('100%');
   const [activeAutocomplete, setActiveAutocomplete] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
-  const [routeInfoPosition, setRouteInfoPosition] = useState('top');
-  
+
   // Track the bottom sheet position/index
   const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
-  
+
   // Calculated bottom sheet height based on index
   const bottomSheetHeight = useMemo(() => {
-    switch(bottomSheetIndex) {
+    switch (bottomSheetIndex) {
       case 0: return BOTTOM_SHEET_HEIGHTS.COLLAPSED;
       case 1: return BOTTOM_SHEET_HEIGHTS.HALF;
       case 2: return BOTTOM_SHEET_HEIGHTS.EXPANDED;
       default: return BOTTOM_SHEET_HEIGHTS.COLLAPSED;
     }
   }, [bottomSheetIndex]);
-  
+
   // Animated value for button opacity
   const centerButtonOpacity = useSharedValue(1);
-  
+
   // Add animated value for location button
   const locationButtonHeight = useSharedValue(80);
   const locationButtonOpacity = useSharedValue(1);
 
-  // Define the animated style using Reanimated
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: centerButtonOpacity.value
-    };
-  });
-  
   // Define animated style for location button
   const locationButtonStyle = useAnimatedStyle(() => {
     return {
@@ -107,15 +99,12 @@ const RegisterRidePage = () => {
     };
   });
 
-  // State for route info display
-  const [showRouteInfo, setShowRouteInfo] = useState(false);
-
   // Add keyboard listeners to adjust map height
   useEffect(() => {
-    const keyboardWillShowListener = Platform.OS === 'ios' 
+    const keyboardWillShowListener = Platform.OS === 'ios'
       ? Keyboard.addListener('keyboardWillShow', () => setMapHeight('50%'))
       : Keyboard.addListener('keyboardDidShow', () => setMapHeight('50%'));
-      
+
     const keyboardWillHideListener = Platform.OS === 'ios'
       ? Keyboard.addListener('keyboardWillHide', () => setMapHeight('100%'))
       : Keyboard.addListener('keyboardDidHide', () => setMapHeight('100%'));
@@ -162,24 +151,6 @@ const RegisterRidePage = () => {
     }
   }, [departureLocation, arrivalLocation]);
 
-  // Dynamically update route info position based on map region and bottom sheet index
-  useEffect(() => {
-    if (!mapRegion || !showRouteInfo) return;
-
-    // Check if we're zoomed in close enough to show on the side
-    const isZoomedIn = mapRegion.latitudeDelta < 0.05;
-    
-    // Default positioning logic
-    if (isZoomedIn && bottomSheetIndex === 0) {
-      // If zoomed in and bottom sheet collapsed, position on side
-      setRouteInfoPosition('side');
-    } else {
-      // Otherwise, position on top
-      setRouteInfoPosition('top');
-    }
-
-  }, [mapRegion, bottomSheetIndex, showRouteInfo]);
-
   // Handle change locations button press
   const handleChangeLocations = () => {
     navigation.navigate('LocationSelection', {
@@ -187,7 +158,8 @@ const RegisterRidePage = () => {
       departureLocation,
       arrival,
       arrivalLocation,
-      comingFromRegisterRide: true  // Flag to indicate we're coming from RegisterRidePage
+      comingFromRegisterRide: true,  // Flag to indicate we're coming from RegisterRidePage
+      carAvailableSeats: initialCarAvailableSeats // Pass car available seats to LocationSelectionPage
     });
   };
 
@@ -214,7 +186,7 @@ const RegisterRidePage = () => {
   // Function to center the map on both locations
   const centerMapOnLocations = () => {
     if (!mapRef.current) return;
-    
+
     if (selectedRoute && selectedRoute.pontos && selectedRoute.pontos.length > 0) {
       // If we have a route, fit to the entire route
       fitMapToCoordinates(selectedRoute.pontos);
@@ -223,11 +195,11 @@ const RegisterRidePage = () => {
       mapRef.current.fitToCoordinates(
         [departureLocation, arrivalLocation],
         {
-          edgePadding: { 
-            top: 70, 
-            right: 50, 
-            bottom: bottomSheetHeight + 50, 
-            left: 50 
+          edgePadding: {
+            top: 70,
+            right: 50,
+            bottom: bottomSheetHeight + 50,
+            left: 50
           },
           animated: true
         }
@@ -258,11 +230,11 @@ const RegisterRidePage = () => {
       latitude: address.latitude,
       longitude: address.longitude
     });
-    
+
     // Dismiss keyboard to hide suggestions and reset active autocomplete
     Keyboard.dismiss();
     setActiveAutocomplete(null);
-    
+
     // Show the selected location on map immediately
     if (mapRef.current && !arrivalLocation) {
       mapRef.current.animateToRegion({
@@ -274,7 +246,7 @@ const RegisterRidePage = () => {
     }
 
     console.debug('Departure address selected:', address);
-    
+
     // If we already have arrival location, update routes
     if (arrivalLocation) {
       updateRoutes(
@@ -291,11 +263,11 @@ const RegisterRidePage = () => {
       latitude: address.latitude,
       longitude: address.longitude
     });
-    
+
     // Dismiss keyboard to hide suggestions and reset active autocomplete
     Keyboard.dismiss();
     setActiveAutocomplete(null);
-    
+
     // Show the selected location on map immediately
     if (mapRef.current && !departureLocation) {
       mapRef.current.animateToRegion({
@@ -307,7 +279,7 @@ const RegisterRidePage = () => {
     }
 
     console.debug('Arrival address selected:', address);
-    
+
     // If we already have departure location, update routes
     if (departureLocation) {
       updateRoutes(
@@ -317,10 +289,25 @@ const RegisterRidePage = () => {
     }
   };
 
+  const handleSeatsChange = (value) => {
+    const newValue = parseInt(value, 10);
+    // Convert initialCarAvailableSeats to number and provide a fallback value of 4
+    const maxSeats = initialCarAvailableSeats ? parseInt(initialCarAvailableSeats, 10) : 4;
+
+    if (newValue > maxSeats) {
+      Alert.alert(
+        'Limite de Assentos',
+        `Você não pode oferecer mais do que ${maxSeats} vagas, pois este é o limite de passageiros configurado para o seu veículo.`,
+      );
+      return;
+    }
+    setSeats(value);
+  }
+
   // Update routes when both locations are set
   const updateRoutes = async (start, end) => {
     if (!start || !end) return;
-    
+
     try {
       setLoading(true);
       const options = {
@@ -346,7 +333,7 @@ const RegisterRidePage = () => {
 
           // Set descriptions based on index
           let description = index === 0 ? 'Principal' : `Alternativa ${index}`;
-          
+
           return {
             ...route,
             pontos,
@@ -356,15 +343,14 @@ const RegisterRidePage = () => {
             descricao: description
           };
         });
-        
+
         // Limit to max 2 routes (primary and one alternative)
         const limitedRoutes = processedRoutes.slice(0, 2);
-        
+
         setRoutes(limitedRoutes);
         setSelectedRoute(limitedRoutes[0]);
         setDuration(limitedRoutes[0].duracaoSegundos || 0);
-        setShowRouteInfo(true);
-        
+
         // Fit map to show all routes
         const allCoordinates = limitedRoutes.flatMap(route => route.pontos);
         fitMapToCoordinates(allCoordinates);
@@ -380,13 +366,13 @@ const RegisterRidePage = () => {
   // Fit map to show the entire route
   const fitMapToCoordinates = (coordinates) => {
     if (!coordinates || coordinates.length === 0 || !mapRef.current) return;
-    
+
     mapRef.current.fitToCoordinates(coordinates, {
-      edgePadding: { 
-        top: 70, 
-        right: 50, 
-        bottom: bottomSheetHeight + 50, 
-        left: 50 
+      edgePadding: {
+        top: 70,
+        right: 50,
+        bottom: bottomSheetHeight + 50,
+        left: 50
       },
       animated: true
     });
@@ -395,17 +381,17 @@ const RegisterRidePage = () => {
   // Format duration from seconds to human-readable format
   const formatDuration = (seconds) => {
     if (!seconds) return '0 min';
-    
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}min`;
     } else {
       return `${minutes} min`;
     }
   };
-  
+
   // Format distance in km
   const formatDistance = (meters) => {
     if (!meters) return '0 km';
@@ -454,9 +440,9 @@ const RegisterRidePage = () => {
 
     try {
       setLoading(true);
-      
+
       const arrivalDate = new Date(departureDate.getTime() + (duration * 1000));
-      
+
       const rideData = {
         motorista: {
           id: user.id
@@ -481,15 +467,24 @@ const RegisterRidePage = () => {
           duracaoSegundos: selectedRoute.duracaoSegundos
         }
       };
-      
-      const response = await apiClient.post(rideData, '/caronas');
-      
+
+      await apiClient.post(rideData, '/caronas');
+
       Alert.alert(
         'Sucesso',
         'Sua carona foi registrada com sucesso!',
-        [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
+        [{
+          text: 'OK',
+          onPress: () => navigation.navigate('TabNavigator', {
+            screen: 'Rides',
+            params: {
+              refresh: Date.now(),
+              updated: true
+            }
+          })
+        }]
       );
-      
+
     } catch (error) {
       console.error('Error creating ride:', error);
       Alert.alert('Erro', 'Não foi possível registrar a carona. Tente novamente.');
@@ -506,7 +501,7 @@ const RegisterRidePage = () => {
   return (
     <SafeAreaView style={commonStyles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      
+
       <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
@@ -528,7 +523,7 @@ const RegisterRidePage = () => {
               pinColor="#4285F4"
             />
           )}
-          
+
           {arrivalLocation && (
             <Marker
               coordinate={arrivalLocation}
@@ -536,19 +531,19 @@ const RegisterRidePage = () => {
               pinColor="#34A853"
             />
           )}
-          
+
           {/* Render all routes (up to 2) with the selected one having a thicker line */}
           {routes.map((route, index) => (
             <Polyline
               key={index}
               coordinates={route.pontos}
               strokeWidth={route === selectedRoute ? 5 : 3}
-              strokeColor={route === selectedRoute ? COLORS.primary : '#7FB3F5'} 
+              strokeColor={route === selectedRoute ? COLORS.primary : '#7FB3F5'}
               onPress={() => handleSelectRoute(route)}
             />
           ))}
         </MapView>
-        
+
         {/* Top bar with back button and title */}
         <View style={styles.topBar}>
           <TouchableOpacity
@@ -557,9 +552,9 @@ const RegisterRidePage = () => {
           >
             <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
           </TouchableOpacity>
-          
+
           <Text style={styles.titleText}>Criar Carona</Text>
-          
+
           <TouchableOpacity
             style={styles.centerMapButton}
             onPress={handleCenterMap}
@@ -573,7 +568,7 @@ const RegisterRidePage = () => {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={handleChangeLocations}
-            style={{flex: 1}}
+            style={{ flex: 1 }}
           >
             <View style={styles.locationEditContent}>
               <View style={styles.locationIcons}>
@@ -600,7 +595,7 @@ const RegisterRidePage = () => {
           </TouchableOpacity>
         </Reanimated.View>
       </View>
-      
+
       <RideFormBottomSheet
         ref={bottomSheetRef}
         departure={departure}
@@ -612,7 +607,7 @@ const RegisterRidePage = () => {
         showDatePicker={showDatePicker}
         setShowDatePicker={setShowDatePicker}
         seats={seats}
-        onSeatsChange={setSeats}
+        onSeatsChange={handleSeatsChange}
         observations={observations}
         onObservationsChange={setObservations}
         onSubmit={handleSubmitRide}
@@ -630,6 +625,7 @@ const RegisterRidePage = () => {
         onSelectRoute={handleSelectRoute}
         formatDuration={formatDuration}
         formatDistance={formatDistance}
+        initialCarAvailableSeats={initialCarAvailableSeats}
       />
     </SafeAreaView>
   );

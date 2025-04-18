@@ -26,6 +26,8 @@ const LocationSelectionPage = ({ navigation, route }) => {
     departureLocation: initialDepartureLocation,
     arrival: initialArrival,
     arrivalLocation: initialArrivalLocation,
+    comingFromRegisterRide,
+    carAvailableSeats,
   } = route.params || {};
 
   const [departure, setDeparture] = useState(initialDeparture || '');
@@ -158,7 +160,8 @@ const LocationSelectionPage = ({ navigation, route }) => {
         departureLocation,
         departure,
         arrivalLocation,
-        arrival
+        arrival,
+        carAvailableSeats  // Pass carAvailableSeats back to RegisterRidePage
       });
     }
   };

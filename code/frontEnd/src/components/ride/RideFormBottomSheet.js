@@ -45,7 +45,8 @@ const RideFormBottomSheet = forwardRef(({
     selectedRoute,
     onSelectRoute,
     formatDuration,
-    formatDistance
+    formatDistance,
+    initialCarAvailableSeats
 }, ref) => {
     const snapPoints = useMemo(() => ['25%', '50%', '80%'], []);
     const scrollViewRef = useRef(null);
@@ -203,7 +204,7 @@ const RideFormBottomSheet = forwardRef(({
                                 <Text style={styles.seatsValue}>{seats}</Text>
                                 <TouchableOpacity
                                     style={styles.seatButton}
-                                    onPress={() => onSeatsChange(Math.min(6, parseInt(seats, 10) + 1).toString())}
+                                    onPress={() => onSeatsChange(Math.min(initialCarAvailableSeats || 4, parseInt(seats, 10) + 1).toString())}
                                 >
                                     <Ionicons name="add" size={20} color={COLORS.primary} />
                                 </TouchableOpacity>
@@ -239,9 +240,7 @@ const RideFormBottomSheet = forwardRef(({
                         ) : (
                             <>
                                 <Ionicons name="car" size={24} color="#fff" />
-                                <Text style={styles.submitButtonText}>
-                                    {hasValidRoute ? 'Registrar Carona' : 'Selecione os pontos de partida e chegada'}
-                                </Text>
+                                <Text style={styles.submitButtonText}>Registrar Carona</Text>
                             </>
                         )}
                     </TouchableOpacity>

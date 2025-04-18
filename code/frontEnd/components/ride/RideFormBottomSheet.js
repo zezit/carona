@@ -36,7 +36,8 @@ const RideFormBottomSheet = forwardRef(({
     duration,
     hasValidRoute,
     onSelectDepartureAddress,
-    onSelectArrivalAddress
+    onSelectArrivalAddress,
+    initialCarAvailableSeats = 4
 }, ref) => {
     // Snapping points with more granular control
     const snapPoints = useMemo(() => ['25%', '60%', '90%'], []);
@@ -158,7 +159,7 @@ const RideFormBottomSheet = forwardRef(({
                                 <Text style={styles.seatsValue}>{seats}</Text>
                                 <TouchableOpacity
                                     style={styles.seatButton}
-                                    onPress={() => onSeatsChange(Math.min(6, parseInt(seats, 10) + 1).toString())}
+                                    onPress={() => onSeatsChange(Math.min(initialCarAvailableSeats, parseInt(seats, 10) + 1).toString())}
                                 >
                                     <Ionicons name="add" size={20} color="#4285F4" />
                                 </TouchableOpacity>
