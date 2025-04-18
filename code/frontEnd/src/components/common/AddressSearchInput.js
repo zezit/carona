@@ -1,28 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  Platform,
-  TouchableWithoutFeedback,
-} from 'react-native';
-import Autocomplete from 'react-native-autocomplete-input';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { useAuthContext } from '../../contexts/AuthContext';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, RADIUS, SPACING, FONT_SIZE } from '../../constants';
+import AutocompleteInput from './AutocompleteInput';
 
 const RECENT_ADDRESSES_KEY = 'recent_addresses';
-const DEBOUNCE_DELAY = 500;
-
-// Create a global active input reference to track which autocomplete is active
-// This will be shared across all instances of the component
-let activeAutocompleteId = null;
+const DEBOUNCE_DELAY = 150; // Reduced for faster response
 
 const AddressSearchInput = ({
   placeholder,
@@ -30,41 +15,28 @@ const AddressSearchInput = ({
   onChangeText,
   onSelectAddress,
   iconName = 'location',
-  iconColor = '#4285F4',
+  iconColor = COLORS.primary,
   style,
-  inputStyle,
-  inputId, // Unique ID for this input to track active state
-  isActive, // Whether this input should be active
-  onFocus, // Callback to notify parent when focus occurs
+  label,
+  autoFocus = false,
+  hideInput = false // New prop to hide the input field
 }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [recentAddresses, setRecentAddresses] = useState([]);
-  const [hideResults, setHideResults] = useState(true); // Default to hiding results
   const [loading, setLoading] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showNoResults, setShowNoResults] = useState(false);
   const debounceTimeout = useRef(null);
-  const inputRef = useRef(null);
-  const { authToken } = useAuthContext(); // Assuming you have a context for auth token
-  const componentId = useRef(Math.random().toString(36).substring(7)); // Unique ID for this instance
+  const searchRequestRef = useRef(0);
 
-  // Load recent addresses on component mount
   useEffect(() => {
     loadRecentAddresses();
-    
-    // Clear any pending debounce timers on unmount
     return () => {
       if (debounceTimeout.current) {
         clearTimeout(debounceTimeout.current);
       }
     };
   }, []);
-
-  // Update visibility based on active state
-  useEffect(() => {
-    if (!isActive && !hideResults) {
-      setHideResults(true);
-    }
-  }, [isActive]);
 
   const loadRecentAddresses = async () => {
     try {
@@ -79,39 +51,34 @@ const AddressSearchInput = ({
 
   const saveRecentAddress = async (address) => {
     try {
-      // Don't save empty addresses
       if (!address || !address.endereco) return;
       
-      // Get current recents
       let addresses = [];
       const savedAddresses = await AsyncStorage.getItem(RECENT_ADDRESSES_KEY);
       if (savedAddresses) {
         addresses = JSON.parse(savedAddresses);
       }
       
-      // Check if address already exists to avoid duplicates
-      const exists = addresses.some(a => a.endereco === address.endereco);
+      const existingIndex = addresses.findIndex(a => a.endereco === address.endereco);
       
-      if (!exists) {
-        // Add new address at the beginning and keep only the most recent 5
+      if (existingIndex === -1) {
         addresses = [address, ...addresses.slice(0, 4)];
-        await AsyncStorage.setItem(RECENT_ADDRESSES_KEY, JSON.stringify(addresses));
-        setRecentAddresses(addresses);
+      } else {
+        const [existing] = addresses.splice(existingIndex, 1);
+        addresses.unshift(existing);
       }
+      
+      await AsyncStorage.setItem(RECENT_ADDRESSES_KEY, JSON.stringify(addresses));
+      setRecentAddresses(addresses);
     } catch (error) {
       console.error('Error saving recent address:', error);
     }
   };
 
-  // Handle text input with debounce
   const handleChangeText = (text) => {
+    setError(null);
+    setShowNoResults(false);
     onChangeText(text);
-    setHideResults(false);
-    
-    // Set this input as active
-    if (inputId && onFocus) {
-      onFocus(inputId);
-    }
     
     if (debounceTimeout.current) {
       clearTimeout(debounceTimeout.current);
@@ -119,9 +86,10 @@ const AddressSearchInput = ({
     
     if (text.trim().length > 2) {
       setLoading(true);
+      const currentRequest = ++searchRequestRef.current;
       
       debounceTimeout.current = setTimeout(() => {
-        fetchAddressSuggestions(text);
+        fetchAddressSuggestions(text, currentRequest);
       }, DEBOUNCE_DELAY);
     } else {
       setSuggestions([]);
@@ -129,50 +97,50 @@ const AddressSearchInput = ({
     }
   };
 
-  const handleInputFocus = () => {
-    setHideResults(false);
-    if (inputId && onFocus) {
-      onFocus(inputId);
-    }
-  };
-
-  // Handle clicking outside to dismiss the autocomplete
-  const handleDismiss = () => {
-    setHideResults(true);
-  };
-
-  // Use Expo Location for geocoding instead of API
-  const fetchAddressSuggestions = async (searchText) => {
+  const fetchAddressSuggestions = async (searchText, requestId) => {
     try {
-      setLoading(true);
+      if (requestId !== searchRequestRef.current) return;
       
-      // Request location permissions if not already granted
+      setLoading(true);
+      setError(null);
+      setShowNoResults(false);
+      
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
+        setError('Permissão de localização necessária');
         Alert.alert(
           'Permissão necessária',
           'Precisamos de permissão para acessar serviços de localização para buscar endereços.',
           [{ text: 'OK' }]
         );
-        setLoading(false);
         return;
       }
-      
-      // Use Expo Location to geocode the address
-      const enhancedSearchText = searchText.toLowerCase().includes('mg') ||
-        searchText.toLowerCase().includes('minas') ||
-        searchText.toLowerCase().includes('minas gerais') ||
-        searchText.toLowerCase().includes('bh') ||
-        searchText.toLowerCase().includes('belo horizonte')
-        ? searchText
-        : `${searchText}, MG`;
 
-      console.debug('Geocoding address:', enhancedSearchText);
-
-      const geocodeResults = await Location.geocodeAsync(enhancedSearchText);
+      const searchVariations = [
+        searchText,
+        `${searchText}, UFMG`,
+        `${searchText}, Pampulha`,
+        `${searchText}, Belo Horizonte`,
+        `${searchText}, Belo Horizonte, MG`
+      ];
       
-      if (geocodeResults && geocodeResults.length > 0) {
-        // For each geocoded location, get the address details
+      let geocodeResults = [];
+      
+      for (const query of searchVariations) {
+        if (geocodeResults.length === 0) {
+          try {
+            const results = await Location.geocodeAsync(query);
+            if (results?.length > 0) {
+              geocodeResults = results;
+              break;
+            }
+          } catch (err) {
+            console.debug(`Failed to geocode variation: ${query}`, err);
+          }
+        }
+      }
+      
+      if (geocodeResults?.length > 0) {
         const addressPromises = geocodeResults.map(async (result) => {
           try {
             const reverseGeocode = await Location.reverseGeocodeAsync({
@@ -180,11 +148,10 @@ const AddressSearchInput = ({
               longitude: result.longitude
             });
             
-            if (reverseGeocode && reverseGeocode.length > 0) {
+            if (reverseGeocode?.[0]) {
               const addressObj = reverseGeocode[0];
-              
-              // Format the address from the geocoding result
               const addressParts = [
+                addressObj.name,
                 addressObj.street,
                 addressObj.streetNumber,
                 addressObj.district,
@@ -192,130 +159,109 @@ const AddressSearchInput = ({
                 addressObj.region
               ].filter(Boolean);
               
-              const formattedAddress = addressParts.join(', ');
+              const fullAddress = addressParts.join(', ');
               
-              return {
-                latitude: result.latitude,
-                longitude: result.longitude,
-                endereco: formattedAddress
-              };
+              const searchTerms = searchText.toLowerCase().split(/[\s,]+/);
+              const matchesSearch = searchTerms.every(term => 
+                fullAddress.toLowerCase().includes(term)
+              );
+              
+              if (matchesSearch) {
+                return {
+                  latitude: result.latitude,
+                  longitude: result.longitude,
+                  endereco: fullAddress,
+                  distance: calculateDistance(result.latitude, result.longitude),
+                  relevanceScore: calculateRelevanceScore(fullAddress, searchText)
+                };
+              }
             }
-            return null;
           } catch (error) {
-            console.error('Error in reverse geocoding:', error);
-            return null;
+            console.debug('Error in reverse geocoding:', error);
           }
+          return null;
         });
         
-        // Wait for all reverse geocode requests to complete
         const addressResults = await Promise.all(addressPromises);
+        const validAddresses = addressResults.filter(addr => addr?.endereco);
         
-        // Filter out null results and results with empty addresses
-        const validAddresses = addressResults.filter(
-          addr => addr && addr.endereco && addr.endereco.trim() !== ''
-        );
-        
-        // Remove duplicates based on endereco
-        const uniqueAddresses = [];
-        const addressSet = new Set();
-        
-        validAddresses.forEach(addr => {
-          if (!addressSet.has(addr.endereco)) {
-            addressSet.add(addr.endereco);
-            uniqueAddresses.push(addr);
-          }
-        });
-        
-        setSuggestions(uniqueAddresses);
+        const sortedAddresses = validAddresses
+          .sort((a, b) => {
+            const scoreA = a.relevanceScore - (a.distance * 0.1);
+            const scoreB = b.relevanceScore - (b.distance * 0.1);
+            return scoreB - scoreA;
+          })
+          .slice(0, 5);
+
+        if (sortedAddresses.length === 0) {
+          setShowNoResults(true);
+        }
+        setSuggestions(sortedAddresses);
       } else {
+        setShowNoResults(true);
         setSuggestions([]);
       }
     } catch (error) {
       console.error('Error geocoding address:', error);
+      setError('Erro ao buscar endereço. Tente novamente.');
       setSuggestions([]);
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestRef.current) {
+        setLoading(false);
+      }
     }
   };
 
-  const handleSelectAddress = (address) => {
-    onSelectAddress(address);
-    onChangeText(address.endereco);
-    setHideResults(true);
-    Keyboard.dismiss();
-    saveRecentAddress(address);
-  };
-
-  const handleUseCurrentLocation = async () => {
-    setLocationLoading(true);
+  const calculateRelevanceScore = (address, searchText) => {
+    const addressLower = address.toLowerCase();
+    const searchTerms = searchText.toLowerCase().split(/[\s,]+/);
     
-    try {
-      // Request permission to access location
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permissão negada',
-          'Permita que o aplicativo acesse sua localização para usar esta funcionalidade.',
-          [{ text: 'OK' }]
-        );
-        return;
+    let score = 0;
+    searchTerms.forEach(term => {
+      if (addressLower.includes(term)) {
+        score += addressLower.indexOf(term) === 0 ? 3 : 1;
+        score += addressLower.includes(` ${term} `) ? 2 : 0;
+        score += addressLower.includes(`${term},`) ? 2 : 0;
       }
-      
-      // Get current location
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High
-      });
-      
-      // Try to get the address from coordinates (reverse geocoding)
-      let address = "Minha localização atual";
-      try {
-        const geocode = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude
-        });
-        
-        if (geocode && geocode.length > 0) {
-          // Format the address from the geocoding result
-          const addressObj = geocode[0];
-          const addressParts = [
-            addressObj.street,
-            addressObj.streetNumber,
-            addressObj.district,
-            addressObj.city,
-            addressObj.region
-          ].filter(Boolean);
-          
-          if (addressParts.length > 0) {
-            address = addressParts.join(', ');
-          }
-        }
-      } catch (error) {
-        console.warn('Error getting address from coordinates:', error);
-      }
-      
-      // Create location object
-      const locationData = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        endereco: address
-      };
-      
-      // Send to parent component
-      handleSelectAddress(locationData);
-    } catch (error) {
-      console.error('Error getting location:', error);
-      Alert.alert(
-        'Erro de localização',
-        'Não foi possível obter sua localização atual. Verifique se o GPS está ativado.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setLocationLoading(false);
+    });
+    
+    if (addressLower.includes('ufmg') || addressLower.includes('universidade federal')) {
+      score += 3;
     }
+    
+    if (addressLower.includes('pampulha')) {
+      score += 2;
+    }
+    
+    return score;
   };
 
-  // Get all available data to show
+  const calculateDistance = (lat, lon) => {
+    const UFMG_LAT = -19.8721;
+    const UFMG_LON = -43.9673;
+    
+    const R = 6371;
+    const dLat = deg2rad(lat - UFMG_LAT);
+    const dLon = deg2rad(lon - UFMG_LON);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(deg2rad(UFMG_LAT)) * Math.cos(deg2rad(lat)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const deg2rad = (deg) => {
+    return deg * (Math.PI/180);
+  };
+
+  const handleSelectItem = (item) => {
+    onSelectAddress(item);
+    saveRecentAddress(item);
+    setSuggestions([]);
+    setShowNoResults(false);
+  };
+
   const getData = () => {
     if (value.trim().length < 3) {
       return recentAddresses;
@@ -323,109 +269,102 @@ const AddressSearchInput = ({
     return suggestions;
   };
 
-  // Render item in the suggestions list
-  const renderItem = (item, index, isRecent) => {
-    return (
-      <TouchableOpacity
-        key={`${isRecent ? 'recent' : 'suggestion'}-${index}`}
-        style={styles.suggestionItem}
-        onPress={() => handleSelectAddress(item)}
-      >
-        <Ionicons 
-          name={isRecent ? "time-outline" : "location-outline"} 
-          size={20} 
-          color="#777" 
-          style={styles.suggestionIcon} 
-        />
-        <Text style={styles.suggestionText} numberOfLines={1}>{item.endereco}</Text>
-      </TouchableOpacity>
-    );
+  const getHintText = () => {
+    if (loading) {
+      return 'Buscando endereços...';
+    }
+    if (showNoResults) {
+      return 'Nenhum endereço encontrado. Tente adicionar o bairro ou cidade.';
+    }
+    if (error) {
+      return error;
+    }
+    if (value.trim().length > 0 && value.trim().length < 3) {
+      return 'Digite mais caracteres para buscar';
+    }
+    return suggestions.length > 0 ? 'Selecione um endereço da lista' : '';
   };
 
-  return (
-    <View style={[styles.container, style]}>
-      <Autocomplete
-        inputContainerStyle={styles.inputContainer}
-        containerStyle={styles.autocompleteContainer}
-        data={getData()}
-        value={value}
-        onChangeText={handleChangeText}
-        hideResults={hideResults || !isActive}
-        keyboardShouldPersistTaps="always"
-        listContainerStyle={styles.listContainerStyle}
-        flatListProps={{
-          keyboardShouldPersistTaps: 'always',
-          keyExtractor: (_, idx) => `result-${idx}`,
-          renderItem: ({ item, index }) => {
-            const isRecent = value.trim().length < 3;
-            return renderItem(item, index, isRecent);
-          },
-          ListHeaderComponent: () => (
-            <>
-              {value.trim().length < 3 && recentAddresses.length > 0 && (
-                <Text style={styles.sectionHeader}>Recentes</Text>
-              )}
-              {value.trim().length >= 3 && suggestions.length > 0 && (
-                <Text style={styles.sectionHeader}>Sugestões</Text>
-              )}
-              {value.trim().length >= 3 && suggestions.length === 0 && !loading && (
-                <Text style={styles.noResults}>Nenhum resultado encontrado</Text>
-              )}
-              <TouchableOpacity
-                style={styles.currentLocationItem}
-                onPress={handleUseCurrentLocation}
-                disabled={locationLoading}
-              >
-                {locationLoading ? (
-                  <>
-                    <ActivityIndicator size="small" color="#4285F4" style={styles.suggestionIcon} />
-                    <Text style={styles.currentLocationText}>Obtendo sua localização...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons name="navigate" size={20} color="#4285F4" style={styles.suggestionIcon} />
-                    <Text style={styles.currentLocationText}>Usar minha localização atual</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </>
-          ),
-          ListEmptyComponent: loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#4285F4" />
-              <Text style={styles.loadingText}>Buscando endereços...</Text>
-            </View>
-          ) : null,
-          style: styles.listStyle
-        }}
-        renderTextInput={(props) => (
-          <View style={styles.textInputContainer}>
-            <View style={styles.iconContainer}>
-              <Ionicons name={iconName} size={24} color={iconColor} />
-            </View>
-            <TextInput
-              {...props}
-              ref={inputRef}
-              placeholder={placeholder}
-              style={[styles.input, inputStyle]}
-              onFocus={handleInputFocus}
-            />
-            {loading ? (
-              <ActivityIndicator size="small" color="#4285F4" style={styles.loadingIndicator} />
-            ) : value ? (
-              <TouchableOpacity 
-                style={styles.clearButton}
-                onPress={() => {
-                  onChangeText('');
-                  setSuggestions([]);
-                  setHideResults(true);
-                }}
-              >
-                <Ionicons name="close-circle" size={20} color="#999" />
-              </TouchableOpacity>
-            ) : null}
+  // Render suggestions directly if hideInput is true
+  if (hideInput) {
+    const data = getData();
+    const hintText = getHintText();
+    
+    return (
+      <View style={[styles.container, style]}>
+        {hintText && (
+          <Text style={[
+            styles.hintText,
+            error ? { color: COLORS.danger } : { color: COLORS.text.secondary }
+          ]}>
+            {hintText}
+          </Text>
+        )}
+        
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
           </View>
         )}
+        
+        {data.length > 0 ? (
+          <View style={styles.suggestionsList}>
+            {data.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.suggestionItem}
+                onPress={() => handleSelectItem(item)}
+                accessibilityRole="button"
+                accessibilityLabel={item.endereco}
+              >
+                <Ionicons 
+                  name="location-outline" 
+                  size={16} 
+                  color={COLORS.text.secondary}
+                  style={styles.suggestionIcon}
+                />
+                <Text style={styles.suggestionText}>
+                  {item.endereco}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          showNoResults && !loading && (
+            <View style={styles.emptyState}>
+              <Ionicons name="search-outline" size={24} color={COLORS.text.tertiary} />
+              <Text style={styles.emptyStateText}>Nenhum resultado encontrado</Text>
+            </View>
+          )
+        )}
+      </View>
+    );
+  }
+
+  // Regular render with AutocompleteInput
+  return (
+    <View style={[styles.container, style]}>
+      <AutocompleteInput
+        value={value}
+        onChangeText={handleChangeText}
+        onSelectItem={handleSelectItem}
+        data={getData()}
+        loading={loading}
+        error={error}
+        placeholder={placeholder}
+        icon={iconName}
+        iconColor={iconColor}
+        label={label}
+        itemLabelKey="endereco"
+        autoFocus={autoFocus}
+        hintText={getHintText()}
+        renderRightButton={() => loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        )}
+        containerStyle={styles.inputContainer}
+        listContainerStyle={styles.suggestionsList}
       />
     </View>
   );
@@ -434,125 +373,76 @@ const AddressSearchInput = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    position: 'relative',
-    zIndex: 999, // Keep high z-index for container
   },
   inputContainer: {
-    borderWidth: 0,
-    borderColor: 'transparent',
-    backgroundColor: 'transparent',
-    borderRadius: 0,
-    marginBottom: 0,
-    padding: 0,
-    flexDirection: 'column',
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  autocompleteContainer: {
-    position: 'relative', // Position relative but manage z-index
-    flex: 1,
-    left: 0,
-    right: 0,
-    zIndex: 999, // Keep high z-index
-  },
-  textInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    height: 48,
-  },
-  iconContainer: {
-    width: 40,
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    padding: 12,
-    zIndex: 1,
-  },
-  loadingIndicator: {
-    marginRight: 10,
-  },
-  clearButton: {
-    padding: 10,
-  },
-  listStyle: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    marginTop: 0,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    maxHeight: 250, // Added fixed height to prevent overlap
-  },
-  listContainerStyle: {
-    position: 'absolute',
-    width: '100%',
-    top: 48, // Position below the input
-    borderWidth: 0,
-    borderColor: 'transparent',
-    elevation: Platform.OS === 'android' ? 50 : undefined, // Higher elevation for Android
-    zIndex: Platform.OS === 'ios' ? 9999 : undefined, // Higher z-index for iOS
+  suggestionsList: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    marginTop: SPACING.xs,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   loadingContainer: {
-    padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    padding: SPACING.xs,
+    marginRight: SPACING.xs,
     alignItems: 'center',
-  },
-  loadingText: {
-    marginLeft: 10,
-    color: '#666',
-    fontSize: 14,
-  },
-  sectionHeader: {
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    fontSize: 12,
-    color: '#888',
-    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    width: '100%',
+    height: 40,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  currentLocationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#f8f9fa',
+    borderBottomColor: COLORS.border,
   },
   suggestionIcon: {
-    marginRight: 10,
+    marginRight: SPACING.sm,
   },
   suggestionText: {
-    fontSize: 14,
-    color: '#333',
     flex: 1,
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.primary,
   },
-  currentLocationText: {
-    fontSize: 14,
-    color: '#4285F4',
-    fontWeight: '500',
+  hintText: {
+    fontSize: FONT_SIZE.sm,
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
   },
-  noResults: {
-    padding: 15,
-    color: '#888',
-    textAlign: 'center',
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.xl,
   },
+  emptyStateText: {
+    color: COLORS.text.tertiary,
+    marginTop: SPACING.sm,
+    fontSize: FONT_SIZE.md,
+  }
 });
 
-export default AddressSearchInput;
+export default React.memo(AddressSearchInput);

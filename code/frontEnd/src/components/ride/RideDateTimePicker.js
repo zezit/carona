@@ -2,29 +2,39 @@ import React, { useState, useCallback } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, RADIUS } from '../../constants';
 
-const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange }) => {
+const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMode, duration = 0 }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [currentMode, setCurrentMode] = useState('date');
-  const [selectedType, setSelectedType] = useState(null);
   const [tempDate, setTempDate] = useState(new Date());
   
-  // Use callbacks for functions that compute values instead of computing them during render
-  const getArrivalTimeString = useCallback(() => {
-    return arrivalDate ? arrivalDate.toLocaleString() : '';
-  }, [arrivalDate]);
-  
-  const getDepartureTimeString = useCallback(() => {
-    return departureDate ? departureDate.toLocaleString() : '';
-  }, [departureDate]);
+  // Format date for display
+  const formatDate = useCallback((date) => {
+    if (!date) return '';
+    
+    const options = { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false
+    };
+    
+    return date.toLocaleString('pt-BR', options)
+      .replace(',', ' às');
+  }, []);
 
-  const showDatepicker = (type) => {
-    setSelectedType(type);
-    setTempDate(type === 'departure' ? departureDate : arrivalDate);
+  // Show date picker
+  const showDatepicker = () => {
+    // Set initial date based on active mode
+    setTempDate(activeMode === 'departure' ? departureDate : arrivalDate);
     setCurrentMode('date');
     setShowPicker(true);
   };
 
+  // Handle date/time change
   const onChange = (event, selectedDate) => {
     if (event.type === 'dismissed') {
       setShowPicker(false);
@@ -39,13 +49,14 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange }) => {
         setCurrentMode('time');
       } else {
         setShowPicker(false);
-        onDateChange(selectedType, currentDate);
+        onDateChange(activeMode, currentDate);
       }
     } else {
-      onDateChange(selectedType, currentDate);
+      onDateChange(activeMode, currentDate);
     }
   };
 
+  // Render date picker
   const renderDatePicker = () => (
     <DateTimePicker
       value={tempDate}
@@ -53,45 +64,51 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange }) => {
       is24Hour={true}
       display={Platform.OS === 'ios' ? 'spinner' : 'default'}
       onChange={onChange}
-      minimumDate={
-        selectedType === 'arrival' 
-          ? new Date(departureDate.getTime() + 60000)
-          : new Date()
-      }
+      minimumDate={new Date()}
     />
   );
-
-  // Get the formatted strings outside the render
-  const departureTimeString = getDepartureTimeString();
-  const arrivalTimeString = getArrivalTimeString();
+  
+  // Calculate the equivalent departure time if arrival is set
+  const getEstimatedDepartureTime = () => {
+    if (!arrivalDate || duration <= 0) return new Date();
+    return new Date(arrivalDate.getTime() - duration * 1000);
+  };
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.dateButton}
-        onPress={() => showDatepicker('departure')}
+        onPress={showDatepicker}
       >
-        <Ionicons name="calendar-outline" size={24} color="#4285F4" />
+        <Ionicons 
+          name="calendar-outline" 
+          size={24} 
+          color={activeMode === 'departure' ? COLORS.primary : COLORS.success} 
+        />
         <View style={styles.dateTextContainer}>
-          <Text style={styles.dateLabel}>Partida</Text>
+          <Text style={styles.dateLabel}>
+            {activeMode === 'departure' ? 'Horário de partida' : 'Horário de chegada'}
+          </Text>
           <Text style={styles.dateValue}>
-            {departureTimeString}
+            {formatDate(activeMode === 'departure' ? departureDate : arrivalDate)}
           </Text>
         </View>
+        <Ionicons name="chevron-down" size={20} color={COLORS.text.secondary} />
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.dateButton}
-        onPress={() => showDatepicker('arrival')}
-      >
-        <Ionicons name="calendar-outline" size={24} color="#34A853" />
-        <View style={styles.dateTextContainer}>
-          <Text style={styles.dateLabel}>Chegada</Text>
-          <Text style={styles.dateValue}>
-            {arrivalTimeString}
+      {/* Show estimated arrival or departure time based on active mode */}
+      {duration > 0 && (
+        <View style={styles.estimatedTimeContainer}>
+          <Text style={styles.estimatedTimeLabel}>
+            {activeMode === 'departure' 
+              ? 'Chegada estimada:' 
+              : 'Partida estimada:'}
+          </Text>
+          <Text style={styles.estimatedTimeValue}>
+            {formatDate(activeMode === 'departure' ? arrivalDate : getEstimatedDepartureTime())}
           </Text>
         </View>
-      </TouchableOpacity>
+      )}
 
       {Platform.OS === 'ios' ? (
         <Modal
@@ -101,12 +118,20 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange }) => {
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <TouchableOpacity 
-                style={styles.doneButton} 
-                onPress={() => setShowPicker(false)}
-              >
-                <Text style={styles.doneButtonText}>Done</Text>
-              </TouchableOpacity>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {activeMode === 'departure' ? 'Selecionar hora de partida' : 'Selecionar hora de chegada'}
+                </Text>
+                <TouchableOpacity 
+                  style={styles.doneButton} 
+                  onPress={() => {
+                    setShowPicker(false);
+                    onDateChange(activeMode, tempDate);
+                  }}
+                >
+                  <Text style={styles.doneButtonText}>Confirmar</Text>
+                </TouchableOpacity>
+              </View>
               {renderDatePicker()}
             </View>
           </View>
@@ -120,27 +145,49 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.background,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   dateTextContainer: {
-    marginLeft: 12,
+    flex: 1,
+    marginLeft: SPACING.md,
   },
   dateLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
+    marginBottom: 2,
   },
   dateValue: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.primary,
+    fontWeight: FONT_WEIGHT.semiBold,
+  },
+  estimatedTimeContainer: {
+    marginTop: SPACING.sm,
+    backgroundColor: COLORS.background,
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: 'dashed',
+  },
+  estimatedTimeLabel: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
+  },
+  estimatedTimeValue: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.primary,
+    fontWeight: FONT_WEIGHT.medium,
   },
   modalContainer: {
     flex: 1,
@@ -148,19 +195,31 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.card,
     paddingBottom: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: FONT_WEIGHT.semiBold,
+    color: COLORS.text.primary,
   },
   doneButton: {
-    alignSelf: 'flex-end',
-    padding: 16,
+    padding: SPACING.sm,
   },
   doneButtonText: {
-    color: '#4285F4',
-    fontSize: 16,
-    fontWeight: '600',
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.semiBold,
   },
 });
 

@@ -1,147 +1,302 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Alert, TouchableOpacity, ActivityIndicator, Keyboard } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import * as Animatable from 'react-native-animatable';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONT_SIZE, RADIUS, SPACING } from '../constants';
+import { useAuthContext } from '../contexts/AuthContext';
 import { commonStyles } from '../theme/styles/commonStyles';
-import useAuth from '../hooks/useAuth';
-import * as crypto from 'crypto-js';
-import { useFadeSlideAnimation } from '../hooks/animations';
-import { Animated } from 'react-native';
+
+// Import reusable components
+import { ActionButton } from '../components/common';
+import { FormInput } from '../components/form';
+import { LoadingIndicator } from '../components/ui';
 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading, error } = useAuth();
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuthContext();
 
-  const { animatedStyle } = useFadeSlideAnimation({
-    fadeStartValue: 0,
-    fadeEndValue: 1,
-    slideStartValue: 50,
-    slideEndValue: 0,
-    fadeDuration: 400,
-    slideDuration: 300
-  });
-
+  // Email validation
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleLogin = async () => {
-    Keyboard.dismiss();
+  // Form validation
+  const validateForm = () => {
+    let newErrors = {};
+    let isValid = true;
 
-    if (email === '' || password === '') {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
-      return;
+    if (!email) {
+      newErrors.email = 'E-mail é obrigatório';
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'E-mail inválido';
+      isValid = false;
     }
 
-    if (!validateEmail(email)) {
-      Alert.alert('Erro', 'Por favor, insira um email válido.');
-      return;
+    if (!password) {
+      newErrors.password = 'Senha é obrigatória';
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'A senha deve ter pelo menos 6 caracteres';
+      isValid = false;
     }
 
-    const hashedPassword = crypto.MD5(password).toString();
-    await login(email, hashedPassword);
+    setErrors(newErrors);
+    return isValid;
   };
 
-  useEffect(() => {
-    if (error) {
-      let errorMessage = error;
+  // Handle login
+  const handleLogin = async () => {
+    if (!validateForm()) return;
 
-      if (error.includes('Email ou senha incorretos')) {
-        errorMessage = 'Email ou senha incorretos. Por favor, tente novamente.';
-      } else if (error.includes('Tempo limite')) {
-        errorMessage = 'O servidor não respondeu a tempo. Verifique sua conexão e tente novamente.';
-      } else if (error.includes('Erro de conexão')) {
-        errorMessage = 'Ocorreu um erro ao comunicar com o servidor. Verifique sua conexão.';
-      } else {
-        errorMessage = 'Ocorreu um erro inesperado. Por favor, tente novamente.';
+    try {
+      setLoading(true);
+      const success = await login(email, password);
+
+      if (!success) {
+        Alert.alert(
+          'Erro de Login',
+          'E-mail ou senha incorretos. Por favor, tente novamente.'
+        );
       }
-
-      Alert.alert('Erro de Login', errorMessage);
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert(
+        'Erro',
+        'Ocorreu um erro ao tentar fazer login. Por favor, tente novamente.'
+      );
+    } finally {
+      setLoading(false);
     }
-  }, [error]);
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, commonStyles.centered]}>
+        <LoadingIndicator text="Entrando..." />
+      </View>
+    );
+  }
 
   return (
-    <View style={commonStyles.container}>
-      <View style={commonStyles.headerView}>
-        <Animated.Text style={[commonStyles.title, { opacity: animatedStyle.opacity }]}>
-          Carona?
-        </Animated.Text>
-      </View>
+    <SafeAreaView style={commonStyles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-      <Animated.View style={[commonStyles.contentView, animatedStyle]}>
-        <Text style={commonStyles.subtitle}>Login</Text>
-
-        <View style={commonStyles.linkContainer}>
-          <Text style={commonStyles.normalText}>
-            Novo Usuário?{' '}
-            <Text
-              style={commonStyles.linkText}
-              onPress={() => {
-                navigation.navigate('Registrar');
-              }}
-            >
-              Crie uma conta!
-            </Text>
-          </Text>
-        </View>
-
-        <TextInput
-          style={commonStyles.textInput}
-          placeholder="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          textContentType="emailAddress"
-          accessibilityLabel="Campo de email"
-        />
-
-        <TextInput
-          style={commonStyles.textInput}
-          placeholder="Senha"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          secureTextEntry
-          autoCapitalize="none"
-          textContentType="password"
-          accessibilityLabel="Campo de senha"
-        />
-
-        <TouchableOpacity
-          style={commonStyles.forgotPasswordContainer}
-          onPress={() => Alert.alert("Redefinir senha", "Função de recuperação de senha será implementada em breve.")}
-        >
-          <Text style={commonStyles.forgotPasswordText}>Esqueceu sua senha?</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
-      <View style={[commonStyles.footerView, { paddingBottom: 0 }]}>
-        <View style={commonStyles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              commonStyles.button,
-              isLoading && commonStyles.buttonDisabled
-            ]}
-            onPress={handleLogin}
-            disabled={isLoading}
-            accessibilityLabel="Botão de login"
-            accessibilityRole="button"
+      <LinearGradient
+        colors={[COLORS.primary, COLORS.primaryDark]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.5 }}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Animatable.View
+            animation="fadeIn"
+            duration={300}
+            style={styles.logoContainer}
           >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={commonStyles.buttonText}>Entrar</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+            <Ionicons name="car" size={40} color="white" />
+          </Animatable.View>
 
-      <View style={[commonStyles.footerView, { flex: 0 }]}>
-        <Text style={{ display: 'none' }}></Text>
-      </View>
-    </View>
+          <Animatable.View
+            animation="fadeIn"
+            duration={300}
+            style={styles.logoTextContainer}
+          >
+            <Text style={styles.logoText}>Carona?</Text>
+          </Animatable.View>
+        </View>
+      </LinearGradient>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          style={styles.formScrollView}
+          contentContainerStyle={styles.formScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animatable.View
+            animation="fadeIn"
+            duration={300}
+            style={styles.formContainer}
+          >
+            <Text style={styles.formTitle}>Login</Text>
+            <Text style={styles.formSubtitle}>Entre com sua conta para continuar</Text>
+
+            <View style={styles.inputsContainer}>
+              <FormInput
+                label="E-mail"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="seu.email@exemplo.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                icon="mail"
+                error={errors.email}
+              />
+
+              <FormInput
+                label="Senha"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Sua senha"
+                secureTextEntry
+                icon="lock-closed"
+                error={errors.password}
+              />
+
+              <TouchableOpacity
+                style={styles.forgotPassword}
+                onPress={() => Alert.alert('Info', 'Funcionalidade em desenvolvimento')}
+              >
+                <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}
+              >
+                <Text style={styles.loginButtonText}>Entrar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Não tem uma conta? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Registrar')}>
+                <Text style={styles.registerLink}>Cadastre-se</Text>
+              </TouchableOpacity>
+            </View>
+          </Animatable.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
-export default React.memo(LoginPage);
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    height: 200,
+    paddingTop: SPACING.md,
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: SPACING.lg,
+  },
+  logoContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoTextContainer: {
+    marginTop: SPACING.md,
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  formScrollView: {
+    flex: 1,
+    marginTop: -40,
+  },
+  formScrollContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.lg,
+  },
+  formContainer: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  formTitle: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+  },
+  formSubtitle: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.lg,
+  },
+  inputsContainer: {
+    marginBottom: SPACING.md,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.md,
+  },
+  forgotPasswordText: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.primary,
+  },
+  buttonContainer: {
+    marginTop: SPACING.sm,
+  },
+  loginButton: {
+    height: 50,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginButtonText: {
+    color: COLORS.text.light,
+    fontSize: FONT_SIZE.md,
+    fontWeight: 'bold',
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.lg,
+  },
+  registerText: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.secondary,
+  },
+  registerLink: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.primary,
+    fontWeight: 'bold',
+  }
+});
+
+export default LoginPage;

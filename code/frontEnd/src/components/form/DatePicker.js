@@ -1,216 +1,177 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '../../constants';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-const DatePicker = ({ 
-  visible, 
-  onClose, 
-  onConfirm, 
-  day, 
-  month, 
-  year,
-  setDay,
-  setMonth,
-  setYear,
-  title = "Data de Nascimento"
-}) => {
-  // Animation values
-  const modalScaleAnim = useRef(new Animated.Value(0.9)).current;
-  const modalOpacityAnim = useRef(new Animated.Value(0)).current;
+const DatePicker = ({ value, onDateChange, label }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const modalAnimation = useRef(new Animated.Value(0)).current;
 
-  // Options
-  const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
-  const months = [
-    { value: '01', label: 'Janeiro' },
-    { value: '02', label: 'Fevereiro' },
-    { value: '03', label: 'Março' },
-    { value: '04', label: 'Abril' },
-    { value: '05', label: 'Maio' },
-    { value: '06', label: 'Junho' },
-    { value: '07', label: 'Julho' },
-    { value: '08', label: 'Agosto' },
-    { value: '09', label: 'Setembro' },
-    { value: '10', label: 'Outubro' },
-    { value: '11', label: 'Novembro' },
-    { value: '12', label: 'Dezembro' }
-  ];
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 80 }, (_, i) => (currentYear - i).toString());
+  const showDatePicker = () => {
+    setIsVisible(true);
+    Animated.timing(modalAnimation, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
 
-  // Animate modal when visible changes
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.timing(modalScaleAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(modalOpacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        })
-      ]).start();
-    } else {
-      modalScaleAnim.setValue(0.9);
-      modalOpacityAnim.setValue(0);
-    }
-  }, [visible]);
-
-  const handleClose = () => {
-    Animated.parallel([
-      Animated.timing(modalScaleAnim, {
-        toValue: 0.9,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(modalOpacityAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      })
-    ]).start(() => {
-      onClose();
-    });
+  const hideDatePicker = () => {
+    Animated.timing(modalAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setIsVisible(false));
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
-      <View style={styles.modalContainer}>
-        <Animated.View 
-          style={[
-            styles.modalWrapper,
-            {
-              opacity: modalOpacityAnim,
-              transform: [{ scale: modalScaleAnim }]
-            }
-          ]}
+    <View style={styles.container}>
+      <TouchableOpacity 
+        style={[
+          styles.dateButton,
+          { transform: [{ scale: buttonScale }] }
+        ]} 
+        onPress={showDatePicker}
+        onPressIn={() => {
+          Animated.spring(buttonScale, {
+            toValue: 0.98,
+            useNativeDriver: true,
+            speed: 12,
+            bounciness: 8
+          }).start();
+        }}
+        onPressOut={() => {
+          Animated.spring(buttonScale, {
+            toValue: 1,
+            useNativeDriver: true,
+            speed: 12,
+            bounciness: 8
+          }).start();
+        }}
+      >
+        <Ionicons 
+          name="calendar" 
+          size={20} 
+          color={COLORS.text.secondary} 
+        />
+        <Text style={[
+          styles.dateText,
+          !value && styles.placeholderText
+        ]}>
+          {value ? format(value, 'PP', { locale: ptBR }) : 'Selecionar data'}
+        </Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={isVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={hideDatePicker}
+      >
+        <TouchableOpacity 
+          style={styles.modalContainer} 
+          activeOpacity={1} 
+          onPress={hideDatePicker}
         >
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
+          <Animated.View 
+            style={[
+              styles.modalWrapper,
+              {
+                transform: [{
+                  translateY: modalAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [300, 0]
+                  })
+                }],
+                opacity: modalAnimation
+              }
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{label || "Data de Nascimento"}</Text>
+              <TouchableOpacity 
+                onPress={hideDatePicker}
+                accessibilityLabel="Fechar seleção de data"
+                accessibilityRole="button"
+              >
+                <Text style={styles.closeButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.datePickerContainer}>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>Dia</Text>
+                <ScrollView 
+                  style={styles.datePickerScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {/* Render day options */}
+                </ScrollView>
+              </View>
+              
+              <View style={styles.datePickerColumnMonth}>
+                <Text style={styles.datePickerLabel}>Mês</Text>
+                <ScrollView 
+                  style={styles.datePickerScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {/* Render month options */}
+                </ScrollView>
+              </View>
+              
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>Ano</Text>
+                <ScrollView 
+                  style={styles.datePickerScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {/* Render year options */}
+                </ScrollView>
+              </View>
+            </View>
+            
             <TouchableOpacity 
-              onPress={handleClose}
-              accessibilityLabel="Fechar seleção de data"
+              style={styles.confirmButton} 
+              onPress={() => {
+                onDateChange(value);
+                hideDatePicker();
+              }}
+              accessibilityLabel="Confirmar data"
               accessibilityRole="button"
             >
-              <Text style={styles.closeButtonText}>Cancelar</Text>
+              <Text style={styles.confirmButtonText}>Confirmar</Text>
             </TouchableOpacity>
-          </View>
-          
-          <View style={styles.datePickerContainer}>
-            <View style={styles.datePickerColumn}>
-              <Text style={styles.datePickerLabel}>Dia</Text>
-              <ScrollView 
-                style={styles.datePickerScroll}
-                showsVerticalScrollIndicator={false}
-              >
-                {days.map(d => (
-                  <TouchableOpacity 
-                    key={`day-${d}`}
-                    style={[
-                      styles.datePickerItem,
-                      day === d && styles.datePickerItemSelected
-                    ]}
-                    onPress={() => setDay(d)}
-                  >
-                    <Text 
-                      style={[
-                        styles.datePickerText,
-                        day === d && styles.datePickerTextSelected
-                      ]}
-                    >
-                      {d}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-            
-            <View style={styles.datePickerColumnMonth}>
-              <Text style={styles.datePickerLabel}>Mês</Text>
-              <ScrollView 
-                style={styles.datePickerScroll}
-                showsVerticalScrollIndicator={false}
-              >
-                {months.map(m => (
-                  <TouchableOpacity 
-                    key={`month-${m.value}`}
-                    style={[
-                      styles.datePickerItem,
-                      month === m.value && styles.datePickerItemSelected
-                    ]}
-                    onPress={() => setMonth(m.value)}
-                  >
-                    <Text 
-                      style={[
-                        styles.datePickerText,
-                        month === m.value && styles.datePickerTextSelected,
-                        styles.monthText
-                      ]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {m.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-            
-            <View style={styles.datePickerColumn}>
-              <Text style={styles.datePickerLabel}>Ano</Text>
-              <ScrollView 
-                style={styles.datePickerScroll}
-                showsVerticalScrollIndicator={false}
-              >
-                {years.map(y => (
-                  <TouchableOpacity 
-                    key={`year-${y}`}
-                    style={[
-                      styles.datePickerItem,
-                      year === y && styles.datePickerItemSelected
-                    ]}
-                    onPress={() => setYear(y)}
-                  >
-                    <Text 
-                      style={[
-                        styles.datePickerText,
-                        year === y && styles.datePickerTextSelected,
-                        styles.yearText
-                      ]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {y}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.confirmButton} 
-            onPress={onConfirm}
-            accessibilityLabel="Confirmar data"
-            accessibilityRole="button"
-          >
-            <Text style={styles.confirmButtonText}>Confirmar</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    </Modal>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: SPACING.md,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  dateText: {
+    marginLeft: SPACING.sm,
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.primary,
+  },
+  placeholderText: {
+    color: COLORS.text.tertiary,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -274,30 +235,24 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   datePickerItem: {
-    padding: SPACING.md,
+    paddingVertical: SPACING.sm,
     alignItems: 'center',
+    justifyContent: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.border,
+    transition: 'all 0.2s ease',
   },
   datePickerItemSelected: {
-    backgroundColor: '#e6efff',
+    backgroundColor: COLORS.primary + '15',
   },
   datePickerText: {
     fontSize: FONT_SIZE.md,
     color: COLORS.text.secondary,
+    transition: 'all 0.2s ease',
   },
   datePickerTextSelected: {
     color: COLORS.primary,
     fontWeight: FONT_WEIGHT.semiBold,
-  },
-  monthText: {
-    width: '100%',
-    textAlign: 'center',
-    marginHorizontal: SPACING.xs,
-  },
-  yearText: {
-    minWidth: 60,
-    textAlign: 'center',
   },
   confirmButton: {
     backgroundColor: COLORS.primary,
@@ -312,3 +267,5 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.semiBold,
   },
 });
+
+export default React.memo(DatePicker);

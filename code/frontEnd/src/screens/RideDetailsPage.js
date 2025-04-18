@@ -1,37 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
   Linking,
-  Modal,
+  TouchableOpacity,
 } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiClient } from '../services/api/apiClient';
-import { BlurView } from 'expo-blur';
+import { COLORS, SPACING, FONT_SIZE } from '../constants';
+import { commonStyles } from '../theme/styles/commonStyles';
+import { Ionicons } from '@expo/vector-icons';
+import { formatDate, formatTime } from '../utils/dateUtils';
+
+// Import reusable components
+import { PageHeader, ActionButton, UserAvatar } from '../components/common';
+import { RideInfoItem } from '../components/ride';
+import { LoadingIndicator, StatusBadge, ErrorState } from '../components/ui';
 
 const RideDetailsPage = ({ route, navigation }) => {
   const { rideId } = route.params;
   const { user, authToken } = useAuthContext();
-  const [loading, setLoading] = useState(true);
   const [ride, setRide] = useState(null);
-  const [isDriver, setIsDriver] = useState(false);
-  const [isPassenger, setIsPassenger] = useState(false);
-  const [showNavigationModal, setShowNavigationModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
 
-  useEffect(() => {
-    fetchRideDetails();
-  }, [rideId]);
-
-  const fetchRideDetails = async () => {
+  // Function to fetch ride details
+  const fetchRideDetails = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(null);
+
       const response = await apiClient.get(`/carona/${rideId}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -41,22 +45,133 @@ const RideDetailsPage = ({ route, navigation }) => {
 
       if (response.success) {
         setRide(response.data);
-        setIsDriver(response.data.motorista.id === user.id);
-        setIsPassenger(response.data.passageiros.some(p => p.id === user.id));
+      } else {
+        setError(response.message || 'Erro ao carregar detalhes da carona');
       }
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível carregar os detalhes da carona');
+    } catch (err) {
+      console.error('Error fetching ride details:', err);
+      setError('Não foi possível carregar os detalhes da carona. Tente novamente.');
     } finally {
       setLoading(false);
     }
+  }, [rideId, authToken]);
+
+  // Fetch ride details on mount
+  useEffect(() => {
+    fetchRideDetails();
+  }, [fetchRideDetails]);
+
+  // Check if current user is the driver
+  const isDriver = ride?.motorista?.id === user?.id;
+
+  // Check if current user is a passenger
+  const isPassenger = ride?.passageiros?.some(p => p.id === user?.id);
+
+  // Check if there are available seats
+  const hasAvailableSeats = 
+    ride?.capacidadePassageiros > (ride?.passageiros?.length || 0);
+
+  // Handle joining a ride
+  const handleJoinRide = async () => {
+    try {
+      setIsJoining(true);
+
+      const response = await apiClient.post(`/carona/${rideId}/passageiros/${user.id}`, {}, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.success) {
+        Alert.alert('Sucesso', 'Você entrou na carona com sucesso!');
+        fetchRideDetails();
+      } else {
+        Alert.alert('Erro', response.message || 'Não foi possível entrar na carona');
+      }
+    } catch (err) {
+      console.error('Error joining ride:', err);
+      Alert.alert('Erro', 'Não foi possível entrar na carona. Tente novamente.');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
-  const handleStatusChange = async (newStatus) => {
+  // Handle leaving a ride
+  const handleLeaveRide = async () => {
     try {
-      setLoading(true);
-      const response = await apiClient.patch(
-        `/carona/${rideId}/status/${newStatus}`,
-        {},
+      setIsLeaving(true);
+
+      const response = await apiClient.delete(`/carona/${rideId}/passageiros/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.success) {
+        Alert.alert('Sucesso', 'Você saiu da carona com sucesso!');
+        fetchRideDetails();
+      } else {
+        Alert.alert('Erro', response.message || 'Não foi possível sair da carona');
+      }
+    } catch (err) {
+      console.error('Error leaving ride:', err);
+      Alert.alert('Erro', 'Não foi possível sair da carona. Tente novamente.');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
+  // Handle canceling a ride (driver only)
+  const handleCancelRide = async () => {
+    Alert.alert(
+      'Cancelar Carona',
+      'Tem certeza que deseja cancelar esta carona? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Não', style: 'cancel' },
+        {
+          text: 'Sim, Cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsCanceling(true);
+
+              const response = await apiClient.put(
+                `/carona/${rideId}/status`,
+                { status: 'CANCELADA' },
+                {
+                  headers: {
+                    Authorization: `Bearer ${authToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+
+              if (response.success) {
+                Alert.alert('Sucesso', 'A carona foi cancelada com sucesso!');
+                fetchRideDetails();
+              } else {
+                Alert.alert('Erro', response.message || 'Não foi possível cancelar a carona');
+              }
+            } catch (err) {
+              console.error('Error canceling ride:', err);
+              Alert.alert('Erro', 'Não foi possível cancelar a carona. Tente novamente.');
+            } finally {
+              setIsCanceling(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Handle starting a ride (driver only)
+  const handleStartRide = async () => {
+    try {
+      const response = await apiClient.put(
+        `/carona/${rideId}/status`,
+        { status: 'EM_ANDAMENTO' },
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -66,657 +181,406 @@ const RideDetailsPage = ({ route, navigation }) => {
       );
 
       if (response.success) {
-        await fetchRideDetails();
-        Alert.alert('Sucesso', 'Status da carona atualizado com sucesso!');
+        Alert.alert('Sucesso', 'A carona foi iniciada!');
+        fetchRideDetails();
+      } else {
+        Alert.alert('Erro', response.message || 'Não foi possível iniciar a carona');
       }
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível atualizar o status da carona');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Error starting ride:', err);
+      Alert.alert('Erro', 'Não foi possível iniciar a carona. Tente novamente.');
     }
   };
 
-  const handleCancelRide = async () => {
-    Alert.alert(
-      'Cancelar Carona',
-      'Tem certeza que deseja cancelar esta carona?',
-      [
-        { text: 'Não', style: 'cancel' },
+  // Handle finishing a ride (driver only)
+  const handleFinishRide = async () => {
+    try {
+      const response = await apiClient.put(
+        `/carona/${rideId}/status`,
+        { status: 'FINALIZADA' },
         {
-          text: 'Sim',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              await apiClient.delete(`/carona/${rideId}`, {
-                headers: {
-                  Authorization: `Bearer ${authToken}`,
-                  'Content-Type': 'application/json',
-                },
-              });
-              Alert.alert('Sucesso', 'Carona cancelada com sucesso!', [
-                { text: 'OK', onPress: () => navigation.goBack() }
-              ]);
-            } catch (error) {
-              Alert.alert('Erro', 'Não foi possível cancelar a carona');
-            } finally {
-              setLoading(false);
-            }
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
           },
-        },
-      ]
-    );
-  };
+        }
+      );
 
-  const handleNavigationOptions = () => {
-    setShowNavigationModal(true);
-  };
-
-  const openInWaze = () => {
-    setShowNavigationModal(false);
-    
-    if (!ride) return;
-    
-    const { latitudePartida, longitudePartida } = ride;
-    const wazeUrl = `waze://?ll=${latitudePartida},${longitudePartida}&navigate=yes`;
-    
-    Linking.canOpenURL(wazeUrl).then(supported => {
-      if (supported) {
-        return Linking.openURL(wazeUrl);
+      if (response.success) {
+        Alert.alert('Sucesso', 'A carona foi finalizada!');
+        fetchRideDetails();
       } else {
-        const browserWazeUrl = `https://waze.com/ul?ll=${latitudePartida},${longitudePartida}&navigate=yes`;
-        Linking.openURL(browserWazeUrl);
+        Alert.alert('Erro', response.message || 'Não foi possível finalizar a carona');
       }
-    });
+    } catch (err) {
+      console.error('Error finishing ride:', err);
+      Alert.alert('Erro', 'Não foi possível finalizar a carona. Tente novamente.');
+    }
   };
 
-  const openInGoogleMaps = () => {
-    setShowNavigationModal(false);
-    
-    if (!ride) return;
-    
-    const { latitudePartida, longitudePartida } = ride;
-    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitudePartida},${longitudePartida}&travelmode=driving`;
-    
-    Linking.openURL(googleMapsUrl);
-  };
+  // Open WhatsApp
+  const openWhatsApp = (phoneNumber) => {
+    if (!phoneNumber) {
+      Alert.alert('Erro', 'Número de WhatsApp não disponível');
+      return;
+    }
 
-  const handleWhatsAppPress = () => {
-    if (ride?.motorista?.whatsapp && ride?.motorista?.mostrarWhatsapp) {
-      const whatsappUrl = `whatsapp://send?phone=${ride.motorista.whatsapp}`;
-      Linking.canOpenURL(whatsappUrl).then(supported => {
+    const whatsappUrl = `whatsapp://send?phone=${phoneNumber}`;
+    Linking.canOpenURL(whatsappUrl)
+      .then((supported) => {
         if (supported) {
           return Linking.openURL(whatsappUrl);
+        } else {
+          Alert.alert('Erro', 'WhatsApp não está instalado no seu dispositivo');
         }
-        Alert.alert('Erro', 'WhatsApp não está instalado no dispositivo');
+      })
+      .catch((err) => {
+        console.error('Error opening WhatsApp:', err);
+        Alert.alert('Erro', 'Não foi possível abrir o WhatsApp');
       });
-    }
-  };
-
-  const handleJoinRide = async () => {
-    try {
-      setLoading(true);
-      Alert.alert('Solicitar Carona', 'Solicitação enviada com sucesso!');
-      setIsPassenger(true);
-      setLoading(false);
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível solicitar a carona');
-      setLoading(false);
-    }
-  };
-
-  const handleLeaveRide = async () => {
-    try {
-      setLoading(true);
-      Alert.alert('Deixar Carona', 'Você saiu da carona com sucesso!');
-      setIsPassenger(false);
-      setLoading(false);
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível sair da carona');
-      setLoading(false);
-    }
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4285F4" />
-      </SafeAreaView>
+      <View style={[commonStyles.container, commonStyles.centered]}>
+        <LoadingIndicator text="Carregando detalhes da carona..." />
+      </View>
     );
   }
 
-  if (!ride) {
+  if (error) {
     return (
-      <SafeAreaView style={styles.errorContainer}>
-        <Text style={styles.errorText}>Carona não encontrada</Text>
-      </SafeAreaView>
+      <View style={commonStyles.container}>
+        <PageHeader
+          title="Detalhes da Carona"
+          onBack={() => navigation.goBack()}
+        />
+        <ErrorState
+          errorMessage={error}
+          onRetry={fetchRideDetails}
+        />
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalhes da Carona</Text>
-        <TouchableOpacity style={styles.navigationButton} onPress={handleNavigationOptions}>
-          <Ionicons name="navigate" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+    <View style={commonStyles.container}>
+      <PageHeader
+        title="Detalhes da Carona"
+        onBack={() => navigation.goBack()}
+      />
 
-      <ScrollView style={styles.content}>
-        {ride.trajetoriaPrincipal && (
-          <View style={styles.mapContainer}>
-            <MapView
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              initialRegion={{
-                latitude: ride.latitudePartida,
-                longitude: ride.longitudePartida,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-              }}
-            >
-              <Marker
-                coordinate={{
-                  latitude: ride.latitudePartida,
-                  longitude: ride.longitudePartida,
-                }}
-                title="Partida"
-                pinColor="#4285F4"
-              />
-              <Marker
-                coordinate={{
-                  latitude: ride.latitudeDestino,
-                  longitude: ride.longitudeDestino,
-                }}
-                title="Chegada"
-                pinColor="#34A853"
-              />
-              <Polyline
-                coordinates={ride.trajetoriaPrincipal.coordenadas.map(([lat, lon]) => ({
-                  latitude: lat,
-                  longitude: lon,
-                }))}
-                strokeWidth={4}
-                strokeColor="#4285F4"
-              />
-            </MapView>
-          </View>
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Status</Text>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{ride.status}</Text>
-          </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Status Badge */}
+        <View style={styles.statusContainer}>
+          <StatusBadge status={ride?.status} size="large" />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Motorista</Text>
-          <View style={styles.driverInfo}>
-            <View style={styles.driverProfile}>
-              <Ionicons name="person-circle" size={40} color="#4285F4" />
-              <View style={styles.driverDetails}>
-                <Text style={styles.driverName}>{ride.motorista.nome}</Text>
-                {ride.motorista.avaliacaoMedia && (
-                  <View style={styles.ratingContainer}>
-                    <Ionicons name="star" size={16} color="#FBBC04" />
-                    <Text style={styles.ratingText}>{ride.motorista.avaliacaoMedia.toFixed(1)}</Text>
-                  </View>
-                )}
-              </View>
+        {/* Origin and Destination */}
+        <View style={styles.card}>
+          <RideInfoItem
+            icon="location"
+            label="Origem"
+            value={ride?.enderecoPartida?.nome}
+            multiline
+          />
+          
+          <View style={styles.divider} />
+          
+          <RideInfoItem
+            icon="navigate"
+            label="Destino"
+            value={ride?.enderecoDestino?.nome}
+            multiline
+          />
+        </View>
+
+        {/* Date, Time and Passenger Count */}
+        <View style={styles.card}>
+          <View style={styles.infoRow}>
+            <View style={styles.infoCol}>
+              <RideInfoItem
+                icon="calendar"
+                label="Data"
+                value={formatDate(ride?.dataHoraPartida)}
+              />
             </View>
-            {ride.motorista.mostrarWhatsapp && (
-              <TouchableOpacity
-                style={styles.whatsappButton}
-                onPress={handleWhatsAppPress}
-              >
-                <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
-                <Text style={styles.whatsappText}>WhatsApp</Text>
-              </TouchableOpacity>
+            
+            <View style={styles.infoCol}>
+              <RideInfoItem
+                icon="time"
+                label="Horário"
+                value={formatTime(ride?.dataHoraPartida)}
+              />
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <RideInfoItem
+            icon="people"
+            label="Passageiros"
+            value={`${ride?.passageiros?.length || 0} de ${ride?.capacidadePassageiros}`}
+          />
+        </View>
+
+        {/* Tarifa and Observations */}
+        {(ride?.tarifa > 0 || ride?.observacoes) && (
+          <View style={styles.card}>
+            {ride?.tarifa > 0 && (
+              <RideInfoItem
+                icon="cash"
+                label="Tarifa"
+                value={`R$ ${ride?.tarifa.toFixed(2)}`}
+              />
+            )}
+            
+            {ride?.tarifa > 0 && ride?.observacoes && <View style={styles.divider} />}
+            
+            {ride?.observacoes && (
+              <RideInfoItem
+                icon="information-circle"
+                label="Observações"
+                value={ride?.observacoes}
+                multiline
+              />
             )}
           </View>
+        )}
+
+        {/* Driver Information */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Motorista</Text>
           
-          {ride.motorista.carro && (
-            <View style={styles.carInfo}>
-              <View style={styles.carDetails}>
-                <Ionicons name="car" size={18} color="#666" />
-                <Text style={styles.carText}>
-                  {ride.motorista.carro.modelo} - {ride.motorista.carro.cor}
-                </Text>
-              </View>
-              <Text style={styles.licensePlate}>{ride.motorista.carro.placa}</Text>
+          <View style={styles.driverContainer}>
+            <UserAvatar
+              uri={ride?.motorista?.photoUrl}
+              size={60}
+            />
+            
+            <View style={styles.driverInfo}>
+              <Text style={styles.driverName}>{ride?.motorista?.nome}</Text>
+              <Text style={styles.driverCourse}>{ride?.motorista?.curso || 'Curso não informado'}</Text>
+              
+              {ride?.motorista?.whatsapp && ride?.motorista?.mostrarWhatsapp && (
+                <TouchableOpacity
+                  style={styles.whatsappButton}
+                  onPress={() => openWhatsApp(ride?.motorista?.whatsapp)}
+                >
+                  <Ionicons name="logo-whatsapp" size={16} color="#fff" />
+                  <Text style={styles.whatsappButtonText}>WhatsApp</Text>
+                </TouchableOpacity>
+              )}
             </View>
+          </View>
+        </View>
+
+        {/* Vehicle Information */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Veículo</Text>
+          
+          <RideInfoItem
+            icon="car"
+            label="Modelo"
+            value={ride?.motorista?.carro?.modelo}
+          />
+          
+          <View style={styles.infoRow}>
+            <View style={styles.infoCol}>
+              <RideInfoItem
+                icon="color-palette"
+                label="Cor"
+                value={ride?.motorista?.carro?.cor}
+              />
+            </View>
+            
+            <View style={styles.infoCol}>
+              <RideInfoItem
+                icon="clipboard"
+                label="Placa"
+                value={ride?.motorista?.carro?.placa}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Passenger List */}
+        {(isDriver || isPassenger) && ride?.passageiros?.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Passageiros</Text>
+            
+            {ride.passageiros.map((passenger) => (
+              <View key={passenger.id} style={styles.passengerItem}>
+                <UserAvatar
+                  uri={passenger.photoUrl}
+                  size={40}
+                />
+                
+                <View style={styles.passengerInfo}>
+                  <Text style={styles.passengerName}>{passenger.nome}</Text>
+                  <Text style={styles.passengerCourse}>{passenger.curso || 'Curso não informado'}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Action Buttons */}
+        <View style={styles.actionsContainer}>
+          {/* Driver's actions */}
+          {isDriver && ride?.status === 'AGENDADA' && (
+            <>
+              <ActionButton
+                title="Iniciar Carona"
+                onPress={handleStartRide}
+                icon="play"
+                style={[styles.actionButton, { backgroundColor: COLORS.success }]}
+              />
+              
+              <ActionButton
+                title="Cancelar Carona"
+                onPress={handleCancelRide}
+                icon="close-circle"
+                isLoading={isCanceling}
+                style={[styles.actionButton, { backgroundColor: COLORS.error }]}
+              />
+            </>
+          )}
+
+          {isDriver && ride?.status === 'EM_ANDAMENTO' && (
+            <ActionButton
+              title="Finalizar Carona"
+              onPress={handleFinishRide}
+              icon="checkmark-circle"
+              style={[styles.actionButton, { backgroundColor: COLORS.success }]}
+            />
+          )}
+
+          {/* Passenger's actions */}
+          {!isDriver && ride?.status === 'AGENDADA' && !isPassenger && hasAvailableSeats && (
+            <ActionButton
+              title="Entrar na Carona"
+              onPress={handleJoinRide}
+              icon="enter"
+              isLoading={isJoining}
+              style={styles.actionButton}
+            />
+          )}
+
+          {!isDriver && isPassenger && ride?.status === 'AGENDADA' && (
+            <ActionButton
+              title="Sair da Carona"
+              onPress={handleLeaveRide}
+              icon="exit"
+              isLoading={isLeaving}
+              style={[styles.actionButton, { backgroundColor: COLORS.error }]}
+            />
           )}
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Trajeto</Text>
-          <View style={styles.routeInfo}>
-            <View style={styles.routePoint}>
-              <Ionicons name="location" size={20} color="#4285F4" />
-              <Text style={styles.routeText}>{ride.pontoPartida}</Text>
-            </View>
-            <View style={styles.routeDivider} />
-            <View style={styles.routePoint}>
-              <Ionicons name="location" size={20} color="#34A853" />
-              <Text style={styles.routeText}>{ride.pontoDestino}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Horários</Text>
-          <View style={styles.timeInfo}>
-            <Text style={styles.timeText}>
-              Partida: {new Date(ride.dataHoraPartida).toLocaleString()}
-            </Text>
-            <Text style={styles.timeText}>
-              Chegada: {new Date(ride.dataHoraChegada).toLocaleString()}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informações</Text>
-          <View style={styles.infoGrid}>
-            <View style={styles.infoItem}>
-              <Ionicons name="people" size={20} color="#666" />
-              <Text style={styles.infoText}>{ride.vagasDisponiveis} vagas disponíveis</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Ionicons name="speedometer" size={20} color="#666" />
-              <Text style={styles.infoText}>{ride.distanciaEstimadaKm.toFixed(1)} km</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Ionicons name="time" size={20} color="#666" />
-              <Text style={styles.infoText}>
-                {Math.round(ride.tempoEstimadoSegundos / 60)} min
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {ride.observacoes && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Observações</Text>
-            <Text style={styles.observationsText}>{ride.observacoes}</Text>
-          </View>
-        )}
-
-        {isDriver && ride.status === 'AGENDADA' && (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.startButton]}
-              onPress={() => handleStatusChange('EM_ANDAMENTO')}
-            >
-              <Ionicons name="play" size={20} color="#fff" />
-              <Text style={styles.actionButtonText}>Iniciar Carona</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={handleCancelRide}
-            >
-              <Ionicons name="close" size={20} color="#fff" />
-              <Text style={styles.actionButtonText}>Cancelar Carona</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {isDriver && ride.status === 'EM_ANDAMENTO' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.finishButton]}
-            onPress={() => handleStatusChange('FINALIZADA')}
-          >
-            <Ionicons name="checkmark" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Finalizar Carona</Text>
-          </TouchableOpacity>
-        )}
-
-        {!isDriver && !isPassenger && ride.status === 'AGENDADA' && ride.vagasDisponiveis > 0 && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.joinButton]}
-            onPress={handleJoinRide}
-          >
-            <Ionicons name="person-add" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Solicitar Carona</Text>
-          </TouchableOpacity>
-        )}
-
-        {!isDriver && isPassenger && ride.status !== 'FINALIZADA' && ride.status !== 'CANCELADA' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.leaveButton]}
-            onPress={handleLeaveRide}
-          >
-            <Ionicons name="exit" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Sair da Carona</Text>
-          </TouchableOpacity>
-        )}
       </ScrollView>
-
-      <Modal
-        visible={showNavigationModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowNavigationModal(false)}
-      >
-        <BlurView style={styles.modalBackground} intensity={90} tint="dark">
-          <View style={styles.navigationModal}>
-            <Text style={styles.navigationModalTitle}>Navegar até o ponto de partida</Text>
-            
-            <TouchableOpacity style={styles.navigationOption} onPress={openInWaze}>
-              <Ionicons name="navigate-circle" size={30} color="#33CCFF" />
-              <Text style={styles.navigationOptionText}>Abrir no Waze</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.navigationOption} onPress={openInGoogleMaps}>
-              <Ionicons name="map" size={30} color="#4285F4" />
-              <Text style={styles.navigationOptionText}>Abrir no Google Maps</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.closeModalButton} 
-              onPress={() => setShowNavigationModal(false)}
-            >
-              <Text style={styles.closeModalButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </BlurView>
-      </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    marginTop: -30,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  contentContainer: {
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl * 2,
+  },
+  statusContainer: {
     alignItems: 'center',
+    marginBottom: SPACING.md,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  card: {
+    ...commonStyles.profileCard,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
   },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: SPACING.sm,
   },
-  header: {
+  infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#4285F4',
   },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  navigationButton: {
-    padding: 5,
-  },
-  content: {
+  infoCol: {
     flex: 1,
-  },
-  mapContainer: {
-    height: 200,
-    margin: 20,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  map: {
-    flex: 1,
-  },
-  section: {
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    fontSize: FONT_SIZE.md,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.sm,
   },
-  statusBadge: {
-    backgroundColor: '#E8F0FE',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  statusText: {
-    color: '#4285F4',
-    fontWeight: '600',
+  driverContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
   },
   driverInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  driverProfile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  driverDetails: {
-    marginLeft: 10,
+    marginLeft: SPACING.md,
+    flex: 1,
   },
   driverName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: FONT_SIZE.md,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  ratingText: {
-    marginLeft: 4,
-    color: '#666',
+  driverCourse: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
+    marginTop: 2,
   },
   whatsappButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E6F7EF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  whatsappText: {
-    color: '#25D366',
-    marginLeft: 4,
-    fontWeight: '600',
-  },
-  carInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  carDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  carText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
-  },
-  licensePlate: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
+    backgroundColor: '#25D366',
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginTop: SPACING.xs,
   },
-  routeInfo: {
-    marginBottom: 8,
+  whatsappButtonText: {
+    color: '#fff',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    marginLeft: 4,
   },
-  routePoint: {
+  passengerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginVertical: SPACING.xs,
   },
-  routeDivider: {
-    height: 20,
-    width: 2,
-    backgroundColor: '#eee',
-    marginLeft: 9,
-    marginVertical: 4,
-  },
-  routeText: {
-    fontSize: 16,
-    marginLeft: 8,
+  passengerInfo: {
+    marginLeft: SPACING.md,
     flex: 1,
   },
-  timeInfo: {
-    marginBottom: 8,
+  passengerName: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '500',
+    color: COLORS.text.primary,
   },
-  timeText: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 4,
+  passengerCourse: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
   },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -8,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '50%',
-    paddingHorizontal: 8,
-    marginBottom: 8,
-  },
-  infoText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#333',
-  },
-  observationsText: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    marginBottom: 20,
+  actionsContainer: {
+    marginTop: SPACING.md,
   },
   actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    flex: 1,
-    marginHorizontal: 6,
-  },
-  startButton: {
-    backgroundColor: '#34A853',
-  },
-  cancelButton: {
-    backgroundColor: '#EA4335',
-  },
-  finishButton: {
-    backgroundColor: '#34A853',
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  joinButton: {
-    backgroundColor: '#4285F4',
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  leaveButton: {
-    backgroundColor: '#EA4335',
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  actionButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navigationModal: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  navigationModalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  navigationOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    marginVertical: 5,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-  },
-  navigationOptionText: {
-    marginLeft: 15,
-    fontSize: 16,
-    color: '#333',
-  },
-  closeModalButton: {
-    marginTop: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  closeModalButtonText: {
-    color: '#4285F4',
-    fontSize: 16,
-    fontWeight: '600',
+    marginBottom: SPACING.md,
   },
 });
 

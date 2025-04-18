@@ -363,4 +363,32 @@ export const commonStyles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.semiBold,
     marginLeft: SPACING.xs,
   },
+  formField: {
+    marginBottom: SPACING.md,
+  },
+  formInput: {
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.primary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    height: 48,
+  },
+  formInputError: {
+    borderColor: COLORS.danger,
+  },
+  formLabel: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.medium,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  formError: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.danger,
+    marginTop: SPACING.xxs,
+  },
 });

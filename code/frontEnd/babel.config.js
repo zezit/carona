@@ -11,6 +11,7 @@ module.exports = function(api) {
         "safe": true,
         "allowUndefined": true
       }],
+      "babel-plugin-inline-import",
       'react-native-reanimated/plugin'
     ]
   };

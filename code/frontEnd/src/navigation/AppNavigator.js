@@ -18,6 +18,7 @@ import RidesPage from '../screens/RidesPage';
 import CreateDriverProfilePage from '../screens/CreateDriverProfilePage';
 import UpdateProfilePage from '../screens/UpdateProfilePage';
 import UpdateDriverProfilePage from '../screens/UpdateDriverProfilePage';
+import LocationSelectionPage from '../screens/LocationSelectionPage';
 import RegisterRidePage from '../screens/RegisterRidePage';
 import RideDetailsPage from '../screens/RideDetailsPage';
 import RideModeSelectionPage from '../screens/RideModeSelectionPage';
@@ -111,6 +112,7 @@ const MainStack = () => (
     <Stack.Screen name="CreateDriverProfile" component={CreateDriverProfilePage} />
     <Stack.Screen name="UpdateProfile" component={UpdateProfilePage} />
     <Stack.Screen name="UpdateDriverProfile" component={UpdateDriverProfilePage} />
+    <Stack.Screen name="LocationSelection" component={LocationSelectionPage} />
     <Stack.Screen name="RegisterRide" component={RegisterRidePage} />
     <Stack.Screen
       name="RidesPage"

@@ -35,7 +35,7 @@ const StatusBadge = ({ status, size = 'medium' }) => {
     }
   }, []);
 
-  const getStatusLabel = useCallback((status) => {
+  const getStatusText = useCallback((status) => {
     switch (status) {
       case 'AGENDADA':
         return 'Agendada';
@@ -46,67 +46,58 @@ const StatusBadge = ({ status, size = 'medium' }) => {
       case 'CANCELADA':
         return 'Cancelada';
       default:
-        return status;
+        return status || 'Desconhecido';
     }
   }, []);
 
-  const sizeStyles = useMemo(() => {
-    switch (size) {
-      case 'small':
-        return {
-          paddingHorizontal: 8,
-          paddingVertical: 3,
-          fontSize: 10,
-        };
-      case 'large':
-        return {
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          fontSize: 14,
-        };
-      case 'medium':
-      default:
-        return {
-          paddingHorizontal: 12,
-          paddingVertical: 5,
-          fontSize: 12,
-        };
-    }
-  }, [size]);
+  const badgeStyle = useMemo(() => ({
+    ...styles.badge,
+    ...(size === 'small' ? styles.badgeSmall : {}),
+    ...(size === 'large' ? styles.badgeLarge : {}),
+    backgroundColor: getStatusColor(status),
+  }), [status, size, getStatusColor]);
+
+  const textStyle = useMemo(() => ({
+    ...styles.text,
+    ...(size === 'small' ? styles.textSmall : {}),
+    ...(size === 'large' ? styles.textLarge : {}),
+    color: getStatusTextColor(status),
+  }), [status, size, getStatusTextColor]);
 
   return (
-    <View style={[
-      styles.container,
-      {
-        backgroundColor: getStatusColor(status),
-        borderColor: getStatusTextColor(status),
-        paddingHorizontal: sizeStyles.paddingHorizontal,
-        paddingVertical: sizeStyles.paddingVertical,
-      }
-    ]}>
-      <Text style={[
-        styles.text,
-        { 
-          color: getStatusTextColor(status),
-          fontSize: sizeStyles.fontSize,
-        }
-      ]}>
-        {getStatusLabel(status)}
-      </Text>
+    <View style={badgeStyle}>
+      <Text style={textStyle}>{getStatusText(status)}</Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'transparent',
     alignSelf: 'flex-start',
   },
+  badgeSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeLarge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
   text: {
+    fontSize: 14,
     fontWeight: '600',
   },
+  textSmall: {
+    fontSize: 12,
+  },
+  textLarge: {
+    fontSize: 16,
+  }
 });
 
 export default React.memo(StatusBadge);

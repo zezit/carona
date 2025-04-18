@@ -1,24 +1,24 @@
-import React, { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import {
-  View,
   Alert,
-  Animated,
-  Switch,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
-  Text
+  Switch,
+  Text,
+  View
 } from 'react-native';
+import { COLORS, FONT_SIZE, SPACING } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiClient } from '../services/api/apiClient';
-import { COLORS, SPACING, FONT_SIZE } from '../constants';
 import { commonStyles } from '../theme/styles/commonStyles';
-import { useFadeAnimation } from '../hooks/animations';
 
 // Import reusable components
-import FormCard from '../components/form/FormCard';
-import FormField from '../components/form/FormField';
-import ActionButton from '../components/common/ActionButton';
-import PageHeader from '../components/common/PageHeader';
+import { ActionButton, PageHeader } from '../components/common';
+import { FormCard, FormField } from '../components/form';
+import { LoadingIndicator } from '../components/ui';
 
 const UpdateDriverProfilePage = ({ navigation, route }) => {
   const { driverProfile } = route.params || {};
@@ -37,23 +37,58 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
   );
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const { user, authToken } = useAuthContext();
-
-  // Use our custom animation hook
-  const { animatedStyle } = useFadeAnimation({
-    duration: 600
-  });
 
   // Add useFocusEffect to refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      // No need to implement anything here since this is the update page
-      // We just want to make sure we're properly passing refresh params to the profile page
+      // Only fetch if we didn't receive driver profile as a parameter
+      if (!driverProfile) {
+        fetchDriverProfile();
+      }
+
       return () => {
-        // Cleanup if needed
+        // Clean up code if needed
       };
-    }, [])
+    }, [driverProfile])
   );
+
+  const fetchDriverProfile = async () => {
+    try {
+      setIsFetching(true);
+      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.success && response.data) {
+        const profile = response.data;
+        setCnh(profile.cnh || '');
+        setWhatsapp(profile.whatsapp || '');
+        setShowWhatsapp(profile.mostrarWhatsapp || false);
+
+        if (profile.carro) {
+          setModelo(profile.carro.modelo || '');
+          setPlaca(profile.carro.placa || '');
+          setCor(profile.carro.cor || '');
+          setCapacidade(profile.carro.capacidadePassageiros?.toString() || '4');
+        }
+      } else {
+        // No driver profile found or error
+        Alert.alert('Erro', 'Não foi possível carregar os dados do motorista.');
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Error fetching driver profile:', error);
+      Alert.alert('Erro', 'Erro ao carregar dados do motorista.');
+      navigation.goBack();
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const validateForm = () => {
     if (!cnh || cnh.length < 5) {
@@ -81,202 +116,238 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
       return false;
     }
 
-    const capacidadeNum = parseInt(capacidade);
-    if (isNaN(capacidadeNum) || capacidadeNum < 1 || capacidadeNum > 6) {
-      Alert.alert('Erro', 'A capacidade de passageiros deve ser entre 1 e 6.');
-      return false;
-    }
-
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleUpdateDriverProfile = async () => {
     if (!validateForm()) return;
 
-    setIsLoading(true);
-
     try {
+      setIsLoading(true);
+
+      // Estrutura os dados conforme esperado pela API
       const driverData = {
         cnh,
-        whatsapp: whatsapp || null,
+        whatsapp,
         mostrarWhatsapp: showWhatsapp,
         carro: {
           modelo,
-          placa: placa.toUpperCase(),
+          placa,
           cor,
-          capacidadePassageiros: parseInt(capacidade)
+          capacidadePassageiros: parseInt(capacidade, 10)
         }
       };
 
-      const options = {
+      // Envia para a API
+      const response = await apiClient.put(`/estudante/${user.id}/motorista`, driverData, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
-      };
-
-      console.log('Updating driver profile with data:', JSON.stringify(driverData));
-
-      const response = await apiClient.put(
-        `/estudante/${user.id}/motorista`,
-        driverData,
-        options
-      );
+      });
 
       if (response.success) {
-        console.log('Driver profile updated successfully');
-        
-        Alert.alert(
-          "Sucesso",
-          "Perfil de motorista atualizado com sucesso!",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                // Fix: Navigate to TabNavigator first, then to Profile tab
-                navigation.navigate('TabNavigator', {
-                  screen: 'Profile',
-                  params: { 
-                    refresh: Date.now(),
-                    driverUpdated: true
-                  }
-                });
+        Alert.alert('Sucesso', 'Perfil de motorista atualizado com sucesso!', [{
+          text: 'OK',
+          onPress: () => {
+            // Fix: Navigate to TabNavigator first, then to Profile tab
+            console.log('Navigating back to Main->TabNavigator->Profile with refresh param');
+            navigation.navigate('TabNavigator', {
+              screen: 'Profile',
+              params: {
+                refresh: Date.now(),
+                updated: true
               }
-            }
-          ]
-        );
+            });
+          }
+        }
+        ]);
       } else {
-        console.error("Error updating driver profile:", response.error);
-        Alert.alert(
-          "Erro",
-          response.error?.message || "Não foi possível atualizar o perfil de motorista."
-        );
+        Alert.alert('Erro', response.message || 'Erro ao atualizar perfil de motorista.');
       }
     } catch (error) {
-      console.error("Erro ao atualizar perfil de motorista:", error);
-      Alert.alert(
-        "Erro",
-        "Ocorreu um erro ao atualizar o perfil de motorista. Tente novamente."
-      );
+      console.error('Error updating driver profile:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar o perfil de motorista. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isFetching) {
+    return (
+      <View style={[commonStyles.container, commonStyles.centered]}>
+        <LoadingIndicator text="Carregando perfil de motorista..." />
+      </View>
+    );
+  }
+
   return (
     <View style={commonStyles.container}>
       <PageHeader
-        title="Atualizar Perfil de Motorista"
+        title="Editar Perfil de Motorista"
         onBack={() => navigation.goBack()}
       />
 
-      <Animated.ScrollView
-        style={[{ flex: 1, marginTop: -50 }, animatedStyle]}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <View style={{ paddingHorizontal: SPACING.lg }}>
-          <FormCard title="Informações do Motorista" icon="person-circle" iconColor={COLORS.primary}>
-            <FormField
-              label="Número da CNH"
-              value={cnh}
-              onChangeText={setCnh}
-              placeholder="Ex: 12345678901"
-              keyboardType="number-pad"
-              maxLength={15}
-            />
-
-            <FormField
-              label="WhatsApp (opcional)"
-              value={whatsapp}
-              onChangeText={setWhatsapp}
-              placeholder="Ex: +5531912345678"
-              keyboardType="phone-pad"
-            />
-
-            <View style={styles.switchContainer}>
-              <Text style={styles.switchLabel}>Mostrar WhatsApp para passageiros</Text>
-              <Switch
-                value={showWhatsapp}
-                onValueChange={setShowWhatsapp}
-                trackColor={{ false: "#767577", true: COLORS.primaryLight }}
-                thumbColor={showWhatsapp ? COLORS.primary : "#f4f3f4"}
-                ios_backgroundColor="#3e3e3e"
+        <ScrollView
+          style={{ flex: 1, marginTop: -50 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formContainer}>
+            <FormCard
+              title="Informações do Motorista"
+              icon="person"
+              iconColor={COLORS.primary}
+            >
+              <FormField
+                label="Número da CNH"
+                value={cnh}
+                onChangeText={setCnh}
+                placeholder="Informe o número da sua CNH"
+                keyboardType="numeric"
               />
-            </View>
-          </FormCard>
 
-          <FormCard title="Informações do Veículo" icon="car" iconColor={COLORS.success}>
-            <FormField
-              label="Modelo do Carro"
-              value={modelo}
-              onChangeText={setModelo}
-              placeholder="Ex: Gol 1.0"
+              <FormField
+                label="WhatsApp"
+                value={whatsapp}
+                onChangeText={setWhatsapp}
+                placeholder="Número com DDD (ex: 31999999999)"
+                keyboardType="phone-pad"
+              />
+
+              <View style={styles.switchContainer}>
+                <Text style={styles.switchLabel}>Mostrar WhatsApp para passageiros</Text>
+                <Switch
+                  value={showWhatsapp}
+                  onValueChange={setShowWhatsapp}
+                  trackColor={{ false: '#E0E0E0', true: `${COLORS.primary}80` }}
+                  thumbColor={showWhatsapp ? COLORS.primary : '#BDBDBD'}
+                />
+              </View>
+            </FormCard>
+
+            <FormCard
+              title="Informações do Veículo"
+              icon="car"
+              iconColor={COLORS.secondary}
+            >
+              <FormField
+                label="Modelo do Carro"
+                value={modelo}
+                onChangeText={setModelo}
+                placeholder="Ex: Ford Ka, Fiat Uno, etc."
+              />
+
+              <FormField
+                label="Placa"
+                value={placa}
+                onChangeText={setPlaca}
+                placeholder="Ex: ABC1234"
+                autoCapitalize="characters"
+              />
+
+              <FormField
+                label="Cor"
+                value={cor}
+                onChangeText={setCor}
+                placeholder="Ex: Branco, Preto, Prata"
+              />
+
+              <View style={styles.capacityContainer}>
+                <Text style={styles.capacityLabel}>Capacidade de Passageiros</Text>
+                <View style={styles.capacitySelector}>
+                  <ActionButton
+                    title="-"
+                    onPress={() => {
+                      const current = parseInt(capacidade, 10);
+                      if (current > 1) {
+                        setCapacidade((current - 1).toString());
+                      }
+                    }}
+                    style={styles.capacityButton}
+                    disabled={parseInt(capacidade, 10) <= 1}
+                  />
+                  <Text style={styles.capacityValue}>{capacidade}</Text>
+                  <ActionButton
+                    title="+"
+                    onPress={() => {
+                      const current = parseInt(capacidade, 10);
+                      if (current < 8) {
+                        setCapacidade((current + 1).toString());
+                      }
+                    }}
+                    style={styles.capacityButton}
+                    disabled={parseInt(capacidade, 10) >= 8}
+                  />
+                </View>
+              </View>
+            </FormCard>
+
+            <ActionButton
+              title="Atualizar Perfil de Motorista"
+              onPress={handleUpdateDriverProfile}
+              isLoading={isLoading}
+              icon="save-outline"
+              style={styles.updateButton}
             />
-
-            <FormField
-              label="Placa"
-              value={placa}
-              onChangeText={text => setPlaca(text.toUpperCase())}
-              placeholder="Ex: ABC1234"
-              autoCapitalize="characters"
-              maxLength={10}
-            />
-
-            <FormField
-              label="Cor"
-              value={cor}
-              onChangeText={setCor}
-              placeholder="Ex: Prata"
-            />
-
-            <FormField
-              label="Capacidade de Passageiros"
-              value={capacidade}
-              onChangeText={setCapacidade}
-              placeholder="Ex: 4"
-              keyboardType="number-pad"
-              maxLength={1}
-            />
-          </FormCard>
-
-          <ActionButton
-            title="Salvar Alterações"
-            onPress={handleSubmit}
-            isLoading={isLoading}
-            icon="save-outline"
-            style={styles.submitButton}
-          />
-
-          <ActionButton
-            title="Cancelar"
-            onPress={() => navigation.goBack()}
-            type="secondary"
-            icon="close-outline"
-          />
-        </View>
-      </Animated.ScrollView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  formContainer: {
+    paddingHorizontal: SPACING.lg,
+  },
   switchContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.md,
+    justifyContent: 'space-between',
+    marginVertical: SPACING.sm,
   },
   switchLabel: {
     fontSize: FONT_SIZE.sm,
     color: COLORS.text.secondary,
     flex: 1,
-    marginRight: SPACING.md,
+    marginRight: SPACING.sm,
   },
-  submitButton: {
-    backgroundColor: COLORS.success,
+  capacityContainer: {
+    marginVertical: SPACING.sm,
+  },
+  capacityLabel: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  capacitySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.xs,
+  },
+  capacityButton: {
+    minWidth: 40,
+    height: 40,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    marginHorizontal: SPACING.md,
+  },
+  capacityValue: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: 'bold',
+    width: 30,
+    textAlign: 'center',
+  },
+  updateButton: {
     marginTop: SPACING.md,
+    marginBottom: SPACING.xl,
   }
 });
 

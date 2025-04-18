@@ -33,6 +33,7 @@ public class EstudanteMapper {
         dto.setDataDeNascimento(estudante.getDataDeNascimento());
         dto.setAvaliacaoMedia(estudante.getAvaliacaoMedia());
         dto.setStatusCadastro(estudante.getStatusCadastro());
+        dto.setCurso(estudante.getCurso());
         dto.setDataCriacao(estudante.getDataCriacao());
         dto.setDataAtualizacao(estudante.getDataAtualizacao());
         dto.setCriadoPor(estudante.getCriadoPor());
