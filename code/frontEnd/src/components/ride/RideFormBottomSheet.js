@@ -8,18 +8,27 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import RideDateTimePicker from './RideDateTimePicker';
-import AddressSearchInput from '../common/AddressSearchInput';
+import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, RADIUS } from '../../constants';
+import { commonStyles } from '../../theme/styles/commonStyles';
+
+// Create reusable FormSection component based on the profile card style
+const FormSection = ({ title, icon, children }) => (
+    <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+            <Ionicons name={icon} size={20} color={COLORS.primary} style={styles.sectionIcon} />
+            <Text style={styles.sectionTitle}>{title}</Text>
+        </View>
+        {children}
+    </View>
+);
 
 const RideFormBottomSheet = forwardRef(({
     departure,
     arrival,
-    onDepartureChange,
-    onArrivalChange,
     departureDate,
     onDateChange,
     setShowDatePicker,
@@ -31,40 +40,25 @@ const RideFormBottomSheet = forwardRef(({
     loading,
     duration,
     hasValidRoute,
-    onSelectDepartureAddress,
-    onSelectArrivalAddress,
-    activeInput,
-    onInputFocus,
     onSheetChange
 }, ref) => {
-    // Snapping points with more granular control
-    const snapPoints = useMemo(() => ['38%', '50%', '70%'], []);
+    const snapPoints = useMemo(() => ['25%', '50%', '80%'], []);
     const scrollViewRef = useRef(null);
+    const [activeTimeMode, setActiveTimeMode] = useState('departure');
     
-    // Track active input for autocomplete
-    const [localActiveInput, setLocalActiveInput] = useState(null);
-    
-    // Handle input focus to ensure only one autocomplete is active at a time
-    const handleInputFocus = (inputId) => {
-        setLocalActiveInput(inputId);
-        if (onInputFocus) {
-            onInputFocus(inputId);
-        }
-    };
-    
-    // Handle background press to dismiss autocomplete
-    const handleBackgroundPress = () => {
-        setLocalActiveInput(null);
-        if (onInputFocus) {
-            onInputFocus(null);
-        }
-    };
-
-    // Handle sheet position changes and report to parent
     const handleSheetChanges = (index) => {
         if (onSheetChange) {
             onSheetChange(index);
         }
+    };
+    
+    const handleTimeModeSwitch = (mode) => {
+        setActiveTimeMode(mode);
+    };
+    
+    const getArrivalTime = () => {
+        if (!departureDate || !duration) return new Date();
+        return new Date(departureDate.getTime() + (duration * 1000));
     };
     
     return (
@@ -80,339 +74,274 @@ const RideFormBottomSheet = forwardRef(({
             keyboardBlurBehavior="restore"
             onChange={handleSheetChanges}
         >
-            <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-                <View style={styles.container}>
-                    <BottomSheetScrollView 
-                        ref={scrollViewRef}
-                        style={styles.scrollView} 
-                        showsVerticalScrollIndicator={true}
-                        keyboardShouldPersistTaps="handled"
-                        nestedScrollEnabled={true}
-                        contentContainerStyle={styles.scrollViewContent}
-                        scrollEventThrottle={16}
-                        removeClippedSubviews={Platform.OS === 'android'}
+            <View style={styles.container}>
+                <BottomSheetScrollView 
+                    ref={scrollViewRef}
+                    style={styles.scrollView} 
+                    showsVerticalScrollIndicator={true}
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                    contentContainerStyle={styles.scrollViewContent}
+                >
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                        style={styles.content}
+                        keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 0}
                     >
-                        <KeyboardAvoidingView
-                            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                            style={styles.content}
-                            keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 0}
-                        >
-                            <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-                                <View style={[styles.section, styles.addressSection]}>
-                                    <View style={styles.sectionHeaderRow}>
-                                        <Ionicons name="navigate" size={20} color="#4285F4" style={styles.sectionIcon} />
-                                        <Text style={styles.sectionTitle}>Pontos de Partida e Chegada</Text>
-                                    </View>
-
-                                    <View style={[styles.addressInputContainer, {zIndex: 20}]}>
-                                        <AddressSearchInput
-                                            placeholder="Local de partida"
-                                            value={departure}
-                                            onChangeText={onDepartureChange}
-                                            onSelectAddress={onSelectDepartureAddress || ((address) => onDepartureChange(address.endereco))}
-                                            iconName="location"
-                                            iconColor="#4285F4"
-                                            style={styles.addressInput}
-                                            inputId="departure"
-                                            isActive={activeInput === "departure"}
-                                            onFocus={handleInputFocus}
-                                        />
-                                    </View>
-
-                                    <View style={[styles.addressInputContainer, {zIndex: 10}]}>
-                                        <AddressSearchInput
-                                            placeholder="Local de chegada"
-                                            value={arrival}
-                                            onChangeText={onArrivalChange}
-                                            onSelectAddress={onSelectArrivalAddress || ((address) => onArrivalChange(address.endereco))}
-                                            iconName="location"
-                                            iconColor="#34A853"
-                                            style={styles.addressInput}
-                                            inputId="arrival"
-                                            isActive={activeInput === "arrival"}
-                                            onFocus={handleInputFocus}
-                                        />
-                                    </View>
-                                </View>
-                            </TouchableWithoutFeedback>
-
-                            {/* Add a spacer for autocomplete to show */}
-                            <View style={styles.autocompleteSpacerContainer}>
-                                <View style={[
-                                    styles.autocompleteSpacer, 
-                                    { height: activeInput ? 300 : 0 }
-                                ]} />
-                            </View>
-
-                            <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-                                <View>
-                                    <View style={[styles.section, styles.timeSection]}>
-                                        <View style={styles.sectionHeaderRow}>
-                                            <Ionicons name="time" size={20} color="#4285F4" style={styles.sectionIcon} />
-                                            <Text style={styles.sectionTitle}>Horário</Text>
-                                        </View>
-                                        <RideDateTimePicker
-                                            departureDate={departureDate}
-                                            arrivalDate={new Date(departureDate.getTime() + (duration || 0) * 1000)}
-                                            onDateChange={onDateChange}
-                                        />
-                                    </View>
-
-                                    <View style={styles.section}>
-                                        <View style={styles.sectionHeaderRow}>
-                                            <Ionicons name="people" size={20} color="#4285F4" style={styles.sectionIcon} />
-                                            <Text style={styles.sectionTitle}>Vagas</Text>
-                                        </View>
-                                        <View style={styles.seatsContainer}>
-                                            <TouchableOpacity
-                                                style={styles.seatButton}
-                                                onPress={() => onSeatsChange(Math.max(1, parseInt(seats, 10) - 1).toString())}
-                                            >
-                                                <Ionicons name="remove" size={20} color="#4285F4" />
-                                            </TouchableOpacity>
-                                            <Text style={styles.seatsValue}>{seats}</Text>
-                                            <TouchableOpacity
-                                                style={styles.seatButton}
-                                                onPress={() => onSeatsChange(Math.min(6, parseInt(seats, 10) + 1).toString())}
-                                            >
-                                                <Ionicons name="add" size={20} color="#4285F4" />
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.section}>
-                                        <View style={styles.sectionHeaderRow}>
-                                            <Ionicons name="information-circle" size={20} color="#4285F4" style={styles.sectionIcon} />
-                                            <Text style={styles.sectionTitle}>Observações</Text>
-                                        </View>
-                                        <TextInput
-                                            style={styles.observationsInput}
-                                            placeholder="Informações adicionais para os passageiros"
-                                            value={observations}
-                                            onChangeText={onObservationsChange}
-                                            multiline
-                                            numberOfLines={3}
-                                            textAlignVertical="top"
-                                            onFocus={() => {
-                                                setLocalActiveInput(null);
-                                                if (onInputFocus) {
-                                                    onInputFocus(null);
-                                                }
-                                            }}
-                                        />
-                                    </View>
-                                </View>
-                            </TouchableWithoutFeedback>
-                        </KeyboardAvoidingView>
-                    </BottomSheetScrollView>
-
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity
-                            style={[
-                                styles.submitButton,
-                                (!hasValidRoute || loading) && styles.submitButtonDisabled
-                            ]}
-                            onPress={() => {
-                                setLocalActiveInput(null);
-                                if (onInputFocus) {
-                                    onInputFocus(null);
-                                }
-                                onSubmit();
-                            }}
-                            disabled={!hasValidRoute || loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#fff" size="small" />
-                            ) : (
-                                <>
-                                    <Ionicons name="car" size={24} color="#fff" />
-                                    <Text style={styles.submitButtonText}>
-                                        {hasValidRoute ? 'Registrar Carona' : 'Selecione os pontos de partida e chegada'}
+                        {/* Time Section with toggle */}
+                        <FormSection title="Horário" icon="time">
+                            <View style={styles.timeTabsContainer}>
+                                <TouchableOpacity 
+                                    style={[styles.timeTab, activeTimeMode === 'departure' && styles.timeTabActive]} 
+                                    onPress={() => handleTimeModeSwitch('departure')}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.timeTabText, activeTimeMode === 'departure' && styles.timeTabTextActive]}>
+                                        Hora de Partida
                                     </Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    </View>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={[styles.timeTab, activeTimeMode === 'arrival' && styles.timeTabActive]} 
+                                    onPress={() => handleTimeModeSwitch('arrival')}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.timeTabText, activeTimeMode === 'arrival' && styles.timeTabTextActive]}>
+                                        Hora de Chegada
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                            
+                            <RideDateTimePicker
+                                departureDate={departureDate}
+                                arrivalDate={getArrivalTime()}
+                                onDateChange={onDateChange}
+                                activeMode={activeTimeMode}
+                                duration={duration}
+                            />
+                        </FormSection>
+
+                        {/* Seats Section */}
+                        <FormSection title="Vagas" icon="people">
+                            <View style={styles.seatsContainer}>
+                                <TouchableOpacity
+                                    style={styles.seatButton}
+                                    onPress={() => onSeatsChange(Math.max(1, parseInt(seats, 10) - 1).toString())}
+                                >
+                                    <Ionicons name="remove" size={20} color={COLORS.primary} />
+                                </TouchableOpacity>
+                                <Text style={styles.seatsValue}>{seats}</Text>
+                                <TouchableOpacity
+                                    style={styles.seatButton}
+                                    onPress={() => onSeatsChange(Math.min(6, parseInt(seats, 10) + 1).toString())}
+                                >
+                                    <Ionicons name="add" size={20} color={COLORS.primary} />
+                                </TouchableOpacity>
+                            </View>
+                        </FormSection>
+
+                        {/* Observations Section */}
+                        <FormSection title="Observações" icon="information-circle">
+                            <TextInput
+                                style={styles.observationsInput}
+                                placeholder="Informações adicionais para os passageiros"
+                                value={observations}
+                                onChangeText={onObservationsChange}
+                                multiline
+                                numberOfLines={3}
+                                textAlignVertical="top"
+                            />
+                        </FormSection>
+                    </KeyboardAvoidingView>
+                </BottomSheetScrollView>
+
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.submitButton,
+                            (!hasValidRoute || loading) && styles.submitButtonDisabled
+                        ]}
+                        onPress={onSubmit}
+                        disabled={!hasValidRoute || loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                            <>
+                                <Ionicons name="car" size={24} color="#fff" />
+                                <Text style={styles.submitButtonText}>
+                                    {hasValidRoute ? 'Registrar Carona' : 'Selecione os pontos de partida e chegada'}
+                                </Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
                 </View>
-            </TouchableWithoutFeedback>
+            </View>
         </BottomSheet>
     );
 });
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: COLORS.card,
+    },
     sheetHandle: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 15,
-        borderTopRightRadius: 15,
+        backgroundColor: COLORS.card,
+        borderTopLeftRadius: RADIUS.xl,
+        borderTopRightRadius: RADIUS.xl,
         paddingVertical: 10,
     },
     handleIndicator: {
-        backgroundColor: '#bbb',
+        backgroundColor: COLORS.border,
         width: 40,
-    },
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
-        shadowRadius: 5,
-        shadowOpacity: 0.1,
-        elevation: 3,
     },
     scrollView: {
         flex: 1,
-        marginBottom: 70, // Space for the bottom button
+        marginBottom: 80, // Increased space for the bottom button
     },
     scrollViewContent: {
-        paddingBottom: 30, // Extra padding at the bottom
+        paddingHorizontal: SPACING.md,
+        paddingTop: SPACING.md,
+        paddingBottom: 30,
     },
     content: {
-        padding: 20,
+        flex: 1,
     },
+    // Remove card styling from sections
     section: {
-        marginBottom: 24,
-        position: 'relative',
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-        borderWidth: 1,
-        borderColor: '#eaeaea',
-    },
-    // Special styling for address section which needs higher z-index
-    addressSection: {
-        zIndex: 100,
-        elevation: Platform.OS === 'android' ? 100 : undefined,
-        backgroundColor: '#fff',  // Match background exactly with other sections
-        opacity: 1,               // Ensure full opacity
-        borderWidth: 1,
-        borderColor: '#eaeaea',
-    },
-    // Lower z-index for time section
-    timeSection: {
-        zIndex: 1,
-        elevation: Platform.OS === 'android' ? 1 : undefined,
-    },
-    // Container to add space for the autocomplete dropdown
-    autocompleteSpacerContainer: {
-        zIndex: 50,
-        elevation: Platform.OS === 'android' ? 50 : undefined,
-    },
-    // Spacer that pushes the time section down when autocomplete is open
-    autocompleteSpacer: {
-        height: 0, // Dynamic height based on active state
-        marginBottom: 0,
-        transition: 'height 0.3s',
+        marginBottom: SPACING.lg,
     },
     sectionHeaderRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: SPACING.sm,
     },
     sectionIcon: {
-        marginRight: 8,
+        marginRight: SPACING.xs,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#333',
+        fontSize: FONT_SIZE.md,
+        fontWeight: FONT_WEIGHT.semiBold,
+        color: COLORS.text.primary,
     },
-    addressInputContainer: {
-        marginBottom: 20,
-        zIndex: Platform.OS === 'ios' ? 10 : undefined,
-        elevation: Platform.OS === 'android' ? 10 : undefined,
+    // Make input fields wider
+    input: {
+        width: '100%',
+        height: 48,
+        backgroundColor: COLORS.background,
+        borderRadius: RADIUS.md,
+        paddingHorizontal: SPACING.md,
+        fontSize: FONT_SIZE.md,
+        color: COLORS.text.primary,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
-    addressInput: {
-        marginBottom: 8,
+    // Updated time tabs style
+    timeTabsContainer: {
+        flexDirection: 'row',
+        marginBottom: SPACING.md,
+        borderRadius: RADIUS.lg,
+        backgroundColor: COLORS.background,
+        padding: 4,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
+    timeTab: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: SPACING.sm,
+        borderRadius: RADIUS.md,
+    },
+    timeTabActive: {
+        backgroundColor: COLORS.card,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
+    },
+    timeTabText: {
+        fontSize: FONT_SIZE.sm,
+        color: COLORS.text.secondary,
+    },
+    timeTabTextActive: {
+        fontWeight: FONT_WEIGHT.semiBold,
+        color: COLORS.primary,
+    },
+    // Updated seats control style
     seatsContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 10,
-        padding: 5,
+        justifyContent: 'space-between',
+        backgroundColor: COLORS.background,
+        borderRadius: RADIUS.md,
+        padding: SPACING.sm,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     seatButton: {
         width: 40,
         height: 40,
-        borderRadius: 20,
-        backgroundColor: '#f0f0f0',
+        borderRadius: RADIUS.round,
+        backgroundColor: COLORS.card,
         justifyContent: 'center',
         alignItems: 'center',
-        marginHorizontal: 15,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     seatsValue: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-        width: 30,
-        textAlign: 'center',
+        fontSize: FONT_SIZE.xl,
+        fontWeight: FONT_WEIGHT.bold,
+        color: COLORS.text.primary,
     },
+    // Updated observations input
     observationsInput: {
-        backgroundColor: '#f9f9f9',
-        borderWidth: 1,
-        borderColor: '#eee',
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
+        width: '100%',
         height: 100,
+        backgroundColor: COLORS.background,
+        borderRadius: RADIUS.md,
+        padding: SPACING.md,
+        fontSize: FONT_SIZE.md,
+        color: COLORS.text.primary,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         textAlignVertical: 'top',
     },
-    bottomSpacer: {
-        height: 100, // Extra space at the bottom
-    },
+    // Updated button container
     buttonContainer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#fff',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
+        backgroundColor: COLORS.card,
+        paddingVertical: SPACING.md,
+        paddingHorizontal: SPACING.lg,
         borderTopWidth: 1,
-        borderTopColor: '#f0f0f0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowRadius: 3,
-        shadowOpacity: 0.1,
-        elevation: 3,
+        borderTopColor: COLORS.border,
     },
     submitButton: {
-        backgroundColor: '#4285F4',
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'center',
-        padding: 16,
-        borderRadius: 12,
+        alignItems: 'center',
+        backgroundColor: COLORS.primary,
+        paddingVertical: SPACING.md,
+        borderRadius: RADIUS.md,
     },
     submitButtonDisabled: {
-        backgroundColor: '#A4C2F4',
+        backgroundColor: COLORS.disabled,
     },
     submitButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 10,
-    },
-    routeInfoContainer: {
-        backgroundColor: '#f8f9fa',
-        padding: 12,
-        borderRadius: 8,
-        marginTop: 8,
-    },
-    routeInfoItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    routeInfoText: {
-        fontSize: 14,
-        color: '#555',
-        marginLeft: 8,
+        color: COLORS.text.light,
+        fontSize: FONT_SIZE.md,
+        fontWeight: FONT_WEIGHT.semiBold,
+        marginLeft: SPACING.sm,
     },
 });
 

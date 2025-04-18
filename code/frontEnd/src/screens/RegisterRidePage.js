@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -14,22 +14,33 @@ import {
   View
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import Reanimated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 import { apiClient } from '../services/api/apiClient';
 import RideFormBottomSheet from '../components/ride/RideFormBottomSheet';
 import { useAuthContext } from '../contexts/AuthContext';
+import { COLORS, SPACING, RADIUS } from '../constants';
+import { commonStyles } from '../theme/styles/commonStyles';
 
 const RegisterRidePage = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const { authToken, user } = useAuthContext();
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null);
 
-  // Form state
-  const [departure, setDeparture] = useState('');
-  const [arrival, setArrival] = useState('');
-  const [departureLocation, setDepartureLocation] = useState(null);
-  const [arrivalLocation, setArrivalLocation] = useState(null);
+  // Get location data from route params
+  const { 
+    departureLocation: initialDepartureLocation, 
+    departure: initialDeparture,
+    arrivalLocation: initialArrivalLocation,
+    arrival: initialArrival 
+  } = route.params || {};
+
+  // Form state - initialize with data from LocationSelectionPage
+  const [departure, setDeparture] = useState(initialDeparture || '');
+  const [arrival, setArrival] = useState(initialArrival || '');
+  const [departureLocation, setDepartureLocation] = useState(initialDepartureLocation || null);
+  const [arrivalLocation, setArrivalLocation] = useState(initialArrivalLocation || null);
   const [departureDate, setDepartureDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [seats, setSeats] = useState('3');
@@ -44,7 +55,7 @@ const RegisterRidePage = () => {
   // Track the bottom sheet position/index
   const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
   
-  // Animated value for button opacity - changed from useRef(new Animated.Value(1)) to useSharedValue(1)
+  // Animated value for button opacity
   const centerButtonOpacity = useSharedValue(1);
 
   // Define the animated style using Reanimated
@@ -74,6 +85,13 @@ const RegisterRidePage = () => {
     };
   }, []);
 
+  // When component mounts, fetch route if both locations are provided
+  useEffect(() => {
+    if (initialDepartureLocation && initialArrivalLocation) {
+      updateRoutes(initialDepartureLocation, initialArrivalLocation);
+    }
+  }, []);
+
   // Control center button visibility based on bottom sheet position
   useEffect(() => {
     // Show button only when bottom sheet is at the first (smallest) position
@@ -91,6 +109,16 @@ const RegisterRidePage = () => {
       centerMapOnLocations();
     }
   }, [departureLocation, arrivalLocation]);
+
+  // Handle change locations button press
+  const handleChangeLocations = () => {
+    navigation.navigate('LocationSelection', {
+      departure,
+      departureLocation,
+      arrival,
+      arrivalLocation
+    });
+  };
 
   // Handle touch on map to dismiss autocomplete panels
   const handleMapPress = useCallback(() => {
@@ -306,10 +334,23 @@ const RegisterRidePage = () => {
     fitMapToCoordinates(route.pontos);
   };
 
-  // Handle date changes
-  const handleDateChange = (field, date) => {
-    if (field === 'departure') {
+  // Handle date changes based on the active time mode
+  const handleDateChange = (mode, date) => {
+    if (mode === 'departure') {
       setDepartureDate(date);
+      // If we have a route with duration, calculate arrival time automatically
+      if (duration > 0) {
+        // No need to set arrival date explicitly as it's calculated when needed
+      }
+    } else if (mode === 'arrival') {
+      // If we have a route with duration, calculate departure time from arrival
+      if (duration > 0) {
+        const calculatedDepartureDate = new Date(date.getTime() - (duration * 1000));
+        setDepartureDate(calculatedDepartureDate);
+      } else {
+        // No route yet, just set departure date same as arrival for now
+        setDepartureDate(date);
+      }
     }
   };
 
@@ -372,93 +413,147 @@ const RegisterRidePage = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={commonStyles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
-      <MapView
-        ref={mapRef}
-        style={[styles.map, { height: mapHeight }]}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={{
-          latitude: -19.9322352, // Default to Belo Horizonte
-          longitude: -43.9376369,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-        onPress={handleMapPress}
-      >
-        {departureLocation && (
-          <Marker
-            coordinate={departureLocation}
-            title="Partida"
-            pinColor="#4285F4"
-          />
-        )}
+      <View style={styles.mapContainer}>
+        <MapView
+          ref={mapRef}
+          style={[styles.map, { height: mapHeight }]}
+          provider={PROVIDER_GOOGLE}
+          initialRegion={{
+            latitude: -19.9322352, // Default to Belo Horizonte
+            longitude: -43.9376369,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+          onPress={handleMapPress}
+        >
+          {departureLocation && (
+            <Marker
+              coordinate={departureLocation}
+              title="Partida"
+              pinColor="#4285F4"
+            />
+          )}
+          
+          {arrivalLocation && (
+            <Marker
+              coordinate={arrivalLocation}
+              title="Chegada"
+              pinColor="#34A853"
+            />
+          )}
+          
+          {/* Render all routes (up to 2) with the selected one having a thicker line */}
+          {routes.map((route, index) => (
+            <Polyline
+              key={index}
+              coordinates={route.pontos}
+              strokeWidth={route === selectedRoute ? 5 : 3}
+              strokeColor={route === selectedRoute ? COLORS.primary : '#7FB3F5'} 
+              onPress={() => handleSelectRoute(route)}
+            />
+          ))}
+        </MapView>
         
-        {arrivalLocation && (
-          <Marker
-            coordinate={arrivalLocation}
-            title="Chegada"
-            pinColor="#34A853"
-          />
-        )}
-        
-        {/* Render all routes (up to 2) with the selected one having a thicker line */}
-        {routes.map((route, index) => (
-          <Polyline
-            key={index}
-            coordinates={route.pontos}
-            strokeWidth={route === selectedRoute ? 5 : 3}
-            strokeColor={route === selectedRoute ? '#4285F4' : '#7FB3F5'} 
-            onPress={() => handleSelectRoute(route)}
-          />
-        ))}
-      </MapView>
-      
-      {/* Route info panel */}
-      {showRouteInfo && selectedRoute && (
-        <View style={styles.routeInfoContainer}>
-          <View style={styles.routeInfoHeader}>
-            <Text style={styles.routeInfoTitle}>{selectedRoute.descricao || 'Rota Principal'}</Text>
-            <TouchableOpacity 
-              style={styles.routeInfoSwitch}
-              onPress={() => {
-                const nextRouteIndex = routes.findIndex(r => r === selectedRoute) === 0 ? 1 : 0;
-                if (routes[nextRouteIndex]) {
-                  handleSelectRoute(routes[nextRouteIndex]);
-                }
-              }}
-              disabled={routes.length <= 1}
-            >
-              <Ionicons name="swap-horizontal" size={20} color={routes.length > 1 ? "#4285F4" : "#B0BEC5"} />
-              <Text style={[styles.routeInfoSwitchText, {color: routes.length > 1 ? "#4285F4" : "#B0BEC5"}]}>
-                {routes.length > 1 ? "Alternar rota" : "Rota única"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.routeInfoDetails}>
-            <View style={styles.routeInfoDetail}>
-              <Ionicons name="time-outline" size={16} color="#555" />
-              <Text style={styles.routeInfoText}>
-                {formatDuration(selectedRoute.duracaoSegundos)}
-              </Text>
-            </View>
-            <View style={styles.routeInfoDetail}>
-              <Ionicons name="navigate-outline" size={16} color="#555" />
-              <Text style={styles.routeInfoText}>
-                {formatDistance(selectedRoute.distanciaMetros)}
-              </Text>
-            </View>
-          </View>
+        {/* Top bar with back button and title */}
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
+          </TouchableOpacity>
+          
+          <Text style={styles.titleText}>Registrar Carona</Text>
         </View>
-      )}
-      
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="arrow-back" size={24} color="#333" />
-      </TouchableOpacity>
+
+        {/* Location edit button */}
+        <TouchableOpacity
+          style={styles.locationEditButton}
+          onPress={handleChangeLocations}
+        >
+          <View style={styles.locationEditContent}>
+            <View style={styles.locationIcons}>
+              <View style={[styles.locationIcon, styles.departureIcon]}>
+                <Ionicons name="location" size={14} color="#FFFFFF" />
+              </View>
+              <View style={styles.locationConnector} />
+              <View style={[styles.locationIcon, styles.arrivalIcon]}>
+                <Ionicons name="navigate" size={14} color="#FFFFFF" />
+              </View>
+            </View>
+            <View style={styles.locationTexts}>
+              <Text numberOfLines={1} style={styles.locationEditText}>
+                {departure || 'Selecionar partida'}
+              </Text>
+              <Text numberOfLines={1} style={styles.locationEditText}>
+                {arrival || 'Selecionar destino'}
+              </Text>
+            </View>
+            <View style={styles.locationEditIcon}>
+              <Ionicons name="pencil" size={16} color={COLORS.primary} />
+            </View>
+          </View>
+        </TouchableOpacity>
+        
+        {/* Route info panel */}
+        {showRouteInfo && selectedRoute && (
+          <Animated.View style={[styles.routeInfoContainer, {
+            transform: [
+              {
+                translateY: interpolate(bottomSheetIndex, [0, 1, 2], [0, -50, -100]),
+              },
+            ],
+          }]}>
+            <View style={styles.routeInfoContent}>
+              <View style={styles.routeInfoHeader}>
+                <Text style={styles.routeInfoTitle}>{selectedRoute.descricao || 'Rota Principal'}</Text>
+                <TouchableOpacity 
+                  style={styles.routeInfoSwitch}
+                  onPress={() => {
+                    const nextRouteIndex = routes.findIndex(r => r === selectedRoute) === 0 ? 1 : 0;
+                    if (routes[nextRouteIndex]) {
+                      handleSelectRoute(routes[nextRouteIndex]);
+                    }
+                  }}
+                  disabled={routes.length <= 1}
+                >
+                  <Ionicons name="swap-horizontal" size={20} color={routes.length > 1 ? COLORS.primary : "#B0BEC5"} />
+                  <Text style={[styles.routeInfoSwitchText, {color: routes.length > 1 ? COLORS.primary : "#B0BEC5"}]}>
+                    {routes.length > 1 ? "Alternar rota" : "Rota única"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.routeInfoDetails}>
+                <View style={styles.routeInfoDetail}>
+                  <Ionicons name="time-outline" size={16} color={COLORS.text.secondary} />
+                  <Text style={styles.routeInfoText}>
+                    {formatDuration(selectedRoute.duracaoSegundos)}
+                  </Text>
+                </View>
+                <View style={styles.routeInfoDetail}>
+                  <Ionicons name="navigate-outline" size={16} color={COLORS.text.secondary} />
+                  <Text style={styles.routeInfoText}>
+                    {formatDistance(selectedRoute.distanciaMetros)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+        )}
+        
+        {/* Center map button */}
+        <Reanimated.View style={[styles.centerButtonContainer, animatedStyle]}>
+          <TouchableOpacity
+            style={styles.centerButton}
+            onPress={centerMapOnLocations}
+          >
+            <Ionicons name="locate" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+        </Reanimated.View>
+      </View>
       
       <RideFormBottomSheet
         ref={bottomSheetRef}
@@ -483,63 +578,144 @@ const RegisterRidePage = () => {
         activeInput={activeAutocomplete}
         onInputFocus={handleInputFocus}
         onSheetChange={handleSheetChanges}
+        onChangeLocations={handleChangeLocations}
       />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  mapContainer: {
     flex: 1,
+    position: 'relative',
   },
   map: {
     ...StyleSheet.absoluteFillObject,
-    height: '100%',
+  },
+  topBar: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 40,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 10,
   },
   backButton: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    backgroundColor: 'white',
-    padding: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    zIndex: 5,
+    backgroundColor: COLORS.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  centerButtonContainer: {
+  titleText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginRight: 40, // To balance with back button
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  locationEditButton: {
     position: 'absolute',
-    bottom: '42%',
+    top: Platform.OS === 'ios' ? 100 : 90,
+    left: 16,
     right: 16,
-    zIndex: 5,
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.md,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    zIndex: 9,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  centerButton: {
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 30,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+  locationEditContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationIcons: {
+    width: 30,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  locationIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  departureIcon: {
+    backgroundColor: COLORS.primary,
+  },
+  arrivalIcon: {
+    backgroundColor: COLORS.secondary,
+  },
+  locationConnector: {
+    width: 2,
+    height: 14,
+    backgroundColor: COLORS.border,
+    marginVertical: 2,
+  },
+  locationTexts: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  locationEditText: {
+    fontSize: 14,
+    color: COLORS.text.primary,
+    marginVertical: 2,
+  },
+  locationEditIcon: {
+    padding: 6,
   },
   routeInfoContainer: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    left: 60,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    zIndex: 5,
+    top: Platform.OS === 'ios' ? 230 : 220, // Increased from 170/160 to avoid overlap
+    left: 16,
+    right: 16,
+    zIndex: 5, // Reduced z-index to be below the location edit button
+  },
+  routeInfoContent: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   routeInfoHeader: {
     flexDirection: 'row',
@@ -550,7 +726,7 @@ const styles = StyleSheet.create({
   routeInfoTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.text.primary,
   },
   routeInfoSwitch: {
     flexDirection: 'row',
@@ -572,8 +748,24 @@ const styles = StyleSheet.create({
   },
   routeInfoText: {
     fontSize: 14,
-    color: '#555',
+    color: COLORS.text.secondary,
     marginLeft: 4,
+  },
+  centerButtonContainer: {
+    position: 'absolute',
+    bottom: '45%',
+    right: 16,
+    zIndex: 7,
+  },
+  centerButton: {
+    backgroundColor: COLORS.card,
+    padding: 12,
+    borderRadius: RADIUS.round,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
   },
 });
 

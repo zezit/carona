@@ -1,178 +1,305 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, Keyboard, StyleSheet, ActivityIndicator } from 'react-native';
-import { commonStyles } from '../theme/styles/commonStyles';
-import { useAuthContext } from '../contexts/AuthContext';
-import { Animated } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFadeSlideAnimation } from '../hooks/animations';
-import { COLORS, SPACING, RADIUS } from '../constants';
+import { COLORS, SPACING, FONT_SIZE, RADIUS } from '../constants';
+import { commonStyles } from '../theme/styles/commonStyles';
 
-export default function RegisterPage({ navigation }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+// Import reusable components
+import { FormInput } from '../components/form';
+import { LoadingIndicator } from '../components/ui';
 
-  const { animatedStyle } = useFadeSlideAnimation({
-    fadeStartValue: 0,
-    fadeEndValue: 1,
-    slideStartValue: 50,
-    slideEndValue: 0,
-    fadeDuration: 200,
-    slideDuration: 100
-  });
+const RegisterPage = ({ navigation }) => {
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
+  // Email validation
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleCadastro = async () => {
-    Keyboard.dismiss();
+  // Form validation
+  const validateForm = () => {
+    let newErrors = {};
+    let isValid = true;
 
-    if (email === '' || password === '' || username === "") {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
-      return;
+    if (!nome || nome.length < 3) {
+      newErrors.nome = 'Nome deve ter pelo menos 3 caracteres';
+      isValid = false;
     }
 
-    if (!validateEmail(email)) {
-      Alert.alert('Erro', 'Por favor, insira um email válido.');
-      return;
+    if (!email) {
+      newErrors.email = 'E-mail é obrigatório';
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'E-mail inválido';
+      isValid = false;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
-      return;
+    if (!password) {
+      newErrors.password = 'Senha é obrigatória';
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'A senha deve ter pelo menos 6 caracteres';
+      isValid = false;
     }
 
-    try {
-      setIsSubmitting(true);
-
-      navigation.navigate('RegisterSecond', {
-        username,
-        email,
-        password
-      });
-
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Erro', 'Ocorreu um erro ao prosseguir. Tente novamente.');
-    } finally {
-      setIsSubmitting(false);
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Confirme sua senha';
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Senhas não coincidem';
+      isValid = false;
     }
+
+    setErrors(newErrors);
+    return isValid;
   };
 
+  // Handle next step in registration
+  const handleNext = () => {
+    if (!validateForm()) return;
+    
+    // Navigate to second registration page with form data
+    navigation.navigate('RegisterSecond', {
+      username: nome,
+      email: email,
+      password: password
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={[commonStyles.container, commonStyles.centered]}>
+        <LoadingIndicator text="Processando..." />
+      </View>
+    );
+  }
+
   return (
-    <View style={commonStyles.container}>
-      <View style={commonStyles.headerView}>
+    <SafeAreaView style={commonStyles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      
+      <LinearGradient
+        colors={[COLORS.primary, COLORS.primaryDark]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.5 }}
+        style={styles.header}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
-          accessibilityLabel="Botão voltar"
         >
-          <Ionicons name="arrow-back" size={24} color={COLORS.text.light} />
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
 
-        <Animated.Text style={[commonStyles.title, { opacity: animatedStyle.opacity }]}>
-          Carona?
-        </Animated.Text>
-
-        {/* Empty view for layout balance */}
-        <View style={{ width: 24 }} />
-      </View>
-
-      <Animated.View style={[commonStyles.contentView, animatedStyle]}>
-        <Text style={commonStyles.subtitle}>Criar Conta</Text>
-
-        {/* Progress indicator with proper Text components */}
-        <View style={commonStyles.progressIndicator}>
-          {/* Replace View with empty Text components for the dots and lines */}
-          <Text style={[styles.progressDot, commonStyles.progressDot, commonStyles.activeDot]}></Text>
-          <Text style={[styles.progressLine, commonStyles.progressLine]}></Text>
-          <Text style={[styles.progressDot, commonStyles.progressDot]}></Text>
+        <View style={styles.headerContent}>
+          <Animatable.View 
+            animation="fadeIn" 
+            duration={300} 
+            style={styles.logoContainer}
+          >
+            <Ionicons name="car" size={40} color="white" />
+          </Animatable.View>
         </View>
+      </LinearGradient>
 
-        <TextInput
-          style={commonStyles.textInput}
-          placeholder="Nome completo"
-          value={username}
-          onChangeText={(text) => setUsername(text)}
-          autoCapitalize="words"
-          textContentType="name"
-        />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          style={styles.formScrollView}
+          contentContainerStyle={styles.formScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animatable.View 
+            animation="fadeIn" 
+            duration={300} 
+            style={styles.formContainer}
+          >
+            <View style={commonStyles.progressIndicator}>
+              <View style={[commonStyles.progressDot, commonStyles.activeDot]} />
+              <View style={commonStyles.progressLine} />
+              <View style={commonStyles.progressDot} />
+            </View>
 
-        <TextInput
-          style={commonStyles.textInput}
-          placeholder="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          textContentType="emailAddress"
-          autoComplete="email"
-        />
+            <Text style={styles.formTitle}>Criar Conta</Text>
+            <Text style={styles.formSubtitle}>Preencha seus dados para começar</Text>
 
-        <TextInput
-          style={commonStyles.textInput}
-          placeholder="Senha"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          secureTextEntry
-          autoCapitalize="none"
-          textContentType="newPassword"
-        />
+            <View style={styles.inputsContainer}>
+              <FormInput
+                label="Nome completo"
+                value={nome}
+                onChangeText={setNome}
+                placeholder="Seu nome completo"
+                autoCapitalize="words"
+                icon="person"
+                error={errors.nome}
+              />
 
-        <View style={commonStyles.linkContainer}>
-          <Text style={commonStyles.normalText}>
-            Já tem uma conta?{' '}
-            <Text
-              style={commonStyles.linkText}
-              onPress={() => navigation.goBack()}
+              <FormInput
+                label="E-mail"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="seu.email@exemplo.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                icon="mail"
+                error={errors.email}
+              />
+
+              <FormInput
+                label="Senha"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Crie uma senha forte"
+                secureTextEntry
+                icon="lock-closed"
+                error={errors.password}
+              />
+
+              <FormInput
+                label="Confirmar senha"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirme sua senha"
+                secureTextEntry
+                icon="shield-checkmark"
+                error={errors.confirmPassword}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleNext}
             >
-              Faça login!
-            </Text>
-          </Text>
-        </View>
+              <Text style={styles.continueButtonText}>Continuar</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[
-            commonStyles.button,
-            styles.registerButton,
-            isSubmitting && commonStyles.buttonDisabled
-          ]}
-          onPress={handleCadastro}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color={COLORS.text.light} size="small" />
-          ) : (
-            <Text style={commonStyles.buttonText}>Continuar</Text>
-          )}
-        </TouchableOpacity>
-      </Animated.View>
-    </View>
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>Já tem uma conta? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.loginLink}>Faça login</Text>
+              </TouchableOpacity>
+            </View>
+          </Animatable.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  header: {
+    height: 160,
+    paddingTop: SPACING.lg,
+  },
   backButton: {
     position: 'absolute',
-    left: SPACING.lg,
+    top: Platform.OS === 'ios' ? 50 : 40,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 10,
-    padding: SPACING.xs,
   },
-  registerButton: {
-    marginTop: SPACING.xl,
-    alignSelf: 'center',
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  progressDot: {
-    // Empty text component styled as a dot
-    fontSize: 0,
-    color: 'transparent',
+  logoContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  progressLine: {
-    // Empty text component styled as a line
-    fontSize: 0,
-    color: 'transparent',
+  keyboardView: {
+    flex: 1,
+  },
+  formScrollView: {
+    flex: 1,
+    marginTop: -40,
+  },
+  formScrollContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  formContainer: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  formTitle: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+    marginTop: SPACING.md,
+  },
+  formSubtitle: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.lg,
+  },
+  inputsContainer: {
+    marginBottom: SPACING.md,
+  },
+  continueButton: {
+    height: 50,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueButtonText: {
+    color: COLORS.text.light,
+    fontSize: FONT_SIZE.md,
+    fontWeight: 'bold',
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.lg,
+  },
+  loginText: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.secondary,
+  },
+  loginLink: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.primary,
+    fontWeight: 'bold',
   }
 });
+
+export default RegisterPage;

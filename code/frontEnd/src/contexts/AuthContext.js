@@ -20,27 +20,13 @@ export const AuthProvider = ({ children }) => {
       try {
         console.log("Checking for auth token...");
         const token = await AsyncStorage.getItem('authToken');
-        const userEmail = await AsyncStorage.getItem('userEmail');
-        const userName = await AsyncStorage.getItem('userName');
-        const userId = await AsyncStorage.getItem('userId');
-        const photoUrl = await AsyncStorage.getItem('photoUrl');
-        
+
         if (token) {
           console.log("Found token:", token.substring(0, 10) + "...");
           // Set the token in memory
           setAuthToken(token);
           setIsAuthenticated(true);
-          
-          // Set user info if available
-          if (userEmail) {
-            setUser({ 
-              email: userEmail,
-              name: userName || null,
-              id: userId || null,
-              photoUrl: photoUrl || null
-            });
-          }
-          
+
           // Verify token validity with server
           validateToken(token);
         } else {
@@ -56,7 +42,7 @@ export const AuthProvider = ({ children }) => {
 
     checkToken();
   }, []);
-  
+
   // Validate the token with the server
   const validateToken = async (token) => {
     try {
@@ -66,61 +52,35 @@ export const AuthProvider = ({ children }) => {
           'Authorization': `Bearer ${token}`
         }
       };
-      
+
       // Use a simple endpoint to verify token validity
       const result = await apiClient.get('/auth/validate', options);
 
-      console.debug("Token validation result:", result);
-      
+      console.debug("Token validation result:", JSON.stringify(result?.data, null, 1));
+
       if (!result.success) {
         console.log("Token validation failed");
         // Token is invalid, log the user out
-        await logout();
+        await logoutUser();
       } else {
         console.log("Token is valid");
-        
-        // Get current stored values for comparison
-        const storedEmail = await AsyncStorage.getItem('userEmail');
-        const storedUserId = await AsyncStorage.getItem('userId');
-        
-        // Only update if we have new data and it's different
-        if (result.data?.email) {
-          const currentUser = user || {};
-          let shouldUpdateUser = false;
-          let updatedUser = {...currentUser};
-          
-          // Check each field for updates
-          if (result.data.email && result.data.email !== storedEmail) {
-            updatedUser.email = result.data.email;
-            await AsyncStorage.setItem('userEmail', result.data.email);
-            shouldUpdateUser = true;
-          }
-          
-          if (result.data.userId && result.data.userId.toString() !== storedUserId) {
-            updatedUser.id = result.data.userId;
-            await AsyncStorage.setItem('userId', result.data.userId.toString());
-            shouldUpdateUser = true;
-          }
-          
-          if (result.data.name && result.data.name !== currentUser.name) {
-            updatedUser.name = result.data.name;
-            await AsyncStorage.setItem('userName', result.data.name);
-            shouldUpdateUser = true;
-          }
-          
-          if (result.data.imgUrl && result.data.imgUrl !== currentUser.photoUrl) {
-            updatedUser.photoUrl = result.data.imgUrl;
-            await AsyncStorage.setItem('photoUrl', result.data.imgUrl);
-            shouldUpdateUser = true;
-          }
-          
-          // Only update the state if something changed
-          if (shouldUpdateUser) {
-            console.info("Updating user info in context");
-            console.debug("Updated user:", updatedUser);
-            setUser(updatedUser);
-          }
+
+        await AsyncStorage.setItem('userEmail', result.data.email);
+        await AsyncStorage.setItem('userId', result.data.userId.toString());
+        await AsyncStorage.setItem('userName', result.data.name);
+        await AsyncStorage.setItem('photoUrl', result.data.imgUrl);
+
+        const updatedUser = {
+          email: result.data.email,
+          id: result.data.userId,
+          name: result.data.name,
+          photoUrl: result.data.imgUrl
         }
+
+        console.info("Updating user info in context");
+        console.debug("Updated user:", updatedUser);
+
+        setUser(updatedUser);
       }
     } catch (e) {
       // Non-critical error, don't log out but log the error
@@ -131,24 +91,24 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Always strip email to prevent login issues
       const strippedEmail = email.trim().toLowerCase();
-      
-      const result = await apiClient.post('/auth/login', { 
-        email: strippedEmail, 
-        password 
+
+      const result = await apiClient.post('/auth/login', {
+        email: strippedEmail,
+        password: crypto.MD5(password).toString()
       });
 
       if (!result.success) {
         setError(result.error.message);
         return false;
       }
-      
+
       if (result.data?.token) {
         console.log("Login successful, saving token");
-        
+
         // Extract user ID and name from token if available
         let userId = null;
         let userName = null;
@@ -162,7 +122,7 @@ export const AuthProvider = ({ children }) => {
         } catch (e) {
           console.warn("Could not extract user ID from token");
         }
-        
+
         // Store token and user info persistently
         await AsyncStorage.setItem('authToken', result.data.token);
         await AsyncStorage.setItem('userEmail', strippedEmail);
@@ -177,11 +137,11 @@ export const AuthProvider = ({ children }) => {
         console.debug("User Email:", strippedEmail);
         console.debug("User Photo URL:", photoUrl);
         console.debug("Token:", result.data.token.substring(0, 10) + "...");
-        
+
         // Update state
         setAuthToken(result.data.token);
         setIsAuthenticated(true);
-        setUser({ 
+        setUser({
           email: strippedEmail,
           id: userId,
           name: userName,
@@ -201,20 +161,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logoutUser = async () => {
     try {
       console.log("Logging out...");
       // Clear all auth data from storage
       await AsyncStorage.multiRemove(['authToken', 'userEmail', 'userId', 'userName', 'photoUrl']);
-      
+
       // Reset state
       setAuthToken(null);
       setIsAuthenticated(false);
       setUser(null);
-      
+
       // Add delay to ensure state updates before navigation
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       console.log("Logout complete");
       return true;
     } catch (e) {
@@ -226,25 +186,25 @@ export const AuthProvider = ({ children }) => {
   const registerStudent = async (studentData) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Clean email
       if (studentData.email) {
         studentData.email = studentData.email.trim().toLowerCase();
       }
-      
+
       // Make sure password is hashed if not already done
       if (studentData.password && studentData.password.length !== 32) {
         studentData.password = crypto.MD5(studentData.password).toString();
       }
-      
+
       const result = await apiClient.post('/usuario/estudante', studentData);
-      
+
       if (!result.success) {
         setError(result.error.message);
         return { success: false, error: result.error.message };
       }
-      
+
       return { success: true, data: result.data };
     } catch (e) {
       console.error("Error in student registration:", e);
@@ -263,7 +223,7 @@ export const AuthProvider = ({ children }) => {
     setUser,
     authToken,
     login,
-    logout,
+    logoutUser,
     registerStudent,
     isLoading,
     error
