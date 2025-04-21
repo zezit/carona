@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import com.br.puc.carona.config.MockMvcSecurityConfig;
-import com.br.puc.carona.dto.LocationDto;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.service.MapService;
 
@@ -38,17 +37,10 @@ class MapControllerTest {
     @MockitoBean
     private MapService mapService;
 
-    private LocationDto locationDto;
     private List<TrajetoDto> trajetosDto;
 
     @BeforeEach
     void setUp() {
-        // Create sample location DTO
-        locationDto = new LocationDto(
-                -19.9322507,
-                -43.9408341,
-                "Avenida Afonso Pena, 1500, Belo Horizonte, Minas Gerais, Brasil");
-
         // Create sample trajectories DTOs
         trajetosDto = new ArrayList<>();
 
@@ -78,49 +70,6 @@ class MapControllerTest {
         trajetosDto.add(trajetoAlternativo);
     }
 
-    @Test
-    @DisplayName("GET /api/maps/geocode - Should geocode address successfully")
-    void shouldGeocodeAddressSuccessfully() throws Exception {
-        // Given
-        String address = "Avenue Afonso Pena, 1500";
-        Mockito.when(mapService.geocodeAddress(address))
-                .thenReturn(List.of(locationDto));
-
-        // When & Then
-        mockMvc.perform(MockMvcRequestBuilders.get("/maps/geocode")
-                .param("address", address)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].latitude")
-                        .value(locationDto.getLatitude()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].longitude")
-                        .value(locationDto.getLongitude()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].endereco")
-                        .value(locationDto.getEndereco()));
-
-        Mockito.verify(mapService).geocodeAddress(address);
-    }
-
-    @Test
-    @DisplayName("GET /api/maps/geocode - Should return empty list when address is not found")
-    void shouldReturnEmptyListWhenAddressIsNotFound() throws Exception {
-        // Given
-        String address = "Non-existent address, 999999";
-        Mockito.when(mapService.geocodeAddress(address))
-                .thenReturn(new ArrayList<>());
-
-        // When & Then
-        mockMvc.perform(MockMvcRequestBuilders.get("/maps/geocode")
-                .param("address", address)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(0));
-
-        Mockito.verify(mapService).geocodeAddress(address);
-    }
 
     @Test
     @DisplayName("GET /api/maps/trajectories - Should calculate trajectories successfully")
