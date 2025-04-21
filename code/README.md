@@ -55,7 +55,7 @@ Aplicação para coordenação e compartilhamento de caronas entre estudantes un
 ## Guias Específicos
 
 - [Guia para Desenvolvedores Mobile](docs/mobile-dev-guide.md) - Instruções para configurar e executar a API e conectar aplicações mobile
-- [Manual de Usuário](docs/user-manual.md) - Instruções para uso do aplicativo
+- [Configuração do VS Code - Launch e Tasks](docs/vscode-launch-tasks.md) - Documentação sobre como configurar e utilizar as tasks e launch configurations do VSCode
 
 ## Requisitos de Sistema
 
