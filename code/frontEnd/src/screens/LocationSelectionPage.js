@@ -28,6 +28,8 @@ const LocationSelectionPage = ({ navigation, route }) => {
     arrivalLocation: initialArrivalLocation,
     comingFromRegisterRide,
     carAvailableSeats,
+    isEditingRide,
+    rideId
   } = route.params || {};
 
   const [departure, setDeparture] = useState(initialDeparture || '');
@@ -156,13 +158,26 @@ const LocationSelectionPage = ({ navigation, route }) => {
 
   const handleNextPress = () => {
     if (isNextButtonEnabled) {
-      navigation.navigate('RegisterRide', {
+      // Create the location data object to pass back
+      const locationData = {
         departureLocation,
         departure,
         arrivalLocation,
         arrival,
-        carAvailableSeats  // Pass carAvailableSeats back to RegisterRidePage
-      });
+        carAvailableSeats
+      };
+      
+      // If we're editing a ride, navigate back to EditRide
+      if (isEditingRide) {
+        navigation.navigate('EditRide', {
+          ...locationData,
+          rideId,
+          isReturningFromLocationSelection: true
+        });
+      } else {
+        // Otherwise navigate to RegisterRide (new ride creation)
+        navigation.navigate('RegisterRide', locationData);
+      }
     }
   };
 
@@ -247,15 +262,25 @@ const LocationSelectionPage = ({ navigation, route }) => {
                       <Text style={styles.loadingText}>Obtendo sua localização...</Text>
                     </View>
                   ) : (
-                    <TextInput
-                      style={styles.input}
-                      placeholder="De onde você está saindo?"
-                      value={departure}
-                      onChangeText={setDeparture}
-                      onFocus={handleFocusDeparture}
-                      placeholderTextColor={COLORS.text.tertiary}
-                      editable={!loadingCurrentLocation}
-                    />
+                    <>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="De onde você está saindo?"
+                        value={departure}
+                        onChangeText={setDeparture}
+                        onFocus={handleFocusDeparture}
+                        placeholderTextColor={COLORS.text.tertiary}
+                        editable={!loadingCurrentLocation}
+                      />
+                      {departure.length > 0 && (
+                        <TouchableOpacity
+                          style={styles.clearButton}
+                          onPress={() => setDeparture('')}
+                        >
+                          <Ionicons name="close-circle" size={18} color={COLORS.text.secondary} />
+                        </TouchableOpacity>
+                      )}
+                    </>
                   )}
                 </View>
               </TouchableOpacity>
@@ -273,14 +298,24 @@ const LocationSelectionPage = ({ navigation, route }) => {
               >
                 <Text style={styles.inputLabel}>Local de Destino</Text>
                 <View style={styles.inputContainer}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Para onde você vai?"
-                    value={arrival}
-                    onChangeText={setArrival}
-                    onFocus={handleFocusArrival}
-                    placeholderTextColor={COLORS.text.tertiary}
-                  />
+                  <>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Para onde você vai?"
+                      value={arrival}
+                      onChangeText={setArrival}
+                      onFocus={handleFocusArrival}
+                      placeholderTextColor={COLORS.text.tertiary}
+                    />
+                    {arrival.length > 0 && (
+                      <TouchableOpacity
+                        style={styles.clearButton}
+                        onPress={() => setArrival('')}
+                      >
+                        <Ionicons name="close-circle" size={18} color={COLORS.text.secondary} />
+                      </TouchableOpacity>
+                    )}
+                  </>
                 </View>
               </TouchableOpacity>
             </View>
@@ -538,6 +573,10 @@ const styles = StyleSheet.create({
     marginRight: SPACING.xs,
   },
   nextButtonIcon: {
+    marginLeft: SPACING.xs,
+  },
+  clearButton: {
+    padding: 4,
     marginLeft: SPACING.xs,
   },
 });

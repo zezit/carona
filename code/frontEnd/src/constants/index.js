@@ -24,7 +24,7 @@ export const COLORS = {
     light: '#FFFFFF',
   },
   border: '#EEEEEE',
-  disabled: '#CCCCCC'
+  disabled: '#CCCCCC',
 };
 
 export const SPACING = {

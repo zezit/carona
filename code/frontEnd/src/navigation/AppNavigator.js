@@ -14,14 +14,14 @@ import RegisterSecondPage from '../screens/RegisterSecondPage';
 // Main app screens
 import HomePage from '../screens/HomePage';
 import ProfilePage from '../screens/ProfilePage';
-import RidesPage from '../screens/RidesPage';
 import CreateDriverProfilePage from '../screens/CreateDriverProfilePage';
 import UpdateProfilePage from '../screens/UpdateProfilePage';
 import UpdateDriverProfilePage from '../screens/UpdateDriverProfilePage';
 import LocationSelectionPage from '../screens/LocationSelectionPage';
 import RegisterRidePage from '../screens/RegisterRidePage';
-import RideDetailsPage from '../screens/RideDetailsPage';
 import RideModeSelectionPage from '../screens/RideModeSelectionPage';
+import ScheduledRides from '../screens/ScheduledRides';
+import EditRide from '../screens/EditRide';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,20 +114,8 @@ const MainStack = () => (
     <Stack.Screen name="UpdateDriverProfile" component={UpdateDriverProfilePage} />
     <Stack.Screen name="LocationSelection" component={LocationSelectionPage} />
     <Stack.Screen name="RegisterRide" component={RegisterRidePage} />
-    <Stack.Screen
-      name="RidesPage"
-      component={RidesPage}
-      options={({ route }) => ({
-        title: route.params?.mode === 'pickup' ? 'Caronas Disponíveis' : 'Minhas Caronas'
-      })}
-    />
-    <Stack.Screen
-      name="RideDetails"
-      component={RideDetailsPage}
-      options={({ route }) => ({
-        title: route.params?.mode === 'pickup' ? 'Detalhes da Carona' : 'Detalhes da Minha Carona'
-      })}
-    />
+    <Stack.Screen name="ScheduledRides" component={ScheduledRides} options={{ headerShown: false }} />
+    <Stack.Screen name="EditRide" component={EditRide} options={{ headerShown: false }} />
   </Stack.Navigator>
 );
 

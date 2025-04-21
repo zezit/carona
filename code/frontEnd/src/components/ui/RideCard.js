@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import StatusBadge from './StatusBadge';
+import { parseApiDate, formatDate, formatTime } from '../../utils/dateUtils';
 
 /**
  * A reusable card component for displaying ride information
@@ -11,12 +12,13 @@ const RideCard = ({
   onPress,
   compact = false
 }) => {
-  const formatDate = useCallback((dateString) => {
-    return new Date(dateString).toLocaleDateString();
+  // Use our enhanced date utilities
+  const formatCardDate = useCallback((dateString) => {
+    return formatDate(dateString);
   }, []);
 
-  const formatTime = useCallback((dateString) => {
-    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatCardTime = useCallback((dateString) => {
+    return formatTime(dateString);
   }, []);
 
   return (
@@ -27,10 +29,10 @@ const RideCard = ({
     >
       <View style={styles.header}>
         <Text style={styles.date}>
-          {formatDate(item.dataHoraPartida)}
+          {formatCardDate(item.dataHoraPartida)}
         </Text>
         <Text style={styles.time}>
-          {formatTime(item.dataHoraPartida)}
+          {formatCardTime(item.dataHoraPartida)}
         </Text>
       </View>
 

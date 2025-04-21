@@ -1,19 +1,18 @@
+import { Ionicons } from '@expo/vector-icons';
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { forwardRef, useMemo, useRef, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    TextInput,
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING } from '../../constants';
 import RideDateTimePicker from './RideDateTimePicker';
-import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, RADIUS } from '../../constants';
-import { commonStyles } from '../../theme/styles/commonStyles';
 
 // Create reusable FormSection component based on the profile card style
 const FormSection = ({ title, icon, children }) => (
@@ -27,11 +26,8 @@ const FormSection = ({ title, icon, children }) => (
 );
 
 const RideFormBottomSheet = forwardRef(({
-    departure,
-    arrival,
     departureDate,
     onDateChange,
-    setShowDatePicker,
     seats,
     onSeatsChange,
     observations,
@@ -46,7 +42,8 @@ const RideFormBottomSheet = forwardRef(({
     onSelectRoute,
     formatDuration,
     formatDistance,
-    initialCarAvailableSeats
+    initialCarAvailableSeats,
+    isEditMode = false
 }, ref) => {
     const snapPoints = useMemo(() => ['25%', '50%', '80%'], []);
     const scrollViewRef = useRef(null);
@@ -62,9 +59,35 @@ const RideFormBottomSheet = forwardRef(({
         setActiveTimeMode(mode);
     };
     
+    // Updated getArrivalTime function with better type checking
     const getArrivalTime = () => {
-        if (!departureDate || !duration) return new Date();
-        return new Date(departureDate.getTime() + (duration * 1000));
+        if (!departureDate || !duration) {
+            return new Date();
+        }
+        
+        try {
+            // Handle both dayjs objects and Date objects
+            let dateValue;
+            
+            if (departureDate && typeof departureDate === 'object') {
+                // Handle dayjs object
+                if (departureDate.$d || departureDate.toDate) {
+                    // If it's a dayjs object
+                    dateValue = departureDate.$d || departureDate.toDate();
+                } else {
+                    // If it's a regular date object
+                    dateValue = departureDate;
+                }
+                
+                return new Date(dateValue.getTime() + (duration * 1000));
+            }
+            
+            // Fallback to current date
+            return new Date();
+        } catch (error) {
+            console.error('Error calculating arrival time:', error);
+            return new Date();
+        }
     };
 
     // Default formatters if not provided
@@ -196,32 +219,58 @@ const RideFormBottomSheet = forwardRef(({
                         <FormSection title="Vagas" icon="people">
                             <View style={styles.seatsContainer}>
                                 <TouchableOpacity
-                                    style={styles.seatButton}
+                                    style={[styles.seatButton, parseInt(seats) <= 1 && styles.seatButtonDisabled]}
                                     onPress={() => onSeatsChange(Math.max(1, parseInt(seats, 10) - 1).toString())}
+                                    disabled={parseInt(seats) <= 1}
                                 >
-                                    <Ionicons name="remove" size={20} color={COLORS.primary} />
+                                    <Ionicons 
+                                        name="remove" 
+                                        size={20} 
+                                        color={parseInt(seats) <= 1 ? COLORS.disabled : COLORS.primary} 
+                                    />
                                 </TouchableOpacity>
                                 <Text style={styles.seatsValue}>{seats}</Text>
                                 <TouchableOpacity
-                                    style={styles.seatButton}
-                                    onPress={() => onSeatsChange(Math.min(initialCarAvailableSeats || 4, parseInt(seats, 10) + 1).toString())}
+                                    style={[
+                                        styles.seatButton, 
+                                        parseInt(seats) >= (initialCarAvailableSeats || 4) && styles.seatButtonDisabled
+                                    ]}
+                                    onPress={() => onSeatsChange(Math.min(
+                                        initialCarAvailableSeats || 4, 
+                                        parseInt(seats, 10) + 1).toString()
+                                    )}
+                                    disabled={parseInt(seats) >= (initialCarAvailableSeats || 4)}
                                 >
-                                    <Ionicons name="add" size={20} color={COLORS.primary} />
+                                    <Ionicons 
+                                        name="add" 
+                                        size={20} 
+                                        color={parseInt(seats) >= (initialCarAvailableSeats || 4) ? COLORS.disabled : COLORS.primary} 
+                                    />
                                 </TouchableOpacity>
                             </View>
                         </FormSection>
 
                         {/* Observations Section */}
                         <FormSection title="Observações" icon="information-circle">
-                            <TextInput
-                                style={styles.observationsInput}
-                                placeholder="Informações adicionais para os passageiros"
-                                value={observations}
-                                onChangeText={onObservationsChange}
-                                multiline
-                                numberOfLines={3}
-                                textAlignVertical="top"
-                            />
+                            <View style={styles.observationsInputContainer}>
+                                <TextInput
+                                    style={styles.observationsInput}
+                                    placeholder="Informações adicionais para os passageiros"
+                                    value={observations}
+                                    onChangeText={onObservationsChange}
+                                    multiline
+                                    numberOfLines={3}
+                                    textAlignVertical="top"
+                                />
+                                {observations.length > 0 && (
+                                    <TouchableOpacity
+                                        style={styles.observationsClearButton}
+                                        onPress={() => onObservationsChange('')}
+                                    >
+                                        <Ionicons name="close-circle" size={18} color={COLORS.text.secondary} />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
                         </FormSection>
                     </KeyboardAvoidingView>
                 </BottomSheetScrollView>
@@ -240,7 +289,9 @@ const RideFormBottomSheet = forwardRef(({
                         ) : (
                             <>
                                 <Ionicons name="car" size={24} color="#fff" />
-                                <Text style={styles.submitButtonText}>Registrar Carona</Text>
+                                <Text style={styles.submitButtonText}>
+                                    {isEditMode ? "Salvar Alterações" : "Registrar Carona"}
+                                </Text>
                             </>
                         )}
                     </TouchableOpacity>
@@ -366,12 +417,20 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
     },
+    seatButtonDisabled: {
+        borderColor: COLORS.disabled,
+        backgroundColor: COLORS.background,
+    },
     seatsValue: {
         fontSize: FONT_SIZE.xl,
         fontWeight: FONT_WEIGHT.bold,
         color: COLORS.text.primary,
     },
     // Updated observations input
+    observationsInputContainer: {
+        position: 'relative',
+        width: '100%',
+    },
     observationsInput: {
         width: '100%',
         height: 100,
@@ -383,6 +442,12 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         textAlignVertical: 'top',
+    },
+    observationsClearButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        padding: 4,
     },
     // Updated button container
     buttonContainer: {
@@ -456,6 +521,22 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZE.sm,
         color: COLORS.text.secondary,
         marginLeft: 4,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        height: 48,
+        backgroundColor: COLORS.background,
+        borderRadius: RADIUS.md,
+        paddingHorizontal: SPACING.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        marginBottom: SPACING.md,
+    },
+    clearButton: {
+        padding: 4,
+        marginLeft: SPACING.xs,
     },
 });
 

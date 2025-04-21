@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, RADIUS, SPACING, FONT_SIZE } from '../../constants';
+import { 
+  RECENT_ADDRESSES_KEY,
+  getCurrentLocation,
+  loadRecentAddresses,
+  saveRecentAddress,
+  searchAddresses
+} from '../../utils/locationUtils';
 
-const RECENT_ADDRESSES_KEY = 'recent_addresses';
+const DEBOUNCE_DELAY = 300;
 
+/**
+ * SuggestionsPanel - Component that displays address search suggestions
+ */
 const SuggestionsPanel = ({ 
   searchValue, 
   onSelectAddress, 
@@ -18,130 +26,58 @@ const SuggestionsPanel = ({
   const [currentLocationLoading, setCurrentLocationLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showNoResults, setShowNoResults] = useState(false);
+  const [timeoutId, setTimeoutId] = useState(null);
   
+  // Load recent addresses on component mount
   useEffect(() => {
-    loadRecentAddresses();
+    const fetchRecentAddresses = async () => {
+      const addresses = await loadRecentAddresses();
+      setRecentAddresses(addresses);
+    };
+    
+    fetchRecentAddresses();
   }, []);
 
+  // Handle search value changes with debouncing
   useEffect(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
     if (searchValue.trim().length > 2) {
-      fetchAddressSuggestions(searchValue);
+      const id = setTimeout(() => {
+        fetchAddressSuggestions(searchValue);
+      }, DEBOUNCE_DELAY);
+      
+      setTimeoutId(id);
     } else {
       setSuggestions([]);
       setShowNoResults(false);
     }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [searchValue]);
 
-  const loadRecentAddresses = async () => {
-    try {
-      const addresses = await AsyncStorage.getItem(RECENT_ADDRESSES_KEY);
-      if (addresses) {
-        setRecentAddresses(JSON.parse(addresses));
-      }
-    } catch (error) {
-      console.error('Error loading recent addresses:', error);
-    }
-  };
-
+  // Simplified address search using locationUtils
   const fetchAddressSuggestions = async (searchText) => {
     try {
       setLoading(true);
       setError(null);
       setShowNoResults(false);
       
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setError('Permissão de localização necessária');
-        return;
-      }
-
-      const searchVariations = [
-        searchText,
-        `${searchText}, UFMG`,
-        `${searchText}, Pampulha`,
-        `${searchText}, Belo Horizonte`,
-        `${searchText}, Belo Horizonte, MG`
-      ];
+      const results = await searchAddresses(searchText);
       
-      let geocodeResults = [];
-      
-      for (const query of searchVariations) {
-        if (geocodeResults.length === 0) {
-          try {
-            const results = await Location.geocodeAsync(query);
-            if (results?.length > 0) {
-              geocodeResults = results;
-              break;
-            }
-          } catch (err) {
-            console.debug(`Failed to geocode variation: ${query}`, err);
-          }
-        }
-      }
-      
-      if (geocodeResults?.length > 0) {
-        const addressPromises = geocodeResults.map(async (result) => {
-          try {
-            const reverseGeocode = await Location.reverseGeocodeAsync({
-              latitude: result.latitude,
-              longitude: result.longitude
-            });
-            
-            if (reverseGeocode?.[0]) {
-              const addressObj = reverseGeocode[0];
-              const addressParts = [
-                addressObj.name,
-                addressObj.street,
-                addressObj.streetNumber,
-                addressObj.district,
-                addressObj.city,
-                addressObj.region
-              ].filter(Boolean);
-              
-              const fullAddress = addressParts.join(', ');
-              
-              const searchTerms = searchText.toLowerCase().split(/[\s,]+/);
-              const matchesSearch = searchTerms.every(term => 
-                fullAddress.toLowerCase().includes(term)
-              );
-              
-              if (matchesSearch) {
-                return {
-                  latitude: result.latitude,
-                  longitude: result.longitude,
-                  endereco: fullAddress,
-                  distance: calculateDistance(result.latitude, result.longitude),
-                  relevanceScore: calculateRelevanceScore(fullAddress, searchText)
-                };
-              }
-            }
-          } catch (error) {
-            console.debug('Error in reverse geocoding:', error);
-          }
-          return null;
-        });
-        
-        const addressResults = await Promise.all(addressPromises);
-        const validAddresses = addressResults.filter(addr => addr?.endereco);
-        
-        const sortedAddresses = validAddresses
-          .sort((a, b) => {
-            const scoreA = a.relevanceScore - (a.distance * 0.1);
-            const scoreB = b.relevanceScore - (b.distance * 0.1);
-            return scoreB - scoreA;
-          })
-          .slice(0, 5);
-
-        if (sortedAddresses.length === 0) {
-          setShowNoResults(true);
-        }
-        setSuggestions(sortedAddresses);
-      } else {
+      if (results.length === 0) {
         setShowNoResults(true);
-        setSuggestions([]);
       }
+      
+      setSuggestions(results);
     } catch (error) {
-      console.error('Error geocoding address:', error);
+      console.error('Error in address search:', error);
       setError('Erro ao buscar endereço. Tente novamente.');
       setSuggestions([]);
     } finally {
@@ -149,137 +85,41 @@ const SuggestionsPanel = ({
     }
   };
 
-  const calculateDistance = (lat, lon) => {
-    const UFMG_LAT = -19.8721;
-    const UFMG_LON = -43.9673;
-    
-    const R = 6371;
-    const dLat = deg2rad(lat - UFMG_LAT);
-    const dLon = deg2rad(lon - UFMG_LON);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(deg2rad(UFMG_LAT)) * Math.cos(deg2rad(lat)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-  
-  const deg2rad = (deg) => {
-    return deg * (Math.PI/180);
-  };
-  
-  const calculateRelevanceScore = (address, searchText) => {
-    const addressLower = address.toLowerCase();
-    const searchTerms = searchText.toLowerCase().split(/[\s,]+/);
-    
-    let score = 0;
-    searchTerms.forEach(term => {
-      if (addressLower.includes(term)) {
-        score += addressLower.indexOf(term) === 0 ? 3 : 1;
-        score += addressLower.includes(` ${term} `) ? 2 : 0;
-        score += addressLower.includes(`${term},`) ? 2 : 0;
-      }
-    });
-    
-    if (addressLower.includes('ufmg') || addressLower.includes('universidade federal')) {
-      score += 3;
-    }
-    
-    if (addressLower.includes('pampulha')) {
-      score += 2;
-    }
-    
-    return score;
-  };
-
-  const handleSelectItem = (item) => {
-    saveRecentAddress(item);
-    onSelectAddress(item);
-  };
-
-  const saveRecentAddress = async (address) => {
+  // Handle selection of an address suggestion
+  const handleSelectItem = async (item) => {
     try {
-      if (!address || !address.endereco) return;
-      
-      let addresses = [];
-      const savedAddresses = await AsyncStorage.getItem(RECENT_ADDRESSES_KEY);
-      if (savedAddresses) {
-        addresses = JSON.parse(savedAddresses);
-      }
-      
-      const existingIndex = addresses.findIndex(a => a.endereco === address.endereco);
-      
-      if (existingIndex === -1) {
-        addresses = [address, ...addresses.slice(0, 4)];
-      } else {
-        const [existing] = addresses.splice(existingIndex, 1);
-        addresses.unshift(existing);
-      }
-      
-      await AsyncStorage.setItem(RECENT_ADDRESSES_KEY, JSON.stringify(addresses));
-      setRecentAddresses(addresses);
+      const updatedAddresses = await saveRecentAddress(item);
+      setRecentAddresses(updatedAddresses);
+      onSelectAddress(item);
     } catch (error) {
-      console.error('Error saving recent address:', error);
+      console.error('Error saving address selection:', error);
+      // Still call onSelectAddress even if saving failed
+      onSelectAddress(item);
     }
   };
 
+  // Get current user location
   const handleGetCurrentLocation = async () => {
     try {
       setCurrentLocationLoading(true);
       
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permissão necessária',
-          'Precisamos de permissão para acessar sua localização atual.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High
-      });
-
-      const { latitude, longitude } = location.coords;
-
-      const reverseGeocode = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude
-      });
-
-      if (reverseGeocode && reverseGeocode[0]) {
-        const addressObj = reverseGeocode[0];
-        const addressParts = [
-          addressObj.name,
-          addressObj.street,
-          addressObj.streetNumber,
-          addressObj.district,
-          addressObj.city,
-          addressObj.region
-        ].filter(Boolean);
-        
-        const currentLocationAddress = {
-          latitude,
-          longitude,
-          endereco: addressParts.join(', '),
-          isCurrentLocation: true
-        };
-
-        handleSelectItem(currentLocationAddress);
-      }
+      const locationData = await getCurrentLocation();
+      handleSelectItem(locationData);
     } catch (error) {
       console.error('Error getting current location:', error);
-      Alert.alert(
-        'Erro',
-        'Não foi possível obter sua localização atual. Verifique se o GPS está ativado.',
-        [{ text: 'OK' }]
-      );
+      
+      // Show appropriate error message based on error type
+      const errorMessage = error.message === 'Location permission denied'
+        ? 'Precisamos de permissão para acessar sua localização atual.'
+        : 'Não foi possível obter sua localização atual. Verifique se o GPS está ativado.';
+        
+      Alert.alert('Erro', errorMessage, [{ text: 'OK' }]);
     } finally {
       setCurrentLocationLoading(false);
     }
   };
 
+  // Get displayed data based on search value
   const getData = () => {
     if (searchValue.trim().length < 3) {
       return recentAddresses;
@@ -287,18 +127,19 @@ const SuggestionsPanel = ({
     return suggestions;
   };
 
+  // Get hint text to display
   const renderHintText = () => {
     if (loading) {
       return 'Buscando endereços...';
     }
     if (showNoResults) {
-      return 'Nenhum endereço encontrado. Tente adicionar o bairro ou cidade.';
+      return 'Nenhum endereço encontrado. Tente ser mais específico (adicione bairro ou cidade).';
     }
     if (error) {
       return error;
     }
     if (searchValue.trim().length > 0 && searchValue.trim().length < 3) {
-      return 'Digite mais caracteres para buscar';
+      return 'Digite pelo menos 3 caracteres para buscar';
     }
     return '';
   };
@@ -308,6 +149,7 @@ const SuggestionsPanel = ({
 
   return (
     <View style={styles.container}>
+      {/* Current location button */}
       {includeCurrentLocation && (
         <TouchableOpacity
           style={styles.currentLocationButton}
@@ -326,6 +168,7 @@ const SuggestionsPanel = ({
         </TouchableOpacity>
       )}
 
+      {/* Hint text */}
       {hintText ? (
         <Text style={[
           styles.hintText,
@@ -335,12 +178,14 @@ const SuggestionsPanel = ({
         </Text>
       ) : null}
       
+      {/* Loading indicator */}
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={COLORS.primary} />
         </View>
       )}
 
+      {/* Suggestions list */}
       {data.length > 0 ? (
         <View style={styles.suggestionsList}>
           {data.map((item, index) => (
@@ -352,12 +197,12 @@ const SuggestionsPanel = ({
               accessibilityLabel={item.endereco}
             >
               <Ionicons 
-                name="location-outline" 
+                name={item.isCurrentLocation ? "locate-outline" : "location-outline"} 
                 size={16} 
                 color={COLORS.text.secondary}
                 style={styles.suggestionIcon}
               />
-              <Text style={styles.suggestionText}>
+              <Text style={styles.suggestionText} numberOfLines={2}>
                 {item.endereco}
               </Text>
             </TouchableOpacity>
@@ -376,6 +221,7 @@ const SuggestionsPanel = ({
 };
 
 const styles = StyleSheet.create({
+  // Styles remain unchanged
   container: {
     width: '100%',
   },
@@ -409,6 +255,7 @@ const styles = StyleSheet.create({
   suggestionsList: {
     backgroundColor: COLORS.card,
     borderRadius: RADIUS.md,
+    maxHeight: 250,
   },
   loadingContainer: {
     padding: SPACING.md,
@@ -447,4 +294,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SuggestionsPanel;
+export default React.memo(SuggestionsPanel);

@@ -19,10 +19,12 @@ import Reanimated, {
   withTiming
 } from 'react-native-reanimated';
 import RideFormBottomSheet from '../components/ride/RideFormBottomSheet';
+import { LocationSelector } from '../components/ride';
 import { COLORS, RADIUS } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiClient } from '../services/api/apiClient';
 import { commonStyles } from '../theme/styles/commonStyles';
+import { formatDateForApi } from '../utils/dateUtils';
 
 // Bottom sheet heights for different positions (approximate)
 const BOTTOM_SHEET_HEIGHTS = {
@@ -441,34 +443,39 @@ const RegisterRidePage = ({ route }) => {
     try {
       setLoading(true);
 
-      const arrivalDate = new Date(departureDate.getTime() + (duration * 1000));
+      // Get arrival date by adding the duration to the departure date
+      const departureDateTime = departureDate instanceof Date ? departureDate : new Date(departureDate);
+      const arrivalDateTime = new Date(departureDateTime.getTime() + (duration * 1000));
+      
+      // Ensure both dates are valid
+      if (isNaN(departureDateTime.getTime()) || isNaN(arrivalDateTime.getTime())) {
+        Alert.alert('Erro', 'Datas de partida ou chegada inválidas.');
+        setLoading(false);
+        return;
+      }
 
       const rideData = {
-        motorista: {
-          id: user.id
-        },
-        partida: {
-          latitude: departureLocation.latitude,
-          longitude: departureLocation.longitude,
-          endereco: departure
-        },
-        destino: {
-          latitude: arrivalLocation.latitude,
-          longitude: arrivalLocation.longitude,
-          endereco: arrival
-        },
-        horaPartida: departureDate.toISOString(),
-        horaChegada: arrivalDate.toISOString(),
+        pontoPartida: departure,
+        latitudePartida: departureLocation.latitude,
+        longitudePartida: departureLocation.longitude,
+        pontoDestino: arrival,
+        latitudeDestino: arrivalLocation.latitude,
+        longitudeDestino: arrivalLocation.longitude,
+        dataHoraPartida: formatDateForApi(departureDateTime),
+        dataHoraChegada: formatDateForApi(arrivalDateTime),
         vagas: parseInt(seats, 10),
-        observacoes: observations,
-        rota: {
-          pontos: selectedRoute.pontos,
-          distanciaMetros: selectedRoute.distanciaMetros,
-          duracaoSegundos: selectedRoute.duracaoSegundos
-        }
+        observacoes: observations
       };
 
-      await apiClient.post(rideData, '/caronas');
+      const options = {
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+      
+      console.debug('Submitting ride data:', rideData);
+      
+      await apiClient.post('/carona', rideData, options);
 
       Alert.alert(
         'Sucesso',
@@ -565,34 +572,11 @@ const RegisterRidePage = ({ route }) => {
 
         {/* Location edit button */}
         <Reanimated.View style={[styles.locationEditButton, locationButtonStyle]}>
-          <TouchableOpacity
-            activeOpacity={0.7}
+          <LocationSelector
+            departure={departure}
+            arrival={arrival}
             onPress={handleChangeLocations}
-            style={{ flex: 1 }}
-          >
-            <View style={styles.locationEditContent}>
-              <View style={styles.locationIcons}>
-                <View style={[styles.locationIcon, styles.departureIcon]}>
-                  <Ionicons name="location" size={14} color="#FFFFFF" />
-                </View>
-                <View style={styles.locationConnector} />
-                <View style={[styles.locationIcon, styles.arrivalIcon]}>
-                  <Ionicons name="navigate" size={14} color="#FFFFFF" />
-                </View>
-              </View>
-              <View style={styles.locationTexts}>
-                <Text numberOfLines={1} style={styles.locationEditText}>
-                  {departure || 'Selecionar partida'}
-                </Text>
-                <Text numberOfLines={1} style={styles.locationEditText}>
-                  {arrival || 'Selecionar destino'}
-                </Text>
-              </View>
-              <View style={styles.locationEditIcon}>
-                <Ionicons name="pencil" size={16} color={COLORS.primary} />
-              </View>
-            </View>
-          </TouchableOpacity>
+          />
         </Reanimated.View>
       </View>
 

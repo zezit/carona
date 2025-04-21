@@ -1,12 +1,12 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Animated, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useFadeAnimation } from '../hooks/animations';
-import { apiClient } from '../services/api/apiClient';
+import { apiClient, getUpcomingRides } from '../services/api/apiClient';
 import { commonStyles } from '../theme/styles/commonStyles';
 
 // Import reusable components
@@ -14,9 +14,11 @@ import { LoadingIndicator, OptionButton } from '../components/ui';
 
 const RideModeSelectionPage = ({ navigation, route }) => {
   const { user, authToken } = useAuthContext();
-  const [isDriver, setIsDriver] = React.useState(false);
-  const [driverDetails, setDriverDetails] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
+  const [isDriver, setIsDriver] = useState(false);
+  const [driverDetails, setDriverDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [upcomingRides, setUpcomingRides] = useState([]);
+  const [loadingRides, setLoadingRides] = useState(false);
 
   // Use our custom animation hook
   const { animatedStyle } = useFadeAnimation({
@@ -39,6 +41,9 @@ const RideModeSelectionPage = ({ navigation, route }) => {
       if (response.success && response.data) {
         setIsDriver(true);
         setDriverDetails(response.data);
+        
+        // If the user is a driver, fetch upcoming rides
+        fetchUpcomingRides(response.data.id);
       } else {
         setIsDriver(false);
       }
@@ -49,6 +54,27 @@ const RideModeSelectionPage = ({ navigation, route }) => {
       setLoading(false);
     }
   }, [user?.id, authToken]);
+
+  // Fetch upcoming rides for this driver
+  const fetchUpcomingRides = useCallback(async (driverId) => {
+    setLoadingRides(true);
+    try {
+      const response = await getUpcomingRides(driverId, authToken);
+      
+      if (response.success && response.data) {
+        setUpcomingRides(response.data);
+        console.debug(`Found ${response.data.length} upcoming rides`);
+      } else {
+        console.warn('Failed to fetch upcoming rides:', response.error);
+        setUpcomingRides([]);
+      }
+    } catch (error) {
+      console.error('Error fetching upcoming rides:', error);
+      setUpcomingRides([]);
+    } finally {
+      setLoadingRides(false);
+    }
+  }, [authToken]);
 
   // Check if user is a driver on mount
   useEffect(() => {
@@ -76,6 +102,20 @@ const RideModeSelectionPage = ({ navigation, route }) => {
       carAvailableSeats: driverDetails?.carro?.capacidadePassageiros,
     });
   }, [navigation, driverDetails]);
+
+  const handleManageScheduledRides = useCallback(() => {
+    if (upcomingRides.length > 0) {
+      navigation.navigate('ScheduledRides', { 
+        rides: upcomingRides,
+        driverDetails: driverDetails 
+      });
+    } else {
+      Alert.alert(
+        'Nenhuma carona agendada', 
+        'Você não possui caronas agendadas para o futuro. Que tal oferecer uma nova carona?'
+      );
+    }
+  }, [navigation, upcomingRides, driverDetails]);
 
   const handleHistoryRide = useCallback((mode) => {
     // TODO:  navigation.navigate('RidesPage', { mode });
@@ -136,9 +176,26 @@ const RideModeSelectionPage = ({ navigation, route }) => {
                 onPress={handleStartDrive}
               />
 
+              {loadingRides ? (
+                <View style={styles.loadingContainer}>
+                  <LoadingIndicator size="small" text="Verificando caronas agendadas..." />
+                </View>
+              ) : (
+                <OptionButton
+                  title={`Caronas Agendadas ${upcomingRides.length > 0 ? `(${upcomingRides.length})` : ''}`}
+                  description={upcomingRides.length > 0 
+                    ? "Gerencie suas próximas caronas agendadas" 
+                    : "Você não tem caronas agendadas"}
+                  icon="calendar"
+                  color={COLORS.secondary}
+                  onPress={handleManageScheduledRides}
+                  badge={upcomingRides.length > 0 ? upcomingRides.length.toString() : null}
+                />
+              )}
+
               <OptionButton
                 title="Minhas Caronas"
-                description="Visualize suas caronas agendadas e histórico"
+                description="Visualize seu histórico de caronas"
                 icon="list"
                 color={COLORS.secondary}
                 onPress={() => handleHistoryRide('my-rides')}
@@ -189,6 +246,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
+  loadingContainer: {
+    padding: SPACING.md,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    marginVertical: SPACING.sm,
+  }
 });
 
 export default RideModeSelectionPage;

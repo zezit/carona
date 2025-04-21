@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, Platform, Modal } from 'react
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, RADIUS } from '../../constants';
+import { parseApiDate } from '../../utils/dateUtils';
 
 const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMode, duration = 0 }) => {
   const [showPicker, setShowPicker] = useState(false);
@@ -10,28 +11,94 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMo
   const [tempDate, setTempDate] = useState(new Date());
   
   // Format date for display
-  const formatDate = useCallback((date) => {
-    if (!date) return '';
+  const formatDate = useCallback((dateValue) => {
+    if (!dateValue) return '';
     
-    const options = { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false
-    };
-    
-    return date.toLocaleString('pt-BR', options)
-      .replace(',', ' às');
+    try {
+      let date;
+      
+      // Handle dayjs objects
+      if (dateValue && typeof dateValue === 'object' && dateValue.$d) {
+        date = dateValue.$d; // Extract Date object from dayjs object
+      } 
+      // Handle Date objects
+      else if (dateValue instanceof Date) {
+        date = dateValue;
+      } 
+      // Handle strings/arrays/other formats through parseApiDate
+      else {
+        date = parseApiDate(dateValue);
+      }
+      
+      if (!date) return 'Data inválida';
+      
+      const options = { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+      };
+      
+      return date.toLocaleString('pt-BR', options)
+        .replace(',', ' às');
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return 'Data não definida';
+    }
   }, []);
 
   // Show date picker
   const showDatepicker = () => {
-    // Set initial date based on active mode
-    setTempDate(activeMode === 'departure' ? departureDate : arrivalDate);
-    setCurrentMode('date');
-    setShowPicker(true);
+    try {
+      // Get the correct initial date based on active mode
+      let initialDate = new Date(); // Default to current date
+      
+      if (activeMode === 'departure') {
+        if (departureDate) {
+          // Handle dayjs objects
+          if (typeof departureDate === 'object' && departureDate.$d) {
+            initialDate = departureDate.$d;
+          }
+          // Handle Date objects
+          else if (departureDate instanceof Date) {
+            initialDate = departureDate;
+          }
+          // Try to parse other formats
+          else {
+            const parsed = parseApiDate(departureDate);
+            if (parsed) initialDate = parsed;
+          }
+        }
+      } else {
+        if (arrivalDate) {
+          // Handle dayjs objects
+          if (typeof arrivalDate === 'object' && arrivalDate.$d) {
+            initialDate = arrivalDate.$d;
+          }
+          // Handle Date objects
+          else if (arrivalDate instanceof Date) {
+            initialDate = arrivalDate;
+          }
+          // Try to parse other formats
+          else {
+            const parsed = parseApiDate(arrivalDate);
+            if (parsed) initialDate = parsed;
+          }
+        }
+      }
+      
+      setTempDate(initialDate);
+      setCurrentMode('date');
+      setShowPicker(true);
+    } catch (error) {
+      console.error("Error showing date picker:", error);
+      // Fall back to current date if there's an error
+      setTempDate(new Date());
+      setCurrentMode('date');
+      setShowPicker(true);
+    }
   };
 
   // Handle date/time change
@@ -68,11 +135,42 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMo
     />
   );
   
+  // Get a proper Date object regardless of input format
+  const getProperDateObject = (dateInput) => {
+    if (!dateInput) return new Date();
+    
+    try {
+      // Handle dayjs objects
+      if (typeof dateInput === 'object' && dateInput.$d) {
+        return dateInput.$d;
+      } 
+      // Handle Date objects
+      else if (dateInput instanceof Date) {
+        return dateInput;
+      } 
+      // Try to parse other formats
+      else {
+        const parsed = parseApiDate(dateInput);
+        return parsed || new Date();
+      }
+    } catch (error) {
+      console.error("Error converting date:", error);
+      return new Date();
+    }
+  };
+
   // Calculate the equivalent departure time if arrival is set
   const getEstimatedDepartureTime = () => {
     if (!arrivalDate || duration <= 0) return new Date();
-    return new Date(arrivalDate.getTime() - duration * 1000);
+    
+    // First ensure we have a proper Date object
+    const date = getProperDateObject(arrivalDate);
+    return new Date(date.getTime() - duration * 1000);
   };
+
+  // Process dates to ensure they are Date objects or formatted properly
+  const processedDepartureDate = getProperDateObject(departureDate);
+  const processedArrivalDate = getProperDateObject(arrivalDate);
 
   return (
     <View style={styles.container}>
@@ -90,7 +188,7 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMo
             {activeMode === 'departure' ? 'Horário de partida' : 'Horário de chegada'}
           </Text>
           <Text style={styles.dateValue}>
-            {formatDate(activeMode === 'departure' ? departureDate : arrivalDate)}
+            {formatDate(activeMode === 'departure' ? processedDepartureDate : processedArrivalDate)}
           </Text>
         </View>
         <Ionicons name="chevron-down" size={20} color={COLORS.text.secondary} />
@@ -105,7 +203,7 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMo
               : 'Partida estimada:'}
           </Text>
           <Text style={styles.estimatedTimeValue}>
-            {formatDate(activeMode === 'departure' ? arrivalDate : getEstimatedDepartureTime())}
+            {formatDate(activeMode === 'departure' ? processedArrivalDate : getEstimatedDepartureTime())}
           </Text>
         </View>
       )}

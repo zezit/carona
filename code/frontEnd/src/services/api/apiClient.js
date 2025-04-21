@@ -2,9 +2,17 @@ import axios from 'axios';
 import { API_BASE_URL } from '@env';
 import errorMessages from '../../constants/errors.json';
 
+const DEBUG = true;
+
+const debugLog = (module, message, ...args) => {
+  if (DEBUG) {
+    console.log(`[ApiClient]/${module}: ${message}`, ...args);
+  }
+};
+
 // Determine the base URL based on environment
 const getBaseUrl = () => {
-  return 'https://2801-189-71-58-174.ngrok-free.app/api';
+  return API_BASE_URL;
 };
 
 const BASE_URL = getBaseUrl();
@@ -204,5 +212,45 @@ export const apiClient = {
     if (error.error && error.error.message) return error.error.message;
 
     return 'Ocorreu um erro. Tente novamente.';
+  }
+};
+
+// Add the following method to fetch upcoming rides for a driver
+
+/**
+ * Fetches upcoming scheduled rides for a driver
+ * @param {string} motoristaId - The driver's ID
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const getUpcomingRides = async (motoristaId, authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/carona/motorista/${motoristaId}/proximas`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar caronas agendadas'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching upcoming rides:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
   }
 };

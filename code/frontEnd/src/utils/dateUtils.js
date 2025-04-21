@@ -2,126 +2,128 @@
  * Utility functions for date and time formatting
  */
 
-// Format a date string or Date object to a readable date format (DD/MM/YYYY)
-export const formatDate = (dateString) => {
-  if (!dateString) return 'Data não informada';
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Data inválida';
-    
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Erro ao formatar data';
+const DEBUG = true;
+
+const debugLog = (module, message, ...args) => {
+  if (DEBUG) {
+    console.log(`[DateUtils/${module}]`, message, ...args);
   }
 };
 
-// Format a date string or Date object to a readable time format (HH:MM)
-export const formatTime = (dateString) => {
-  if (!dateString) return 'Horário não informado';
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Horário inválido';
-    
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  } catch (error) {
-    console.error('Error formatting time:', error);
-    return 'Erro ao formatar horário';
-  }
+const errorLog = (module, message, error, input) => {
+  console.error(`[DateUtils/${module}] ${message}`, { error, input });
 };
 
-// Format a date string or Date object to a readable date and time format (DD/MM/YYYY HH:MM)
-export const formatDateTime = (dateString) => {
-  if (!dateString) return 'Data e hora não informadas';
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Data e hora inválidas';
-    
-    return date.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  } catch (error) {
-    console.error('Error formatting date time:', error);
-    return 'Erro ao formatar data e hora';
+export const parseApiDate = (dateInput) => {
+  if (!dateInput) {
+    debugLog('parseApiDate', 'Null input received');
+    return null;
   }
-};
-
-// Get a relative time string (e.g., "Today", "Yesterday", "3 days ago")
-export const getRelativeTimeString = (dateString) => {
-  if (!dateString) return '';
   
   try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return 'Hoje';
-    } else if (diffDays === 1) {
-      return 'Ontem';
-    } else if (diffDays > 1 && diffDays < 7) {
-      return `Há ${diffDays} dias`;
-    } else {
-      return formatDate(date);
+    debugLog('parseApiDate', 'Attempting to parse date:', dateInput);
+
+    if (Array.isArray(dateInput)) {
+      debugLog('parseApiDate', 'Parsing array format:', dateInput);
+      const result = new Date(dateInput[0], dateInput[1] - 1, dateInput[2], 
+        dateInput[3] || 0, dateInput[4] || 0, dateInput[5] || 0);
+
+      debugLog('parseApiDate', 'Parsed date from array:', result);
+      return result;
     }
-  } catch (error) {
-    console.error('Error getting relative time:', error);
-    return '';
-  }
-};
 
-// Format date for API requests (YYYY-MM-DD)
-export const formatDateForApi = (date) => {
-  if (!date) return null;
-  
-  try {
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return null;
+    let date = new Date(dateInput);
     
-    return d.toISOString().split('T')[0];
+    if (!isNaN(date.getTime())) {
+      debugLog('parseApiDate', 'Standard parsing successful:', date);
+      return date;
+    }
+    
+    if (dateString.includes('T') && dateString.includes('-')) {
+      debugLog('parseApiDate', 'Attempting alternative format parse');
+      const parts = dateString.split('T');
+      if (parts.length === 2) {
+        const datePart = parts[0].split('-');
+        if (datePart.length === 3) {
+          const isoDate = `${datePart[2]}-${datePart[1]}-${datePart[0]}T${parts[1]}`;
+          date = new Date(isoDate);
+          if (!isNaN(date.getTime())) {
+            debugLog('parseApiDate', 'Alternative parsing successful:', date);
+            return date;
+          }
+        }
+      }
+    }
+    
+    errorLog('parseApiDate', 'Failed to parse date', null, dateString);
+    return null;
   } catch (error) {
-    console.error('Error formatting date for API:', error);
+    errorLog('parseApiDate', 'Error parsing date', error, dateString);
     return null;
   }
 };
 
-// Format date and time for API requests (YYYY-MM-DDTHH:MM:SS)
-export const formatDateTimeForApi = (date, time) => {
+export const formatDate = (dateString) => {
+  if (!dateString) {
+    debugLog('formatDate', 'Null input received');
+    return 'Data não informada';
+  }
+  
+  try {
+    debugLog('formatDate', 'Formatting date:', dateString);
+    const date = parseApiDate(dateString);
+    if (!date) return 'Data inválida';
+    
+    const result = date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    debugLog('formatDate', 'Formatted result:', result);
+    return result;
+  } catch (error) {
+    errorLog('formatDate', 'Error formatting date', error, dateString);
+    return 'Erro ao formatar data';
+  }
+};
+
+export const formatTime = (dateString) => {
+  if (!dateString) {
+    debugLog('formatTime', 'Null input received');
+    return 'Horário não informado';
+  }
+  
+  try {
+    debugLog('formatTime', 'Formatting time:', dateString);
+    const date = parseApiDate(dateString);
+    if (!date) return 'Horário inválido';
+    
+    const result = date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    debugLog('formatTime', 'Formatted result:', result);
+    return result;
+  } catch (error) {
+    errorLog('formatTime', 'Error formatting time', error, dateString);
+    return 'Erro ao formatar horário';
+  }
+};
+
+export const formatDateForApi = (date) => {
   if (!date) return null;
   
   try {
     const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) return null;
-    
-    // If time is provided, set the hours and minutes
-    if (time) {
-      const [hours, minutes] = time.split(':');
-      dateObj.setHours(parseInt(hours, 10));
-      dateObj.setMinutes(parseInt(minutes, 10));
-    }
-    
-    return dateObj.toISOString();
+    // Adjust for timezone offset
+    const adjustedDate = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000);
+    // Format as YYYY-MM-DD
+    const result = adjustedDate.toISOString();
+    debugLog('formatDateForApi', 'Formatted result:', result);
+    return result;
   } catch (error) {
-    console.error('Error formatting date time for API:', error);
+    errorLog('formatDateForApi', 'Error formatting date for API', error, date);
     return null;
   }
 };
