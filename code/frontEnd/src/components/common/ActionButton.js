@@ -27,17 +27,6 @@ const ActionButton = ({
         return styles.buttonText;
     };
 
-    const getButtonColor = () => {
-        switch (type) {
-            case 'secondary':
-                return COLORS.secondary;
-            case 'danger':
-                return COLORS.danger;
-            default:
-                return COLORS.primary;
-        }
-    };
-
     return (
         <TouchableOpacity
             style={[

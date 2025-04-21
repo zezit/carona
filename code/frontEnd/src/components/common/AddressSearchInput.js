@@ -50,7 +50,6 @@ const AddressSearchInput = ({
     onChangeText(text);
     
     if (text.trim().length > 2) {
-      // Implement debouncing to improve search performance
       const timer = setTimeout(() => {
         setLoading(true);
         fetchSuggestions(text);
@@ -103,11 +102,9 @@ const AddressSearchInput = ({
   
   // Stub function for simplicity - this will be called by LocationSelectionPage
   const fetchSuggestions = () => {
-    // This is simplified now - the main search logic is in SuggestionsPanel
     setLoading(false);
   };
 
-  // Handle address selection
   const handleSelectItem = (item) => {
     onSelectAddress(item);
     saveRecentAddress(item);
@@ -115,7 +112,6 @@ const AddressSearchInput = ({
     setShowNoResults(false);
   };
 
-  // Get data to display based on search context
   const getData = () => {
     if (value.trim().length < 3) {
       return recentAddresses;
@@ -140,7 +136,6 @@ const AddressSearchInput = ({
     return suggestions.length > 0 ? 'Selecione um endereço da lista' : '';
   };
 
-  // If hideInput is true, render just suggestions directly
   if (hideInput) {
     const data = getData();
     const hintText = getHintText();
@@ -196,7 +191,6 @@ const AddressSearchInput = ({
     );
   }
 
-  // Regular render with AutocompleteInput
   return (
     <View style={[styles.container, style]}>
       <AutocompleteInput

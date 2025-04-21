@@ -14,7 +14,6 @@ import {
 import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING } from '../../constants';
 import RideDateTimePicker from './RideDateTimePicker';
 
-// Create reusable FormSection component based on the profile card style
 const FormSection = ({ title, icon, children }) => (
     <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>

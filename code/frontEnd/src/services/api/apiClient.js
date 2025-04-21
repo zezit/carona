@@ -2,14 +2,6 @@ import axios from 'axios';
 import { API_BASE_URL } from '@env';
 import errorMessages from '../../constants/errors.json';
 
-const DEBUG = true;
-
-const debugLog = (module, message, ...args) => {
-  if (DEBUG) {
-    console.log(`[ApiClient]/${module}: ${message}`, ...args);
-  }
-};
-
 // Determine the base URL based on environment
 const getBaseUrl = () => {
   return API_BASE_URL;
@@ -214,8 +206,6 @@ export const apiClient = {
     return 'Ocorreu um erro. Tente novamente.';
   }
 };
-
-// Add the following method to fetch upcoming rides for a driver
 
 /**
  * Fetches upcoming scheduled rides for a driver
