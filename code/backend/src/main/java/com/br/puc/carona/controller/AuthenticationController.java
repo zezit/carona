@@ -54,6 +54,6 @@ public class AuthenticationController {
         // Se o método for acessado com sucesso, o token é válido
         // O Spring Security já faz a validação do token antes de chegar aqui
         log.info("Token validado com sucesso para o usuário: {}", usuario.getEmail());
-        return ResponseEntity.ok(new TokenValidationResponse(true, usuario.getEmail(), usuario.getId()));
+        return ResponseEntity.ok(new TokenValidationResponse(true, usuario.getEmail(), usuario.getId(), usuario.getNome(), usuario.getImgUrl()));
     }
 }

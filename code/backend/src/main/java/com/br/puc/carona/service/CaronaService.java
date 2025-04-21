@@ -53,8 +53,8 @@ public class CaronaService {
 
         // Validar datas da carona
         validarDatasCarona(request.getDataHoraPartida(), request.getDataHoraChegada());
-
-        // Criar a carona
+        
+                // Criar a carona
         final Carona carona = caronaMapper.toEntity(request);
         carona.setMotorista(perfilMotorista);
         carona.setStatus(StatusCarona.AGENDADA);
@@ -89,8 +89,8 @@ public class CaronaService {
 
         // Validar datas da carona
         validarDatasCarona(request.getDataHoraPartida(), request.getDataHoraChegada());
-
-        // Atualizar a carona
+        
+                // Atualizar a carona
         caronaMapper.updateEntity(carona, request);
 
         // Recalcular estimativas de distância e tempo e trajetos se pontos de partida ou destino foram
@@ -165,6 +165,26 @@ public class CaronaService {
         return caronas.map(caronaMapper::toDto);
     }
 
+    // Método para buscar próximas caronas agendadas de um motorista
+    public List<CaronaDto> buscarProximasCaronasDoMotorista(final Long motoristaId) {
+        log.info("Buscando próximas caronas agendadas do motorista ID: {}", motoristaId);
+
+        // Verificar se o motorista existe
+        if (!perfilMotoristaRepository.existsById(motoristaId)) {
+            throw new EntidadeNaoEncontrada(MensagensResposta.ESTUDANTE_NAO_E_MOTORISTA, motoristaId);
+        }
+
+        // Buscar caronas agendadas com data de partida no futuro
+        final List<Carona> caronas = caronaRepository.findByMotoristaIdAndStatusAndDataHoraPartidaAfterOrderByDataHoraPartidaAsc(
+                motoristaId,
+                StatusCarona.AGENDADA,
+                LocalDateTime.now());
+
+        return caronas.stream()
+                .map(caronaMapper::toDto)
+                .toList();
+    }
+
     /**
      * Valida as datas de partida e chegada da carona
      * 
@@ -207,7 +227,7 @@ public class CaronaService {
             throw new ErroDeCliente(MensagensResposta.ALTERACAO_STATUS_CARONA_INVALIDA);
         }
 
-        if (StatusCarona.CANCELADA.equals(carona.getStatus()) || StatusCarona.CANCELADA.equals(status)) {
+        if (StatusCarona.CANCELADA.equals(carona.getStatus()) || StatusCarona.FINALIZADA.equals(carona.getStatus())) {
             // Não é permitido alterar o status de uma carona CANCELADA ou FINALIZADA
             throw new ErroDeCliente(MensagensResposta.ALTERACAO_STATUS_CARONA_INVALIDA);
         }

@@ -5,11 +5,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.br.puc.carona.dto.LocationDto;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.exception.custom.TrajetoNaoEncontradoException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,80 +28,6 @@ public class MapService {
 
     @Value("${app.nominatim.base-url:https://nominatim.openstreetmap.org}")
     private String nominatimBaseUrl;
-
-    /**
-     * Geocode an address to get coordinates
-     * 
-     * @param address the address to geocode
-     * @return List of LocationDto with coordinates or empty list if not found
-     */
-    public List<LocationDto> geocodeAddress(final String address) {
-        log.info("Geocodificando endereço: {}", address);
-
-        try {
-            final String query = buildQueryWithRegionDefault(address);
-            final JsonNode response = fetchGeocodingResponse(query);
-
-            if (response != null && response.isArray() && response.size() > 0) {
-                final List<LocationDto> results = processGeocodingResults(response);
-                logSuccessfulGeocoding(results);
-                return results;
-            }
-
-            log.warn("Não foi possível geocodificar o endereço: {}", address);
-            return new ArrayList<>();
-        } catch (final Exception e) {
-            log.error("Erro ao geocodificar endereço: {}", address, e);
-            return new ArrayList<>();
-        }
-    }
-
-    private String buildQueryWithRegionDefault(final String address) {
-        final String addressLower = address.toLowerCase();
-        if (!addressLower.contains("minas gerais") && !addressLower.contains("mg")) {
-            return address + ", Minas Gerais, Brasil";
-        }
-        return address;
-    }
-
-    private JsonNode fetchGeocodingResponse(final String query) {
-        return nominatimWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/search")
-                        .queryParam("q", query)
-                        .queryParam("format", "json")
-                        .queryParam("limit", 5)
-                        .queryParam("addressdetails", 1)
-                        .queryParam("accept-language", "pt-BR")
-                        .queryParam("countrycodes", "br")
-                        .build())
-                .header(HttpHeaders.USER_AGENT, "CarpoolService/1.0")
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
-    }
-
-    private List<LocationDto> processGeocodingResults(final JsonNode response) {
-        final List<LocationDto> results = new ArrayList<>();
-
-        for (int i = 0; i < response.size(); i++) {
-            final JsonNode location = response.get(i);
-            final Double lat = location.get("lat").asDouble();
-            final Double lon = location.get("lon").asDouble();
-            final String formattedAddress = location.get("display_name").asText();
-
-            results.add(new LocationDto(lat, lon, formattedAddress));
-        }
-
-        return results;
-    }
-
-    private void logSuccessfulGeocoding(final List<LocationDto> results) {
-        if (!results.isEmpty()) {
-            log.info("Endereço geocodificado com sucesso. Coordenadas: [{}, {}]",
-                    results.get(0).getLatitude(), results.get(0).getLongitude());
-        }
-    }
 
     /**
      * Calcular trajetórias (principal e alternativas) entre dois pontos

@@ -30,6 +30,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/carona")
 @RequiredArgsConstructor
@@ -216,7 +218,7 @@ public class CaronaController {
         public ResponseEntity<CaronaDto> buscarCarona(@PathVariable final Long id) {
                 log.info("Buscando carona com ID: {}", id);
                 final CaronaDto caronaDto = caronaService.buscarCaronaPorId(id);
-                log.info("Carona encontrada: {}", caronaDto);
+                log.info("Carona encontrada: {}", caronaDto.toStringBaseInfo());
                 return ResponseEntity.ok(caronaDto);
         }
 
@@ -319,6 +321,80 @@ public class CaronaController {
                 log.info("Listando caronas do motorista ID: {}", motoristaId);
                 final Page<CaronaDto> caronas = caronaService.buscarCaronasDoMotorista(motoristaId, pageable);
                 log.info("Total de caronas encontradas: {}", caronas.getTotalElements());
+                return ResponseEntity.ok(caronas);
+        }
+
+        @GetMapping("/motorista/{motoristaId}/proximas")
+        @Operation(summary = "Listar próximas caronas de motorista", description = "Lista as próximas caronas agendadas de um motorista, ordenadas por data/hora de partida crescente.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Lista de próximas caronas obtida com sucesso", content = {
+                                        @Content(mediaType = "application/json", schema = @Schema(implementation = List.class),
+                                        examples = {
+                                            @ExampleObject(
+                                                name = "Lista de próximas caronas do motorista",
+                                                description = "Exemplo de resposta com lista de próximas caronas",
+                                                value = """
+                                                [
+                                                    {
+                                                        "id": 1,
+                                                        "motorista": {
+                                                            "id": 5,
+                                                            "carro": {
+                                                                "id": 3,
+                                                                "modelo": "Onix",
+                                                                "placa": "ABC1234",
+                                                                "cor": "Prata",
+                                                                "capacidadePassageiros": 4
+                                                            },
+                                                            "cnh": "12345678910",
+                                                            "whatsapp": "31998765432",
+                                                            "mostrarWhatsapp": true
+                                                        },
+                                                        "pontoPartida": "Rua A, 123",
+                                                        "pontoDestino": "Avenida B, 456",
+                                                        "dataHoraPartida": "01-10-2025T10:00:00",
+                                                        "dataHoraChegada": "01-10-2025T12:00:00",
+                                                        "vagas": 3,
+                                                        "status": "AGENDADA",
+                                                        "vagasDisponiveis": 2,
+                                                        "distanciaEstimadaKm": 15.5
+                                                    },
+                                                    {
+                                                        "id": 2,
+                                                        "motorista": {
+                                                            "id": 5,
+                                                            "carro": {
+                                                                "id": 3,
+                                                                "modelo": "Onix",
+                                                                "placa": "ABC1234",
+                                                                "cor": "Prata",
+                                                                "capacidadePassageiros": 4
+                                                            },
+                                                            "cnh": "12345678910",
+                                                            "whatsapp": "31998765432",
+                                                            "mostrarWhatsapp": true
+                                                        },
+                                                        "pontoPartida": "Rua C, 789",
+                                                        "pontoDestino": "Avenida D, 1010",
+                                                        "dataHoraPartida": "02-10-2025T08:00:00",
+                                                        "dataHoraChegada": "02-10-2025T09:30:00",
+                                                        "vagas": 3,
+                                                        "status": "AGENDADA",
+                                                        "vagasDisponiveis": 3,
+                                                        "distanciaEstimadaKm": 16.8
+                                                    }
+                                                ]
+                                                """
+                                            )
+                                        }) }),
+                        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                        @ApiResponse(responseCode = "404", description = "Motorista não encontrado"),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+        })
+        public ResponseEntity<List<CaronaDto>> listarProximasCaronasMotorista(@PathVariable final Long motoristaId) {
+                log.info("Listando próximas caronas agendadas do motorista ID: {}", motoristaId);
+                final List<CaronaDto> caronas = caronaService.buscarProximasCaronasDoMotorista(motoristaId);
+                log.info("Total de próximas caronas encontradas: {}", caronas.size());
                 return ResponseEntity.ok(caronas);
         }
 

@@ -8,7 +8,6 @@ import java.util.Set;
 import com.br.puc.carona.dto.AbstractDto;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.enums.StatusCarona;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,9 +29,7 @@ public class CaronaDto extends AbstractDto {
     private String pontoDestino;
     private Double latitudeDestino;
     private Double longitudeDestino;
-    @JsonFormat(pattern = "dd-MM-yyyy'T'HH:mm:ss")
     private LocalDateTime dataHoraPartida;
-    @JsonFormat(pattern = "dd-MM-yyyy'T'HH:mm:ss")
     private LocalDateTime dataHoraChegada;
     private Integer vagas;
     private StatusCarona status;
@@ -44,4 +41,19 @@ public class CaronaDto extends AbstractDto {
     @Builder.Default
     private List<TrajetoDto> trajetos = new ArrayList<>();
     private TrajetoDto trajetoPrincipal;
+    
+    public String toStringBaseInfo() {
+        return new StringBuilder()
+                .append("CaronaDto{")
+                .append("id=").append(getId())
+                .append(", motorista=").append(motorista != null ? motorista.toStringBaseInfo() : null)
+                .append(", pontoPartida='").append(pontoPartida).append('\'')
+                .append(", pontoDestino='").append(pontoDestino).append('\'')
+                .append(", dataHoraPartida=").append(dataHoraPartida)
+                .append(", dataHoraChegada=").append(dataHoraChegada)
+                .append(", vagas=").append(vagas)
+                .append(", status=").append(status)
+                .append('}')
+                .toString();
+    }
 }

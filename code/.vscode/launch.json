@@ -1,0 +1,60 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Backend API",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "com.br.puc.carona.CaronaApplication",
+      "projectName": "carona",
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/backend/.env",
+      "preLaunchTask": "Start MySQL Database",
+      "presentation": {
+        "hidden": false,
+        "group": "carona",
+        "order": 1
+      }
+    },
+    {
+      "name": "Run Ngrok + API Update",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "./run-ngrok-update-api.sh",
+      "cwd": "${workspaceFolder}/backend",
+      "presentation": {
+        "hidden": false,
+        "group": "carona",
+        "order": 2
+      }
+    },
+    {
+      "name": "Run Frontend",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "yarn start --tunnel",
+      "cwd": "${workspaceFolder}/frontEnd",
+      "presentation": {
+        "hidden": false,
+        "group": "carona",
+        "order": 3
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run App",
+      "configurations": [
+        "Run Backend API",
+        "Run Ngrok + API Update",
+        "Run Frontend"
+      ],
+      "presentation": {
+        "hidden": false,
+        "group": "carona",
+        "order": 1
+      },
+      "stopAll": true
+    }
+  ]
+}

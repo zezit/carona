@@ -25,6 +25,8 @@ public class TokenService {
                     .withIssuer("carona")
                     .withSubject(usuario.getEmail())
                     .withClaim("id", usuario.getId())
+                    .withClaim("name", usuario.getNome())
+                    .withClaim("photoUrl", usuario.getImgUrl())
                     .withExpiresAt(generateExpirationDate())
                     .sign(algorithm);
 
