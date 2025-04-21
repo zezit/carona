@@ -3,11 +3,13 @@ name: Testes Unitários 🧪 - Backend
 on:
   push:
     paths:
+      # - '**'
       - 'code/backend/**'
     branches-ignore:
       - 'dependabot/**' #avoid duplicates: only run the PR, not the push
   pull_request:
     paths:
+      # - '**'
       - 'code/backend/**'
 
 jobs:
@@ -15,13 +17,8 @@ jobs:
     if: (github.event_name != 'pull_request' && ! github.event.pull_request.head.repo.fork) || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.fork || startsWith(github.head_ref, 'dependabot/')))
     runs-on: ubuntu-latest
     permissions:
-      # Required for publishing the coverage report to GitHub Pages
       contents: write
-      # Required for JaCoCo reporter action to create a check
       checks: write
-      # Required for GitHub Pages
-      pages: write
-      # Required for GitHub Actions workflow status
       statuses: write
 
     env:
@@ -53,118 +50,168 @@ jobs:
       - name: Compilando e executando testes com cobertura
         working-directory: ./code/backend
         run: mvn clean verify
-        continue-on-error: true
 
-      - name: Instalar xmllint
-        run: sudo apt-get install -y libxml2-utils
+      - name: Generate Coverage Badge
+        id: coverage_badge
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          generate-branches-badge: false
+          jacoco-csv-file: code/backend/target/site/jacoco/jacoco.csv
+          badges-directory: code/backend/badges
+          coverage-label: 'Backend - Code Coverage 🔍'
+          coverage-badge-filename: lines.svg
 
-      - name: Extraindo dados de cobertura
+      - name: Generate Branches Badge
+        id: branches_badge
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          generate-coverage-badge: false
+          generate-branches-badge: true
+          jacoco-csv-file: code/backend/target/site/jacoco/jacoco.csv
+          badges-directory: code/backend/badges
+          branches-label: 'Backend - Branch Coverage 🌿'
+          branches-badge-filename: branches.svg
+          
+      - name: Update README with badges
+        run: |
+          # Copy badges to root directory
+          mkdir -p .github/badges
+          cp code/backend/badges/*.svg .github/badges/
+          
+          # Update README with new badges - replace only the badges without affecting other content
+          BADGE_LINE="![Backend - Code Coverage 🔍](.github/badges/lines.svg) ![Backend - Branch Coverage 🌿](.github/badges/branches.svg)"
+          
+          # Check if the badge line already exists in the README
+          if grep -q "Backend - Code Coverage 🔍" README.md && grep -q "Backend - Branch Coverage 🌿" README.md; then
+            # Badges already exist, replace the line
+            sed -i 's|!\[Backend - Code Coverage 🔍\](.*/lines.svg) !\[Backend - Branch Coverage 🌿\](.*/branches.svg)|'"$BADGE_LINE"'|g' README.md
+          else
+            # Badges don't exist, add them to the top
+            # First check and remove any old workflow badge line if it exists
+            if grep -q "actions/workflows/backend.yml/badge.svg" README.md; then
+              sed -i '/actions\/workflows\/backend.yml\/badge.svg/d' README.md
+            fi
+            
+            # Add the badges at the top of the file
+            sed -i "1s/^/$BADGE_LINE\n/" README.md
+          fi
+
+      - name: Commit e push das badges
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: '.github/badges/* README.md'
+          message: 'doc: Atualiza badges de cobertura de código [skip ci]'
+          default_author: github_actions
+
+      - name: Publicar relatório de testes JUnit
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: 'code/backend/target/surefire-reports/TEST-*.xml'
+          detailed_summary: true
+          include_passed: true
+          check_name: 'JUnit Test Report'
+
+      - name: Extraindo e verificando cobertura
         id: extract_coverage
+        if: always()
         run: |
           REPORT_FILE="./code/backend/target/site/jacoco/jacoco.xml"
           if [ -f "$REPORT_FILE" ]; then
             echo "report_exists=true" >> $GITHUB_OUTPUT
             
-            # Use a more robust approach with xmllint
-            if command -v xmllint &> /dev/null; then
-              # Extract line coverage data
-              COUNTER_DATA=$(xmllint --xpath "string(/report/counter[@type='LINE']/@covered)" $REPORT_FILE)
-              COVERED_LINES=${COUNTER_DATA:-0}
-              MISSED_DATA=$(xmllint --xpath "string(/report/counter[@type='LINE']/@missed)" $REPORT_FILE)
-              MISSED_LINES=${MISSED_DATA:-0}
-              
-              # Extract branch coverage data
-              BRANCH_COVERED_DATA=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@covered)" $REPORT_FILE)
-              BRANCH_COVERED=${BRANCH_COVERED_DATA:-0}
-              BRANCH_MISSED_DATA=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@missed)" $REPORT_FILE)
-              BRANCH_MISSED=${BRANCH_MISSED_DATA:-0}
-            else
-              # Fallback to simple grep if xmllint is not available
-              COVERED_LINES=$(cat $REPORT_FILE | grep -o 'counter.*type=\"LINE\".*covered=\"[0-9]*\"' | grep -o 'covered=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
-              MISSED_LINES=$(cat $REPORT_FILE | grep -o 'counter.*type=\"LINE\".*missed=\"[0-9]*\"' | grep -o 'missed=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
-              
-              # Extract branch coverage data
-              BRANCH_COVERED=$(cat $REPORT_FILE | grep -o 'counter.*type=\"BRANCH\".*covered=\"[0-9]*\"' | grep -o 'covered=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
-              BRANCH_MISSED=$(cat $REPORT_FILE | grep -o 'counter.*type=\"BRANCH\".*missed=\"[0-9]*\"' | grep -o 'missed=\"[0-9]*\"' | grep -o '[0-9]*' || echo "0")
+            # Install xmllint if needed
+            if ! command -v xmllint &> /dev/null; then
+              sudo apt-get install -y libxml2-utils
             fi
             
-            # Calculate total and percentage for lines
+            # Extract coverage data
+            COVERED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@covered)" $REPORT_FILE)
+            MISSED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@missed)" $REPORT_FILE)
+            BRANCH_COVERED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@covered)" $REPORT_FILE)
+            BRANCH_MISSED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@missed)" $REPORT_FILE)
+            
+            # Calculate percentages
             TOTAL_LINES=$((COVERED_LINES + MISSED_LINES))
-            if [ $TOTAL_LINES -gt 0 ]; then
-              COVERAGE_PERCENT=$(echo "scale=2; 100*$COVERED_LINES/$TOTAL_LINES" | bc)
-            else
-              COVERAGE_PERCENT="0"
-            fi
-            
-            # Calculate total and percentage for branches
             TOTAL_BRANCHES=$((BRANCH_COVERED + BRANCH_MISSED))
-            if [ $TOTAL_BRANCHES -gt 0 ]; then
-              BRANCH_COVERAGE_PERCENT=$(echo "scale=2; 100*$BRANCH_COVERED/$TOTAL_BRANCHES" | bc)
+            
+            if [ $TOTAL_LINES -gt 0 ]; then
+              LINE_COVERAGE=$(echo "scale=2; 100*$COVERED_LINES/$TOTAL_LINES" | bc)
             else
-              BRANCH_COVERAGE_PERCENT="0"
+              LINE_COVERAGE="0"
             fi
             
-            # Set outputs for lines
+            if [ $TOTAL_BRANCHES -gt 0 ]; then
+              BRANCH_COVERAGE=$(echo "scale=2; 100*$BRANCH_COVERED/$TOTAL_BRANCHES" | bc)
+            else
+              BRANCH_COVERAGE="0"
+            fi
+            
+            # Set thresholds
+            LINE_THRESHOLD=70
+            BRANCH_THRESHOLD=60
+            
+            # Output data for GitHub summary
             echo "covered_lines=$COVERED_LINES" >> $GITHUB_OUTPUT
             echo "missed_lines=$MISSED_LINES" >> $GITHUB_OUTPUT
             echo "total_lines=$TOTAL_LINES" >> $GITHUB_OUTPUT
-            echo "coverage_percent=$COVERAGE_PERCENT" >> $GITHUB_OUTPUT
-            
-            # Set outputs for branches
+            echo "line_coverage=$LINE_COVERAGE" >> $GITHUB_OUTPUT
             echo "branch_covered=$BRANCH_COVERED" >> $GITHUB_OUTPUT
             echo "branch_missed=$BRANCH_MISSED" >> $GITHUB_OUTPUT
             echo "total_branches=$TOTAL_BRANCHES" >> $GITHUB_OUTPUT
-            echo "branch_coverage_percent=$BRANCH_COVERAGE_PERCENT" >> $GITHUB_OUTPUT
+            echo "branch_coverage=$BRANCH_COVERAGE" >> $GITHUB_OUTPUT
+            
+            # Create summary report
+            echo "## 📊 Relatório de Cobertura de Código" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            echo "| Métrica | Atual | Mínimo | Status |" >> $GITHUB_STEP_SUMMARY
+            echo "| ------- | ----- | ------ | ------ |" >> $GITHUB_STEP_SUMMARY
+            
+            # Check line coverage
+            if (( $(echo "$LINE_COVERAGE < $LINE_THRESHOLD" | bc -l) )); then
+              echo "| Linhas | $LINE_COVERAGE% | $LINE_THRESHOLD% | ❌ FALHA |" >> $GITHUB_STEP_SUMMARY
+              LINE_STATUS="fail"
+            else
+              echo "| Linhas | $LINE_COVERAGE% | $LINE_THRESHOLD% | ✅ PASSOU |" >> $GITHUB_STEP_SUMMARY
+              LINE_STATUS="pass"
+            fi
+            
+            # Check branch coverage
+            if (( $(echo "$BRANCH_COVERAGE < $BRANCH_THRESHOLD" | bc -l) )); then
+              echo "| Branches | $BRANCH_COVERAGE% | $BRANCH_THRESHOLD% | ❌ FALHA |" >> $GITHUB_STEP_SUMMARY
+              BRANCH_STATUS="fail"
+            else
+              echo "| Branches | $BRANCH_COVERAGE% | $BRANCH_THRESHOLD% | ✅ PASSOU |" >> $GITHUB_STEP_SUMMARY
+              BRANCH_STATUS="pass"
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Detalhes" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Linhas cobertas: $COVERED_LINES de $TOTAL_LINES" >> $GITHUB_STEP_SUMMARY
+            echo "- Branches cobertos: $BRANCH_COVERED de $TOTAL_BRANCHES" >> $GITHUB_STEP_SUMMARY
+            
+            # Check if thresholds are met and fail if not
+            if [ "$LINE_STATUS" = "fail" ] || [ "$BRANCH_STATUS" = "fail" ]; then
+              echo "::error::A cobertura de código está abaixo do mínimo exigido. Linhas: $LINE_COVERAGE% (mín: $LINE_THRESHOLD%), Branches: $BRANCH_COVERAGE% (mín: $BRANCH_THRESHOLD%). Adicione mais testes para aumentar a cobertura."
+              exit 1
+            else
+              echo "✅ A cobertura de código atende aos requisitos mínimos."
+            fi
           else
             echo "report_exists=false" >> $GITHUB_OUTPUT
-            echo "covered_lines=0" >> $GITHUB_OUTPUT
-            echo "missed_lines=0" >> $GITHUB_OUTPUT
-            echo "total_lines=0" >> $GITHUB_OUTPUT
-            echo "coverage_percent=0" >> $GITHUB_OUTPUT
-            
-            # Set outputs for branches
-            echo "branch_covered=0" >> $GITHUB_OUTPUT
-            echo "branch_missed=0" >> $GITHUB_OUTPUT
-            echo "total_branches=0" >> $GITHUB_OUTPUT
-            echo "branch_coverage_percent=0" >> $GITHUB_OUTPUT
+            echo "::error::Relatório de cobertura não foi gerado. Verifique se os testes foram executados corretamente."
+            exit 1
           fi
 
-      - name: Adicionando relatório ao resumo do workflow
-        if: steps.extract_coverage.outputs.report_exists == 'true'
-        run: |
-          echo "## 📊 Relatório de Cobertura de Código" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Cobertura de Linhas" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
-          echo "| ------- | ----- |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📏 Porcentagem de Cobertura | ${{ steps.extract_coverage.outputs.coverage_percent }}% |" >> $GITHUB_STEP_SUMMARY
-          echo "| ✅ Linhas Cobertas | ${{ steps.extract_coverage.outputs.covered_lines }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ❌ Linhas Não Cobertas | ${{ steps.extract_coverage.outputs.missed_lines }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📋 Total de Linhas | ${{ steps.extract_coverage.outputs.total_lines }} |" >> $GITHUB_STEP_SUMMARY
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Cobertura de Branches" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
-          echo "| ------- | ----- |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔄 Porcentagem de Cobertura | ${{ steps.extract_coverage.outputs.branch_coverage_percent }}% |" >> $GITHUB_STEP_SUMMARY
-          echo "| ✅ Branches Cobertos | ${{ steps.extract_coverage.outputs.branch_covered }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ❌ Branches Não Cobertos | ${{ steps.extract_coverage.outputs.branch_missed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📋 Total de Branches | ${{ steps.extract_coverage.outputs.total_branches }} |" >> $GITHUB_STEP_SUMMARY
-          
-          # Verifica se a cobertura está acima ou abaixo do limite
-          coverage="${{ steps.extract_coverage.outputs.coverage_percent }}"
-          if (( $(echo "$coverage < 70" | bc -l) )); then
-            echo "⚠️ **Atenção**: A cobertura está abaixo do mínimo recomendado de 70%" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ **Ótimo**: A cobertura está acima do mínimo recomendado de 70%" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Armazenando artefatos do relatório de cobertura
-        if: steps.extract_coverage.outputs.report_exists == 'true'
+      - name: Armazenando artefatos de relatórios
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: relatorio-cobertura-codigo
-          path: ./code/backend/target/site/jacoco
+          name: relatorios-teste-cobertura
+          path: |
+            ./code/backend/target/site/jacoco
+            ./code/backend/target/surefire-reports
           retention-days: 7
