@@ -32,7 +32,7 @@
       "name": "Run Frontend",
       "type": "node-terminal",
       "request": "launch",
-      "command": "nvm use 20 && yarn start --tunnel",
+      "command": "yarn start --tunnel",
       "cwd": "${workspaceFolder}/frontEnd",
       "presentation": {
         "hidden": false,
