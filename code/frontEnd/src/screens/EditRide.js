@@ -62,19 +62,19 @@ const EditRide = ({ navigation, route }) => {
     // Check for location updates from the LocationSelectionPage
     useEffect(() => {
         // When returning from LocationSelectionPage, update location data
-        const { 
-            departure, 
-            departureLocation, 
-            arrival, 
+        const {
+            departure,
+            departureLocation,
+            arrival,
             arrivalLocation,
-            isReturningFromLocationSelection 
+            isReturningFromLocationSelection
         } = route.params || {};
 
         if (isReturningFromLocationSelection && departureLocation && arrivalLocation) {
             console.log('Returning from location selection with new data:', {
                 departure, departureLocation, arrival, arrivalLocation
             });
-            
+
             // Update ONLY the location data, not the date
             setOrigin(departure);
             setDestination(arrival);
@@ -82,20 +82,20 @@ const EditRide = ({ navigation, route }) => {
             setOriginLng(departureLocation.longitude);
             setDestLat(arrivalLocation.latitude);
             setDestLng(arrivalLocation.longitude);
-            
+
             // Use the ref to ensure we keep the original departure date
             // Don't modify the current departureDate state here
-            
+
             // Refetch routes with new coordinates
             // Use setTimeout to ensure state updates have been applied
             setTimeout(() => {
                 fetchRoutes(
-                    departureLocation.latitude, 
+                    departureLocation.latitude,
                     departureLocation.longitude,
                     arrivalLocation.latitude,
                     arrivalLocation.longitude
                 );
-                
+
                 // Don't try to restore the departure date here
                 // The current state should remain unchanged
             }, 500);
@@ -108,7 +108,7 @@ const EditRide = ({ navigation, route }) => {
             originalDepartureDateRef.current = departureDate;
         }
     }, []);
-    
+
     // After fetching routes, ensure we center the map on the route
     useEffect(() => {
         if (routes && routes.length > 0 && selectedRoute) {
@@ -204,12 +204,12 @@ const EditRide = ({ navigation, route }) => {
             const lngStart = startLng || originLng;
             const latEnd = endLat || destLat;
             const lngEnd = endLng || destLng;
-            
+
             if (!latStart || !lngStart || !latEnd || !lngEnd) {
                 console.error('Missing coordinates for route calculation');
                 return;
             }
-            
+
             const response = await apiClient.get(
                 `/maps/trajectories?startLat=${latStart}&startLon=${lngStart}&endLat=${latEnd}&endLon=${lngEnd}`,
                 {
@@ -337,9 +337,23 @@ const EditRide = ({ navigation, route }) => {
         fitMapToCoordinates(route.pontos);
     };
 
-    // Handle date changes based on the active time mode
     const handleDateChange = (mode, date) => {
-        setDepartureDate(date);
+        if (mode === 'departure') {
+            setDepartureDate(date);
+            // If we have a route with duration, calculate arrival time automatically
+            if (duration > 0) {
+                // No need to set arrival date explicitly as it's calculated when needed
+            }
+        } else if (mode === 'arrival') {
+            // If we have a route with duration, calculate departure time from arrival
+            if (duration > 0) {
+                const calculatedDepartureDate = new Date(date.getTime() - (duration * 1000));
+                setDepartureDate(calculatedDepartureDate);
+            } else {
+                // No route yet, just set departure date same as arrival for now
+                setDepartureDate(date);
+            }
+        }
     };
 
     // Handle seats change
@@ -396,7 +410,10 @@ const EditRide = ({ navigation, route }) => {
         try {
             setLoading(true);
 
-            const arrivalDate = new Date(departureDate.getTime() + (duration * 1000));
+            // Make sure departureDate is valid before calculating arrivalDate
+            const arrivalDate = departureDate 
+                ? new Date(departureDate.getTime() + (duration * 1000))
+                : new Date(Date.now() + (duration * 1000));
 
             const rideData = {
                 pontoPartida: origin,
@@ -411,7 +428,7 @@ const EditRide = ({ navigation, route }) => {
                 observacoes: notes
             };
 
-            const response = await apiClient.put(`/carona/${ride.id}`, rideData, {
+            const response = await apiClient.put(`/carona/${ride?.id}`, rideData, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
