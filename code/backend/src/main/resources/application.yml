@@ -13,10 +13,22 @@ spring:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.MySQL8Dialect
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080}
+  rabbitmq:
+    exchanges:
+      carpool: carpool.topic
+    queues:
+      notifications: carpool.notifications
+      rides-created: carpool.rides.created
+      rides-updated: carpool.rides.updated
 
 server:
   port: ${SERVER_PORT:8080}
