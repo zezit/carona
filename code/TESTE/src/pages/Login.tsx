@@ -15,8 +15,8 @@ import EyeOffIconSrc from '/src/assets/icons/eye_off.svg';
 
 
 export default function Login  ()  {
-  const [email, setEmail] = useState("admin@carona.com");
-  const [password, setPassword] = useState("admin123");
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [values, setValues] = useState({ email: '', password: '' });
   const { login, isLoading, isAuthenticated, token } = useAuth();
@@ -47,7 +47,10 @@ const {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    const email = emailRef.current?.value;
+    const password = passwordRef.current?.value;
+
+    if (!email || !passwordRef) {
       toast.error("Por favor, preencha todos os campos");
       return;
     }
@@ -61,7 +64,10 @@ const {
   };
 
   const toggleShowPassword = () => {
-    setShowPassword((prev) => !prev);
+    // Only toggle if we're not currently animating
+    if (!isAnimating) {
+      setShowPassword((prev) => !prev);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,22 +78,19 @@ const {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-carona-100 page-transition px-4">
       {/* Urso */}
-      <div className="w-[130px] h-[130px] relative mb-4">
-        <div className="absolute inset-0 flex items-center justify-center">
-          {currentBearImage && (
-            <BearAvatar
-              currentImage={currentBearImage}
-              key={`${currentFocus}-${values.email.length}`}
-            />
-          )}
-        </div>
-      </div>
 
       <div className="bg-white py-10 px-6 shadow-card rounded-2xl w-full max-w-md glass-panel">
         <div className="flex flex-col items-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-carona-600 flex items-center justify-center text-white text-xl font-bold">
-            C
+          <div className="w-[130px] h-[130px] relative mb-4">
+          <div className="absolute inset-0 flex items-center justify-center">
+            {currentBearImage && (
+              <BearAvatar
+                currentImage={currentBearImage}
+                key={`${currentFocus}-${values.email.length}`}
+              />
+            )}
           </div>
+        </div>
           <h2 className="mt-4 text-center text-3xl font-extrabold text-gray-900">
             Carona<span className="text-carona-600">?</span>
           </h2>
@@ -101,14 +104,16 @@ const {
             <Label htmlFor="email">Email</Label>
             <div className="mt-1">
               <Input
+                placeholder="admin@carona.com"
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
+                autoFocus
+                onFocus={() => setCurrentFocus('EMAIL')}
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@carona.com"
+                value={values.email}
+                onChange={handleInputChange}
                 className="transition-all duration-200 focus:ring-carona-500 focus:border-carona-500"
               />
             </div>
@@ -123,22 +128,34 @@ const {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                ref={passwordRef}
+                onFocus={() => setCurrentFocus('PASSWORD')}
+                value={values.password}
+                onChange={handleInputChange}
                 placeholder="••••••••"
                 className="transition-all duration-200 focus:ring-carona-500 focus:border-carona-500 pr-10"
               />
               <button
-                type="button"
-                onClick={toggleShowPassword}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
+              type="button"
+              onClick={toggleShowPassword}
+              className={`absolute right-3 top-1/2 -translate-y-1/2
+              text-gray-500 focus:outline-none transition-all duration-300
+              hover:text-gray-700`}
+            >
+              {showPassword ? (
+                <img
+                  src={EyeOffIconSrc}
+                  alt="Hide password"
+                  className="w-5 h-5 transition-transform transform rotate-0 hover:scale-110"
+                />
+              ) : (
+                <img
+                  src={EyeIconSrc}
+                  alt="Show password"
+                  className="w-5 h-5 transition-transform transform rotate-0 hover:scale-110"
+                />
+              )}
+            </button>
             </div>
             <div className="text-sm mt-2 text-right">
               <a href="#" className="font-medium text-carona-600 hover:text-carona-500">
