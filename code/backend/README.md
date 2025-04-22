@@ -1,4 +1,3 @@
-
 # Backend da Aplicação Carona?
 
 Este é o serviço de backend para a aplicação Carona?, desenvolvido com Spring Boot.
@@ -45,9 +44,11 @@ Certifique-se de **não deixar esses campos em branco** para que a aplicação f
 
 2. Modifique os valores no arquivo `.env` conforme necessário.
 
-## Executar o Banco de Dados
+## Executando os Serviços
 
-Para iniciar o banco de dados MySQL usando Docker:
+### Executando MySQL e RabbitMQ Juntos
+
+Para iniciar tanto o banco de dados MySQL quanto o RabbitMQ juntos:
 
 **Linux/macOS:**
 ```bash
@@ -63,14 +64,67 @@ chmod +x ./start-db.sh  # Tornar o script executável na primeira vez
 # Exportar variáveis de ambiente
 for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
 
+docker-compose up -d
+```
+
+### Executando Apenas o MySQL
+
+Se você precisar apenas do banco de dados MySQL:
+
+**Linux/macOS:**
+```bash
+# Exportar variáveis de ambiente
+export $(grep -v '^#' .env | xargs)
+
 docker-compose up -d mysql
 ```
 
-Para parar o banco de dados:
+**Windows:**
+```cmd
+# Exportar variáveis de ambiente
+for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
+
+docker-compose up -d mysql
+```
+
+### Executando Apenas o RabbitMQ
+
+Se você precisar apenas do RabbitMQ:
+
+**Linux/macOS:**
+```bash
+# Exportar variáveis de ambiente
+export $(grep -v '^#' .env | xargs)
+
+docker-compose up -d rabbitmq
+```
+
+**Windows:**
+```cmd
+# Exportar variáveis de ambiente
+for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
+
+docker-compose up -d rabbitmq
+```
+
+### Parando os Serviços
+
+Para parar todos os serviços:
 
 **Linux/macOS/Windows:**
 ```bash
 docker-compose down
+```
+
+Para parar apenas um serviço específico:
+
+**Linux/macOS/Windows:**
+```bash
+# Para parar apenas o MySQL
+docker-compose stop mysql
+
+# Para parar apenas o RabbitMQ
+docker-compose stop rabbitmq
 ```
 
 ## Executando a Aplicação
