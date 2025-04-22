@@ -1,8 +1,8 @@
-package com.br.puc.carona.service;
+package com.br.puc.carona.messaging;
 
+import com.br.puc.carona.service.NotificacaoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +18,16 @@ public class MensagemConsumer {
     private final NotificacaoService notificacaoService;
 
 
-    // Esse metódo talvez nem continue aqui, mas é um exemplo de como receber mensagens do RabbitMQ
-    // e enviar para o WebSocket.
+
     @RabbitListener(queues = "${app.rabbitmq.queues.notifications}")
     public void processarMensagem(Message mensagem) {
-        System.out.println("Mensagem recebida do RabbitMQ: " + mensagem.getPayload());
+        log.info("Mensagem recebida na fila 'notifications': {}", mensagem.getPayload());
 
-        log.info("MENSAGEM RECEBIDA ");
-        //notificacaoService.enviarNotificacao(mensagem);
+    }
+
+    @RabbitListener(queues = "${app.rabbitmq.queues.rides-request}")
+    public void processarRidesRequest(Message mensagem) {
+        log.info("Mensagem recebida na fila 'rides.request': {}", mensagem.getPayload());
+
     }
 }

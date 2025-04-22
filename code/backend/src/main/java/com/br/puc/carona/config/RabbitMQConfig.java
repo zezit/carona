@@ -24,6 +24,9 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.queues.rides-updated}")
     private String ridesUpdatedQueue;
 
+    @Value("${app.rabbitmq.queues.rides-request}")
+    private String ridesRequestQueue;
+
     // Message converter
     @Bean
     public MessageConverter jsonMessageConverter() {
@@ -45,6 +48,18 @@ public class RabbitMQConfig {
     }
 
     // Queues
+    @Bean
+    public Queue ridesRequestQueue() {
+        return QueueBuilder.durable(ridesRequestQueue)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", ridesRequestQueue + ".dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue ridesRequestDlq() {
+        return QueueBuilder.durable(ridesRequestQueue + ".dlq").build();
+    }
     @Bean
     public Queue notificationsQueue() {
         return QueueBuilder.durable(notificationsQueue)
@@ -108,4 +123,13 @@ public class RabbitMQConfig {
                 .to(carpoolExchange())
                 .with("ride.updated");
     }
+
+    @Bean
+    public Binding ridesRequestBinding() {
+        return BindingBuilder
+                .bind(ridesRequestQueue())
+                .to(carpoolExchange())
+                .with("ride.request");
+    }
+
 }
