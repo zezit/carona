@@ -8,7 +8,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.br.puc.carona.dto.testeMessageDTO;
 
-
+/*
+ * Esta é uma classe usada apenas para testes envolvendo mensageria com rabbitmq, não deve ser usada em produção.
+ * Após a conclusão do trabalho, esta classe deve ser removida.
+ * 
+ * Por enquanto, sintam-se à vontade para usar esta classe para testar o envio de mensagens.
+ */
 
 
 @RestController
