@@ -6,6 +6,7 @@ import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.mapper.SolicitacaoCaronaMapper;
+import com.br.puc.carona.messaging.MensagemProducer;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.SolicitacaoCarona;
 import com.br.puc.carona.repository.EstudanteRepository;
@@ -28,6 +29,7 @@ public class SolicitacaoCaronaService {
     private final SolicitacaoCaronaRepository solicitacaoRepository;
     private final EstudanteRepository estudanteRepository;
     private final SolicitacaoCaronaMapper mapper;
+    private final MensagemProducer mensagemProducer;
 
     @Transactional
     public SolicitacaoCaronaDto criarSolicitacao(final Long estudanteId, final SolicitacaoCaronaRequest request) {
@@ -41,6 +43,9 @@ public class SolicitacaoCaronaService {
         solicitacao.setStatus(Status.PENDENTE); // status inicial
 
         solicitacaoRepository.save(solicitacao);
+
+        mensagemProducer.enviarMensagemParaCaronaRequestQueue(solicitacao);
+
         log.info("Solicitação de carona criada com sucesso para estudante ID: {}", estudanteId);
 
         return mapper.toDto(solicitacao);

@@ -24,7 +24,7 @@ public class SolicitacaoCaronaMapper {
 
         return solicitacao;
     }
-    
+
     public SolicitacaoCaronaDto toDto(final SolicitacaoCarona solicitacao) {
         if (solicitacao == null) {
             return null;

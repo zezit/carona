@@ -2,6 +2,7 @@ package com.br.puc.carona.controller;
 
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
+import com.br.puc.carona.messaging.MensagemProducer;
 import com.br.puc.carona.service.SolicitacaoCaronaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,8 @@ public class SolicitacaoCaronaController {
 
     private final SolicitacaoCaronaService solicitacaoService;
 
+    private final MensagemProducer mensagemProducer;
+
     @PostMapping("/{estudanteId}")
     @Operation(summary = "Criar solicitação de carona", description = "Cria uma nova solicitação de carona para um estudante")
     @ApiResponses(value = {
@@ -41,6 +44,8 @@ public class SolicitacaoCaronaController {
             @Valid @RequestBody final SolicitacaoCaronaRequest request) {
         log.info("Iniciando requisição de criação de solicitação de carona para estudante ID: {}", estudanteId);
         SolicitacaoCaronaDto solicitacao = solicitacaoService.criarSolicitacao(estudanteId, request);
+
+
         log.info("Finalizando requisição de criação de solicitação de carona para estudante ID: {}", estudanteId);
         return ResponseEntity.status(HttpStatus.CREATED).body(solicitacao);
     }
