@@ -16,23 +16,25 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "solicitacao-carona")
+@Table(name = "solicitacao_carona")
 public class SolicitacaoCarona extends AbstractEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "estudante_id", nullable = false)
     private Estudante estudante;
 
-    @Column
+    @Column(nullable = false)
     private String origem;
 
-    @Column
+    @Column(nullable = false)
     private String destino;
 
-    @Column
+    @Column(nullable = false)
     private LocalDateTime horarioPartida;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Status status;
+
 
 }
