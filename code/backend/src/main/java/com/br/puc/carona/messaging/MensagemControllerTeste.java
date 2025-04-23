@@ -20,7 +20,7 @@ public class MensagemControllerTeste {
     @GetMapping("/send")
     public String sendMessage() {
         testeMessageDTO message = new testeMessageDTO("Hello, World!");
-        mensagemProducer.enviarMensagemParaNotifications(message);
+        mensagemProducer.enviarMensagemParaCaronaRequestQueue(message);
         return "Message sent: " + message;
     }
 }

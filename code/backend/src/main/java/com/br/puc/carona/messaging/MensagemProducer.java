@@ -30,6 +30,8 @@ public class MensagemProducer {
     }
 
     public void enviarMensagemParaCaronaRequestQueue(final SolicitacaoCarona sc) {
+        log.info("Enviando para a fila2: {}", ridesRequestQueue);
+
         CaronaRequestMessage msg = CaronaRequestMessage.builder()
                 .solicitacaoId(sc.getId())
                 .estudanteId(sc.getEstudante().getId())
