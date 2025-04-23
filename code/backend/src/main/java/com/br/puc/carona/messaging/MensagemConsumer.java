@@ -25,9 +25,9 @@ public class MensagemConsumer {
 
     }
 
-    @RabbitListener(queues = "${app.rabbitmq.queues.rides-request}")
-    public void processarRidesRequest(Message mensagem) {
-        log.info("Mensagem recebida na fila 'rides.request': {}", mensagem.getPayload());
-
-    }
+//    @RabbitListener(queues = "${app.rabbitmq.queues.rides-request}")
+//    public void processarRidesRequest(Message mensagem) {
+//        log.info("Mensagem recebida na fila 'rides.request': {}", mensagem.getPayload());
+//
+//    }
 }

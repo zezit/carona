@@ -37,7 +37,7 @@ public class MensagemProducer {
                 .estudanteId(sc.getEstudante().getId())
                 .origem(sc.getOrigem())
                 .destino(sc.getDestino())
-                .horarioPartida(sc.getHorarioPartida())
+                .dataHoraPartida(sc.getHorarioPartida())
                 .build();
 
         rabbitTemplate.convertAndSend(ridesRequestQueue, msg);
