@@ -1,5 +1,6 @@
 package com.br.puc.carona.mapper;
 
+import com.br.puc.carona.model.Estudante;
 import org.springframework.stereotype.Component;
 
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
@@ -23,7 +24,7 @@ public class SolicitacaoCaronaMapper {
 
         return solicitacao;
     }
-
+    
     public SolicitacaoCaronaDto toDto(final SolicitacaoCarona solicitacao) {
         if (solicitacao == null) {
             return null;
