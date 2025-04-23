@@ -10,7 +10,7 @@ O sistema de carpool conecta estudantes e funcionários da PUC Minas para compar
     <td align="center">
       <a href="https://github.com/picininz">
         <img src="https://avatars.githubusercontent.com/u/138057342?v=4" width="100px;" height="100px;" style="border-radius:50%;" alt="Felipe Freitas"/><br />
-        <sub><b>Felipe Freitas</b></sub>
+        <sub><b>Felipe Picinin</b></sub>
       </a>
     </td>
     <td align="center">
