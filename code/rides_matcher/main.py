@@ -1,3 +1,4 @@
+#main.py
 from database.connection import get_connection
 import logging
 from messaging.messaging import RideRequestConsumer, RabbitMQConnection

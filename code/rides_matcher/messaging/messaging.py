@@ -1,3 +1,4 @@
+#messaging.py
 import json
 import logging
 import pika
@@ -7,6 +8,7 @@ from messaging.config import (
     RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASS,
     QUEUE_REQUEST
 )
+from messaging.config import QUEUE_NOTIFICATIONS
 
 # Configuração do logger
 logging.basicConfig(
@@ -53,6 +55,9 @@ class MessageProcessor:
             
             # Envia o payload tratado para a função tratar_solicitacao
             tratar_solicitacao(payload)  # Não é necessário fazer mais a conversão para string aqui
+
+            # 🆕 Enviar para fila de notificações
+            self.send_notification(payload)
             
             # Confirma o recebimento e processamento da mensagem
             self.acknowledge_message(ch, method)
@@ -84,6 +89,22 @@ class MessageProcessor:
     def nacknowledge_message(self, ch, method):
         """Envia negativa (nack) para indicar que houve erro no processamento"""
         ch.basic_nack(delivery_tag=method.delivery_tag)
+
+    def send_notification(self, payload):
+        """Publica uma mensagem na fila de notificações"""
+        try:
+            message = json.dumps(payload, default=str)  # default=str para serializar datetime
+            self.channel.basic_publish(
+                exchange='',
+                routing_key=QUEUE_NOTIFICATIONS,
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=2  # torna a mensagem persistente
+                )
+            )
+            logger.info(f"Mensagem enviada para a fila de notificações: {payload}")
+        except Exception as e:
+            logger.error(f"Erro ao enviar mensagem para notificações: {e}")    
 
 
 class RideRequestConsumer:
