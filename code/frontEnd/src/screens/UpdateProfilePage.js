@@ -70,7 +70,7 @@ const UpdateProfilePage = ({ navigation, route }) => {
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypes.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -108,12 +108,45 @@ const UpdateProfilePage = ({ navigation, route }) => {
       });
 
       if (response.success) {
+        // If an image is selected, upload it
+        if (image && image !== user?.photoUrl) {
+          try {
+            const formData = new FormData();
+            formData.append('file', {
+              uri: image,
+              name: 'profile.jpg',
+              type: 'image/jpeg',
+            });
+
+            const options = {
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'multipart/form-data',
+              },
+            };
+
+            const imageResponse = await apiClient.patch(
+              `/usuario/${user.id}/imagem`,
+              formData,
+              options
+            );
+
+            if (!imageResponse.success) {
+              Alert.alert("Erro ao atualizar imagem:", imageResponse.error?.message || "Não foi possível atualizar a imagem.");
+            }
+          } catch (error) {
+            console.error("Erro ao atualizar imagem:", error);
+            Alert.alert("Erro", "Ocorreu um erro ao atualizar a imagem. Tente novamente.");
+          }
+        }
+
         // Update local user state with new data
         setUser({
           ...user,
           nome,
           matricula,
           curso,
+          photoUrl: image || user?.photoUrl,
         });
 
         Alert.alert('Sucesso', 'Perfil atualizado com sucesso!', [{
