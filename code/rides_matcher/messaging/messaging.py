@@ -1,21 +1,17 @@
 #messaging.py
 import json
-import logging
 import pika
 from datetime import datetime
 from services.match_rides import tratar_solicitacao
+from utils.logger_config import setup_logger
 from messaging.config import (
     RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASS,
     QUEUE_REQUEST
 )
 from messaging.config import QUEUE_NOTIFICATIONS
 
-# Configuração do logger
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s"
-)
-logger = logging.getLogger("ride_matcher")
+# Setup logger using centralized configuration
+logger = setup_logger("ride_matcher")
 
 
 class RabbitMQConnection:

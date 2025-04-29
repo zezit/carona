@@ -1,15 +1,11 @@
 #main.py
 from database.connection import get_connection
-import logging
+from utils.logger_config import setup_logger
 from messaging.messaging import RideRequestConsumer, RabbitMQConnection
 from messaging.config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASS, QUEUE_REQUEST
 
-# Configuração do logger
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s"
-)
-logger = logging.getLogger("rides_matcher")
+# Setup logger using centralized configuration
+logger = setup_logger("rides_matcher")
 
 
 def testar_conexao():

@@ -1,6 +1,10 @@
 import mysql.connector
 from database.connection import get_connection
 from datetime import datetime, timedelta
+from utils.logger_config import setup_logger
+
+# Setup logger using centralized configuration
+logger = setup_logger("ride_matcher")
 
 def buscar_caronas_similares(data_obj):
     """
@@ -25,5 +29,5 @@ def buscar_caronas_similares(data_obj):
         return resultados
 
     except Exception as e:
-        print("Erro ao buscar caronas:", e)
+        logger.error(f"Erro ao buscar caronas: {e}")
         return []

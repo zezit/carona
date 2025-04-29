@@ -2,17 +2,21 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # carrega .env na variável de ambiente
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+dotenv_path = os.path.join(project_root, 'backend', '.env')
 
-RABBIT_HOST    = os.getenv("RABBIT_HOST")
-RABBIT_PORT    = int(os.getenv("RABBIT_PORT", 5672))
-RABBIT_USER    = os.getenv("RABBIT_USER")
-RABBIT_PASS    = os.getenv("RABBIT_PASS")
+load_dotenv(dotenv_path=dotenv_path)
+
+RABBIT_HOST    = os.getenv("RABBITMQ_HOST")
+RABBIT_PORT    = int(os.getenv("RABBITMQ_PORT", 5672))
+RABBIT_USER    = os.getenv("RABBITMQ_USER")
+RABBIT_PASS    = os.getenv("RABBITMQ_PASSWORD")
 
 QUEUE_REQUEST  = os.getenv("QUEUE_REQUEST")
 QUEUE_MATCHES  = os.getenv("QUEUE_MATCHES")
 QUEUE_NOTIFICATIONS = os.getenv("QUEUE_NOTIFICATIONS")
-
+QUEUE_RIDE_CREATED = os.getenv("QUEUE_RIDE_CREATED")
+QUEUE_RIDE_UPDATED = os.getenv("QUEUE_RIDE_UPDATED")
 
 API_BASE_URL   = os.getenv("API_BASE_URL")
 MAX_DISTANCE_KM= float(os.getenv("MAX_DISTANCE_KM", 5.0))

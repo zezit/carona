@@ -1,13 +1,9 @@
 #match_rides.py
 from database.rides_repository import buscar_caronas_similares
-import logging
+from utils.logger_config import setup_logger
 
-# Configuração do logger
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s"
-)
-logger = logging.getLogger("ride_matcher")
+# Setup logger using centralized configuration
+logger = setup_logger("ride_matcher")
 
 def tratar_solicitacao(payload):
     data_partida = payload.get("dataHoraPartida")
