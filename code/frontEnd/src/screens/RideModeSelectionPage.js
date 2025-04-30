@@ -123,8 +123,8 @@ const RideModeSelectionPage = ({ navigation, route }) => {
   }, [navigation]);
 
   const handleSearchRide = useCallback(() => {
-    // TODO: navigation.navigate('RidesPage', { mode: 'available-rides' });
-    Alert.alert('Em breve!', 'Essa funcionalidade ainda não está disponível.');
+     navigation.navigate('FindRides', { mode: 'available-rides' });
+   
   }, [navigation]);
 
   if (loading) {

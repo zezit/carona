@@ -10,7 +10,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import LoginPage from '../screens/LoginPage';
 import RegisterPage from '../screens/RegisterPage';
 import RegisterSecondPage from '../screens/RegisterSecondPage';
-
+import FindRides from '../screens/FindRides';
 // Main app screens
 import HomePage from '../screens/HomePage';
 import ProfilePage from '../screens/ProfilePage';
@@ -116,6 +116,7 @@ const MainStack = () => (
     <Stack.Screen name="RegisterRide" component={RegisterRidePage} />
     <Stack.Screen name="ScheduledRides" component={ScheduledRides} options={{ headerShown: false }} />
     <Stack.Screen name="EditRide" component={EditRide} options={{ headerShown: false }} />
+    <Stack.Screen name="FindRides" component={FindRides}/>
   </Stack.Navigator>
 );
 
