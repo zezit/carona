@@ -78,4 +78,17 @@ public class SolicitacaoCaronaService {
         solicitacaoRepository.save(solicitacao);
         log.info("Solicitação ID: {} cancelada com sucesso", id);
     }
+
+    public void cancelarSolicitacoesDeCaronaDoEstudante(Estudante estudante) {
+        log.info("Cancelando solicitações de carona do estudante ID: {}", estudante.getId());
+        List<SolicitacaoCarona> solicitacoes = solicitacaoRepository.findByEstudante(estudante)
+                .map(List::of)
+                .orElseGet(List::of);
+
+        for (SolicitacaoCarona solicitacao : solicitacoes) {
+            cancelarSolicitacao(solicitacao.getId());
+        }
+
+        log.info("Todas as solicitações de carona do estudante ID: {} foram canceladas", estudante.getId());
+    }
 }
