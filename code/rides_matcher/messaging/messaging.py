@@ -53,7 +53,12 @@ class MessageProcessor:
             tratar_solicitacao(payload)  # Não é necessário fazer mais a conversão para string aqui
 
             # 🆕 Enviar para fila de notificações
-            self.send_notification(payload)
+            notificationQueuePayload = {
+                "caronaId": 1,
+                "solicitacaoId": payload.get("solicitacaoId")
+            }
+
+            self.send_notification(notificationQueuePayload)
             
             # Confirma o recebimento e processamento da mensagem
             self.acknowledge_message(ch, method)
@@ -89,13 +94,13 @@ class MessageProcessor:
     def send_notification(self, payload):
         """Publica uma mensagem na fila de notificações"""
         try:
-            message = json.dumps(payload, default=str)  # default=str para serializar datetime
+            message = json.dumps(payload, default=str)  # Certifique-se de que a mensagem é JSON válido
             self.channel.basic_publish(
                 exchange='',
                 routing_key=QUEUE_NOTIFICATIONS,
                 body=message,
                 properties=pika.BasicProperties(
-                    delivery_mode=2  # torna a mensagem persistente
+                    delivery_mode=2  # Torna a mensagem persistente
                 )
             )
             logger.info(f"Mensagem enviada para a fila de notificações: {payload}")

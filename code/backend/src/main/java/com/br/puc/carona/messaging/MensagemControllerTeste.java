@@ -32,11 +32,11 @@ public class MensagemControllerTeste {
 
     @GetMapping("/fcmsend")
     public String sendPushNotification() throws Exception{
-        String token = "aqui_o_token_do_dispositivo"; // precisa ser real
+        Long id = 4L; // precisa ser real
         String titulo = "Nova Solicitação de Carona!";
         String corpo = "Alguém perto de você está solicitando uma carona.";
 
-        fcmService.enviarNotificacao(token, titulo, corpo);
+        fcmService.enviarNotificacao(id, titulo, corpo);
         return "push notification sent";
     }
 }
