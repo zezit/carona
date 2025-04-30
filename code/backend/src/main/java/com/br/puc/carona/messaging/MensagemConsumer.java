@@ -21,7 +21,8 @@ public class MensagemConsumer {
 
     @RabbitListener(queues = "${app.rabbitmq.queues.notifications}")
     public void processarMensagem(Message mensagem) {
-        log.info("Mensagem recebida na fila 'notifications': {}", mensagem.getPayload());
+
+        log.info("Mensagem recebida na fila 'notifications': {}\n", mensagem.getPayload());
 
     }
 

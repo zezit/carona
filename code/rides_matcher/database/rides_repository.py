@@ -19,7 +19,7 @@ def buscar_caronas_similares(data_obj):
 
         query = """
             SELECT * FROM carona
-            WHERE dataHoraPartida BETWEEN %s AND %s
+            WHERE data_hora_partida BETWEEN %s AND %s
         """
         cursor.execute(query, (intervalo_inicio, intervalo_fim))
         resultados = cursor.fetchall()
