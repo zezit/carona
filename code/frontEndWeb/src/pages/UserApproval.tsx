@@ -9,10 +9,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+
 
 const UserApproval = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { pendingUsers, approveUser, rejectUser, isLoading, fetchPendingUsers } = useUsers();
+  const { pendingUsers, approveUser, rejectUser,  fetchPendingUsers } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
@@ -26,11 +31,43 @@ const UserApproval = () => {
   });
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
+  // Animações para a página e componentes
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
+  };
+
+  const cardVariants = {
+    hover: { scale: 1.03, transition: { duration: 0.2 } }
+  };
+
+  const handleNavigation = (path) => {
+    // Pequena animação antes de navegar
+    setIsLoading(true);
+    setTimeout(() => {
+      navigate(path);
+    }, 200);
+  };
+
   // Load pending users when component mounts
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchPendingUsers();
-    }
+    let isMounted = true;
+    
+    const loadData = async () => {
+      if (isAuthenticated) {
+        await fetchPendingUsers();
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    loadData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [isAuthenticated, fetchPendingUsers]);
 
   // Update filtered users when pendingUsers changes
@@ -50,6 +87,22 @@ const UserApproval = () => {
   // Redirect if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/" />;
+  }
+
+  // Mostra tela de carregamento se os dados ainda estão sendo carregados
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="text-carona-600 text-xl font-medium"
+        >
+          Carregando...
+        </motion.div>
+      </div>
+    );
   }
 
   const handleViewUser = (user: User) => {
@@ -108,14 +161,23 @@ const UserApproval = () => {
   };
 
   const handleRefresh = () => {
-    fetchPendingUsers();
+    setIsLoading(true);
+    fetchPendingUsers().finally(() => {
+      setIsLoading(false);
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <motion.div 
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={pageVariants}
+      className="min-h-screen bg-gray-50"
+    >
       <Navbar />
       
-      <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-transition">
+      <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Aprovação de Usuários</h1>
@@ -208,7 +270,7 @@ const UserApproval = () => {
         confirmText={confirmAction.type === "approve" ? "Aprovar" : "Rejeitar"}
         variant={confirmAction.type === "reject" ? "destructive" : "default"}
       />
-    </div>
+    </motion.div>
   );
 };
 

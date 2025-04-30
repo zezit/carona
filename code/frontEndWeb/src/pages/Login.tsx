@@ -1,4 +1,4 @@
-import React, { FormEvent, useRef,useState, useEffect } from "react";
+import React, { FormEvent, useRef, useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -51,7 +51,8 @@ const {
     const password = passwordRef.current?.value;
 
 
-    if (!email || !passwordRef) {
+    if (!email || !password) {
+
       toast.error("Por favor, preencha todos os campos");
       return;
     }
@@ -185,4 +186,3 @@ const {
     </div>
   );
 };
-

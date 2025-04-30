@@ -17,10 +17,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const UserManagement = () => {
   const { isAuthenticated } = useAuth();
-  const { users, blockUser, unblockUser, deleteUser, isLoading, filterUsers, fetchAllUsers } = useUsers();
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const { users, blockUser, unblockUser, deleteUser, filterUsers, fetchAllUsers } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
@@ -37,11 +41,43 @@ const UserManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 9;
 
-  // Load users when component mounts
+  // Animações para a página e componentes
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
+  };
+
+  const cardVariants = {
+    hover: { scale: 1.03, transition: { duration: 0.2 } }
+  };
+
+  const handleNavigation = (path) => {
+    // Pequena animação antes de navegar
+    setIsLoading(true);
+    setTimeout(() => {
+      navigate(path);
+    }, 200);
+  };
+
+  // Load all users when component mounts
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchAllUsers();
-    }
+    let isMounted = true;
+    
+    const loadData = async () => {
+      if (isAuthenticated) {
+        await fetchAllUsers();
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    loadData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [isAuthenticated, fetchAllUsers]);
 
   // Update filtered users when users changes
@@ -52,6 +88,22 @@ const UserManagement = () => {
   // Redirect if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/" />;
+  }
+
+  // Mostrar tela de carregamento se os dados ainda estão sendo carregados
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="text-carona-600 text-xl font-medium"
+        >
+          Carregando...
+        </motion.div>
+      </div>
+    );
   }
 
   const handleViewUser = (user: User) => {
@@ -112,7 +164,10 @@ const UserManagement = () => {
   };
 
   const handleRefresh = () => {
-    fetchAllUsers();
+    setIsLoading(true);
+    fetchAllUsers().finally(() => {
+      setIsLoading(false);
+    });
     setCurrentPage(1);
   };
 
@@ -127,10 +182,16 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <motion.div 
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={pageVariants}
+      className="min-h-screen bg-gray-50"
+    >
       <Navbar />
       
-      <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-transition">
+      <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Usuários</h1>
@@ -183,7 +244,13 @@ const UserManagement = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
               {currentUsers.map((user) => (
-                <div key={user.id} className="h-full">
+
+                <motion.div
+                  key={user.id}
+                  whileHover="hover"
+                  variants={cardVariants}
+                >
+
                   <UserCard
                     user={user}
                     onBlock={handleBlockClick}
@@ -192,7 +259,9 @@ const UserManagement = () => {
                     onView={handleViewUser}
                     mode="management"
                   />
-                </div>
+
+                </motion.div>
+
               ))}
             </div>
             
@@ -265,7 +334,7 @@ const UserManagement = () => {
         }
         variant={confirmAction.type === "delete" ? "destructive" : "default"}
       />
-    </div>
+    </motion.div>
   );
 };
 
