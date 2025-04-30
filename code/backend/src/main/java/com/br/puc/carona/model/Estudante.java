@@ -45,6 +45,9 @@ public class Estudante extends Usuario {
     @OneToOne(mappedBy = "estudante", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private PerfilMotorista perfilMotorista;
 
+    @Column(nullable = false)
+    private String fcmToken;
+
     public boolean isMotorista() {
         return perfilMotorista != null;
     }

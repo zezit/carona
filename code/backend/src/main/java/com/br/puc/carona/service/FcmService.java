@@ -1,5 +1,6 @@
 package com.br.puc.carona.service;
 
+import com.br.puc.carona.model.Estudante;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -23,9 +24,14 @@ public class FcmService {
     private static final String FCM_API_URL = "https://fcm.googleapis.com/v1/projects/carona-c9eba/messages:send";
     private static final String SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 
+    private final EstudanteService estudanteService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public void enviarNotificacao(String deviceToken, String titulo, String corpo) throws Exception {
+    public void enviarNotificacao(Long estudanteId, String titulo, String corpo) throws Exception {
+
+        String deviceToken = estudanteService.buscarDeviceTokenPorId(estudanteId);
+
         GoogleCredentials credentials = GoogleCredentials
                 .fromStream(new FileInputStream("carona-c9eba-firebase-adminsdk-fbsvc-36291ddbf8.json"))
                 .createScoped(List.of(SCOPE));
