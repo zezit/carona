@@ -29,7 +29,7 @@
       }
     },
     {
-      "name": "Run Frontend",
+      "name": "Run Mobile",
       "type": "node-terminal",
       "request": "launch",
       "command": "yarn start --tunnel",
@@ -39,6 +39,29 @@
         "group": "carona",
         "order": 3
       }
+    },
+    {
+      "name": "Run Frontend Web",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/frontEndWeb",
+      "presentation": {
+        "hidden": false,
+        "group": "carona",
+        "order": 4
+      }
+    },
+    {
+      "name": "Prompt for Frontend Web",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "${input:runFrontendWebPrompt}",
+      "presentation": {
+        "hidden": false,
+        "group": "carona",
+        "order": 5
+      }
     }
   ],
   "compounds": [
@@ -47,14 +70,33 @@
       "configurations": [
         "Run Backend API",
         "Run Ngrok + API Update",
-        "Run Frontend"
+        "Run Mobile",
+        "Prompt for Frontend Web"
       ],
       "presentation": {
         "hidden": false,
         "group": "carona",
-        "order": 1
+        "order": 2
       },
       "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "runFrontendWebPrompt",
+      "type": "pickString",
+      "description": "Do you want to run the Frontend Web?",
+      "options": [
+        {
+          "label": "Yes",
+          "value": "cd ${workspaceFolder}/frontEndWeb && npm run dev"
+        },
+        {
+          "label": "No",
+          "value": "echo 'Skipping Frontend Web'"
+        }
+      ],
+      "default": "No"
     }
   ]
 }

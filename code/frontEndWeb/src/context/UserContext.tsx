@@ -3,15 +3,34 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useAuth } from "./AuthContext";
 
+export type CarroDto = {
+  id: string;
+  modelo: string;
+  placa: string;
+  cor: string;
+  ano: number;
+};
+
+export type PerfilMotoristaDto = {
+  id: string;
+  cnh: string;
+  whatsapp: string;
+  mostrarWhatsapp: boolean;
+  carro?: CarroDto;
+};
+
 export type User = {
   id: string;
   nome: string;
   email: string;
+  tipoUsuario: "ADMINISTRADOR" | "ESTUDANTE";
   dataDeNascimento: string;
   matricula: string;
+  curso?: string;
   avaliacaoMedia: number;
   status: "PENDENTE" | "APROVADO" | "REJEITADO" | "CANCELADO" | "FINALIZADO";
   imgUrl?: string;
+  perfilMotorista?: PerfilMotoristaDto;
 };
 
 type UserContextType = {
@@ -52,11 +71,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: user.id.toString(),
           nome: user.nome,
           email: user.email,
+          tipoUsuario: user.tipoUsuario || 'ESTUDANTE',
           dataDeNascimento: user.dataDeNascimento,
           matricula: user.matricula || '',
+          curso: user.curso || '',
           avaliacaoMedia: user.avaliacaoMedia || 0,
           status: user.statusCadastro,
           imgUrl: user.imgUrl || '',
+          perfilMotorista: user.perfilMotorista ? {
+            id: user.perfilMotorista.id.toString(),
+            cnh: user.perfilMotorista.cnh || '',
+            whatsapp: user.perfilMotorista.whatsapp || '',
+            mostrarWhatsapp: user.perfilMotorista.mostrarWhatsapp || false,
+            carro: user.perfilMotorista.carro ? {
+              id: user.perfilMotorista.carro.id.toString(),
+              modelo: user.perfilMotorista.carro.modelo || '',
+              placa: user.perfilMotorista.carro.placa || '',
+              cor: user.perfilMotorista.carro.cor || '',
+              ano: user.perfilMotorista.carro.ano || 0
+            } : undefined
+          } : undefined,
         }));
         
         setUsers(formattedUsers);
@@ -85,11 +119,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: user.id.toString(),
           nome: user.nome,
           email: user.email,
+          tipoUsuario: user.tipoUsuario || 'ESTUDANTE',
           dataDeNascimento: user.dataDeNascimento,
           matricula: user.matricula || '',
+          curso: user.curso || '',
           avaliacaoMedia: user.avaliacaoMedia || 0,
           status: "PENDENTE",
           imgUrl: user.imgUrl || '',
+          perfilMotorista: user.perfilMotorista ? {
+            id: user.perfilMotorista.id.toString(),
+            cnh: user.perfilMotorista.cnh || '',
+            whatsapp: user.perfilMotorista.whatsapp || '',
+            mostrarWhatsapp: user.perfilMotorista.mostrarWhatsapp || false,
+            carro: user.perfilMotorista.carro ? {
+              id: user.perfilMotorista.carro.id.toString(),
+              modelo: user.perfilMotorista.carro.modelo || '',
+              placa: user.perfilMotorista.carro.placa || '',
+              cor: user.perfilMotorista.carro.cor || '',
+              ano: user.perfilMotorista.carro.ano || 0
+            } : undefined
+          } : undefined,
         }));
         
         setPendingUsers(formattedUsers);

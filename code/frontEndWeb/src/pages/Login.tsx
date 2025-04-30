@@ -50,6 +50,9 @@ const {
     const email = emailRef.current?.value;
     const password = passwordRef.current?.value;
 
+    console.log("Email:", email);
+    console.log("Password:", password);
+
     if (!email || !passwordRef) {
       toast.error("Por favor, preencha todos os campos");
       return;
@@ -112,6 +115,7 @@ const {
                 autoFocus
                 onFocus={() => setCurrentFocus('EMAIL')}
                 required
+                ref={emailRef}
                 value={values.email}
                 onChange={handleInputChange}
                 className="transition-all duration-200 focus:ring-carona-500 focus:border-carona-500"
@@ -179,10 +183,6 @@ const {
             </Button>
           </div>
         </form>
-
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>Use admin@carona.com / admin123 para demonstração</p>
-        </div>
       </div>
     </div>
   );

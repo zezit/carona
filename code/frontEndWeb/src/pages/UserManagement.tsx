@@ -181,17 +181,18 @@ const UserManagement = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
               {currentUsers.map((user) => (
-                <UserCard
-                  key={user.id}
-                  user={user}
-                  onBlock={handleBlockClick}
-                  onUnblock={handleUnblockClick}
-                  onDelete={handleDeleteClick}
-                  onView={handleViewUser}
-                  mode="management"
-                />
+                <div key={user.id} className="h-full">
+                  <UserCard
+                    user={user}
+                    onBlock={handleBlockClick}
+                    onUnblock={handleUnblockClick}
+                    onDelete={handleDeleteClick}
+                    onView={handleViewUser}
+                    mode="management"
+                  />
+                </div>
               ))}
             </div>
             
