@@ -2,6 +2,8 @@ package com.br.puc.carona.service;
 
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.enums.StatusAprovarPedidoCarona;
+import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.mapper.PedidoDeEntradaMapper;
 import com.br.puc.carona.model.Carona;
@@ -25,8 +27,10 @@ public class PedidoDeEntradaService {
     private final CaronaRepository caronaRepository;
     private final SolicitacaoCaronaRepository solicitacaoRepository;
     private final PedidoDeEntradaRepository pedidoEntradaRepository;
+    private final CaronaService caronaService;
 
     private final PedidoDeEntradaMapper pedidoDeEntradaMapper;
+
 
     @Transactional
     public void processarMensagem(Long caronaId, Long solicitacaoId) {
@@ -68,4 +72,47 @@ public class PedidoDeEntradaService {
         // Mapeando cada PedidoDeEntrada para PedidoDeEntradaDto
         return pedidos.map(pedidoDeEntradaMapper::toDto);
     }
+
+    // Método para aprovar um pedido de entrada
+    @Transactional
+    public void aprovarPedidoDeEntrada(Long idPedido, StatusAprovarPedidoCarona status) {
+        PedidoDeEntrada pedido = pedidoEntradaRepository.findById(idPedido)
+                .orElseThrow(() -> new EntidadeNaoEncontrada("Pedido de entrada não encontrado"));
+        
+
+        switch (status) {
+                case APROVAR:
+        
+                caronaService.adicionarPassageiro(pedido.getCarona().getId(), pedido.getSolicitacao().getEstudante());
+                pedido.setStatus(Status.APROVADO);
+
+                //cancelar todas os pedidos de entrada de carona deste usuario
+                pedidoEntradaRepository.findAll()
+                .stream()
+                .filter(p -> p.getSolicitacao().getEstudante().getId().equals(pedido.getSolicitacao().getEstudante().getId()) 
+                && p.getCarona().getId() != pedido.getCarona().getId()
+                && p.getCarona().getStatus().equals(StatusCarona.AGENDADA)
+                && p.getStatus().equals(Status.PENDENTE)
+                )
+                .forEach(p -> {
+                        p.setStatus(Status.CANCELADO);
+                        pedidoEntradaRepository.save(p);
+                });
+                        
+                        break;
+                case REPROVAR:
+                        pedido.setStatus(Status.REJEITADO);
+                        break;
+
+        
+                default:
+                        
+                        break;
+        }
+
+        // Salva as alterações no banco de dados
+        pedidoEntradaRepository.save(pedido);
+
+        log.info("Pedido de entrada com ID {} atualizado para o status {}", idPedido, status);
+}
 }

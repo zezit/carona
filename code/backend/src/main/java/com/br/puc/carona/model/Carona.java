@@ -110,6 +110,10 @@ public class Carona extends AbstractEntity {
     }
 
     public void adicionarPassageiro(final Estudante estudante) {
+        if (this.passageiros.size() >= this.vagas) {
+            throw new IllegalStateException("Não há vagas disponíveis para adicionar o passageiro.");
+            
+        }
         this.passageiros.add(estudante);
     }
     

@@ -1,6 +1,7 @@
 package com.br.puc.carona.controller;
 
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
+import com.br.puc.carona.enums.StatusAprovarPedidoCarona;
 import com.br.puc.carona.service.PedidoDeEntradaService;
 import com.br.puc.carona.model.PedidoDeEntrada;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +49,18 @@ public class PedidoDeEntradaController {
         return ResponseEntity.ok(pedidos);
     }
 
+    @PostMapping("/aprovarCarona/{idPedido}/{status}")
+    @Operation(summary = "Aprovar pedido de entrada", description = "Aprova um pedido de entrada específico")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido de entrada aprovado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Pedido de entrada não encontrado")
+    })
+    public ResponseEntity<Void> aprovarPedidoDeEntrada(@PathVariable Long idPedido, @PathVariable final StatusAprovarPedidoCarona status) {
+        log.info("Aprovando pedido de entrada com ID de solicitação: {} e status: {}", idPedido, status);
+        pedidoDeEntradaService.aprovarPedidoDeEntrada(idPedido, status);
+        return ResponseEntity.ok().build();
+
+    }
 
 
 }

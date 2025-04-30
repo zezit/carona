@@ -18,6 +18,7 @@ import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.CaronaMapper;
 import com.br.puc.carona.mapper.TrajetoMapper;
 import com.br.puc.carona.model.Carona;
+import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.PerfilMotorista;
 import com.br.puc.carona.model.Trajeto;
 import com.br.puc.carona.repository.CaronaRepository;
@@ -311,5 +312,21 @@ public class CaronaService {
         }
 
         return enderecoAlterado || coordenadasAlteradas;
+    }
+
+    @Transactional
+    public void adicionarPassageiro(Long idCarona, Estudante estudante) {
+
+        // Buscar a carona
+        final Carona carona = caronaRepository.findById(idCarona)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
+
+        // Adicionar o passageiro à carona
+        
+        carona.adicionarPassageiro(estudante);
+
+        // Persistir a atualização
+        caronaRepository.save(carona);
+        log.info("Passageiro adicionado com sucesso à carona. ID: {}", carona.getId());
     }
 }
