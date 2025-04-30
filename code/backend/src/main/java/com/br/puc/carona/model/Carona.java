@@ -84,6 +84,9 @@ public class Carona extends AbstractEntity {
 
     @Column
     private Integer tempoGastoSegundos;
+
+    @OneToMany(mappedBy = "carona", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PedidoDeEntrada> pedidosEntrada = new ArrayList<>();
     
     @ManyToMany
     @JoinTable(
@@ -123,4 +126,13 @@ public class Carona extends AbstractEntity {
     public void removerTodosTrajetos() {
         this.trajetos.clear();
     }
+
+    public void addPedidoDeEntrada(PedidoDeEntrada pedido) {
+        if (!pedidosEntrada.stream()
+                .anyMatch(p -> p.getCarona().getId().equals(pedido.getCarona().getId()) &&
+                        p.getSolicitacao().getId().equals(pedido.getSolicitacao().getId()))) {
+            pedidosEntrada.add(pedido);
+        }
+    }
+
 }

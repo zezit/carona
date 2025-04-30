@@ -222,4 +222,12 @@ public class EstudanteService {
             carro.setCapacidadePassageiros(carroRequest.getCapacidadePassageiros());
         }
     }
+
+    public String buscarDeviceTokenPorId(final Long estudanteId) throws Exception {
+        log.info("Buscando device token do estudante por ID: {}", estudanteId);
+        final Estudante estudante = repository.findById(estudanteId)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId));
+
+        return estudante.getFcmToken();
+    }
 }

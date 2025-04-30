@@ -39,6 +39,21 @@
         "group": "carona",
         "order": 3
       }
+    },
+    {
+      "name": "Run Ride Matcher",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/rides_matcher/main.py",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/backend/.env",
+      "justMyCode": true,
+      "preLaunchTask": "Activate Python Environment for Ride Matcher",
+      "presentation": {
+        "hidden": false,
+        "group": "carona",
+        "order": 4
+      }
     }
   ],
   "compounds": [
@@ -47,7 +62,8 @@
       "configurations": [
         "Run Backend API",
         "Run Ngrok + API Update",
-        "Run Frontend"
+        "Run Frontend",
+        "Run Ride Matcher"
       ],
       "presentation": {
         "hidden": false,

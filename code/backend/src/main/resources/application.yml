@@ -26,9 +26,10 @@ app:
     exchanges:
       carpool: carpool.topic
     queues:
-      notifications: carpool.notifications
-      rides-created: carpool.rides.created
-      rides-updated: carpool.rides.updated
+      notifications: ${QUEUE_NOTIFICATIONS:carpool.notifications}
+      rides-created: ${QUEUE_RIDE_CREATED:carpool.rides.created}
+      rides-updated: ${QUEUE_RIDE_UPDATED:carpool.rides.updated}
+      rides-request: ${QUEUE_REQUEST:carpool.rides.request}
 
 server:
   port: ${SERVER_PORT:8080}

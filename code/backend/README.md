@@ -127,6 +127,51 @@ docker-compose stop mysql
 docker-compose stop rabbitmq
 ```
 
+## Firebase Cloud Messaging (FCM) no Backend (Java)
+
+### 🔐 Arquivo de Credenciais do Firebase
+Para que o backend possa se autenticar com os serviços do Firebase e enviar notificações via FCM (Firebase Cloud Messaging), é necessário utilizar o arquivo de credenciais da conta de serviço.
+
+__Instruções:__
+1. Acesse o console do Firebase.
+2. Vá em Configurações do projeto > Contas de serviço.
+3. Clique em Gerar nova chave privada.
+4. Baixe o arquivo .json, que terá um nome parecido com:
+
+```pgsql
+carona-c9eba-firebase-adminsdk-fbsvc-xxxxxxxx.json
+```
+5. Coloque esse arquivo na pasta raiz do backend (por exemplo: code/backend/).
+
+### Segurança e .gitignore:
+Esse arquivo contém dados sensíveis, como credenciais da sua conta de serviço no Firebase. **Ele não deve ser versionado no GitHub ou em qualquer outro repositório público.
+
+Para evitar isso, foi adicionado essa linha ao seu arquivo .gitignore:
+
+```bash
+/code/backend/carona-c9eba-firebase-adminsdk-*.json
+```
+
+Para impedir que o arquivo seja enviado ao repositório remoto, garantindo segurança para seu projeto.
+
+
+### Estrutura do Projeto
+```bash
+src/
+└── main/
+    └── java/
+        └── com/
+            └── br/
+                └── puc/
+                    └── carona/
+                        └── service/
+                            └── FcmService.java
+carona-c9eba-firebase-adminsdk-fbsvc-36291ddbf8.json
+```
+
+
+
+
 ## Executando a Aplicação
 
 ### Usando Maven
