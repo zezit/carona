@@ -50,8 +50,6 @@ const {
     const email = emailRef.current?.value;
     const password = passwordRef.current?.value;
 
-    console.log("Email:", email);
-    console.log("Password:", password);
 
     if (!email || !passwordRef) {
       toast.error("Por favor, preencha todos os campos");

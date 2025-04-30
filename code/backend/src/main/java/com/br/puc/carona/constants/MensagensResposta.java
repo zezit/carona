@@ -84,6 +84,10 @@ public final class MensagensResposta {
     public static final String ERRO_UPLOAD_ARQUIVO = "arquivo.erro.upload";
     public static final String ERRO_ATUALIZACAO_ARQUIVO = "arquivo.erro.atualizacao";
 
+    // Mensagens relacionadas a solicitação de caronas
+    public static final String SOLICITACAO_CARONA_NAO_ENCONTRADA = "solicitacao_carona.nao.encontrada";
+
+
     private MensagensResposta() {
         throw new IllegalStateException("Utility class");
     }

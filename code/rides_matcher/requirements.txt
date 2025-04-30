@@ -1,0 +1,5 @@
+pika
+requests
+python-dotenv
+mysql-connector-python
+colorlog==6.9.0

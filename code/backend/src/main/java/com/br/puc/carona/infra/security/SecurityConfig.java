@@ -69,7 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/auth/validate").permitAll()
                         .requestMatchers("/swagger/**", "/docs/**", "/health/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

@@ -41,26 +41,29 @@
       }
     },
     {
-      "name": "Run Frontend Web",
+      "name": "Run Frontend",
       "type": "node-terminal",
       "request": "launch",
-      "command": "npm run dev",
+      "command": "yarn dev",
       "cwd": "${workspaceFolder}/frontEndWeb",
       "presentation": {
         "hidden": false,
         "group": "carona",
-        "order": 4
+        "order": 3
       }
     },
     {
-      "name": "Prompt for Frontend Web",
-      "type": "node-terminal",
+      "name": "Run Ride Matcher",
+      "type": "debugpy",
       "request": "launch",
-      "command": "${input:runFrontendWebPrompt}",
+      "program": "${workspaceFolder}/rides_matcher/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "preLaunchTask": "Activate Python Environment for Ride Matcher",
       "presentation": {
         "hidden": false,
         "group": "carona",
-        "order": 5
+        "order": 4
       }
     }
   ],
@@ -71,7 +74,8 @@
         "Run Backend API",
         "Run Ngrok + API Update",
         "Run Mobile",
-        "Prompt for Frontend Web"
+        "Run Ride Matcher",
+        "Run Frontend"
       ],
       "presentation": {
         "hidden": false,
@@ -79,24 +83,6 @@
         "order": 2
       },
       "stopAll": true
-    }
-  ],
-  "inputs": [
-    {
-      "id": "runFrontendWebPrompt",
-      "type": "pickString",
-      "description": "Do you want to run the Frontend Web?",
-      "options": [
-        {
-          "label": "Yes",
-          "value": "cd ${workspaceFolder}/frontEndWeb && npm run dev"
-        },
-        {
-          "label": "No",
-          "value": "echo 'Skipping Frontend Web'"
-        }
-      ],
-      "default": "No"
     }
   ]
 }
