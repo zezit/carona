@@ -1,9 +1,8 @@
 package com.br.puc.carona.messaging;
 
+import com.br.puc.carona.service.FcmService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.br.puc.carona.dto.testeMessageDTO;
@@ -22,10 +21,22 @@ public class MensagemControllerTeste {
 
     private final MensagemProducer mensagemProducer;
 
+    private final FcmService fcmService;
+
     @GetMapping("/send")
     public String sendMessage() {
         testeMessageDTO message = new testeMessageDTO("Hello, World!");
         mensagemProducer.enviarMensagemParaNotifications(message);
         return "Message sent: " + message;
+    }
+
+    @GetMapping("/fcmsend")
+    public String sendPushNotification() throws Exception{
+        String token = "aqui_o_token_do_dispositivo"; // precisa ser real
+        String titulo = "Nova Solicitação de Carona!";
+        String corpo = "Alguém perto de você está solicitando uma carona.";
+
+        fcmService.enviarNotificacao(token, titulo, corpo);
+        return "push notification sent";
     }
 }

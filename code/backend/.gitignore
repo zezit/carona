@@ -34,3 +34,7 @@ build/
 
 ### Environment Variables ###
 .env
+
+### Firebase Api Key .json
+carona-c9eba-firebase-adminsdk-fbsvc-36291ddbf8.json
+
