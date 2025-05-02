@@ -1,13 +1,5 @@
 package com.br.puc.carona.service;
 
-import com.br.puc.carona.model.Estudante;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.auth.oauth2.GoogleCredentials;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,6 +7,15 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.auth.oauth2.GoogleCredentials;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -49,8 +50,8 @@ public class FcmService {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        System.out.println("Status: " + response.statusCode());
-        System.out.println("Resposta: " + response.body());
+        log.info("Status: {}", response.statusCode());
+        log.info("Response: {}", response.body());
     }
 
     private String criarPayload(String token, String titulo, String corpo) throws JsonProcessingException {
@@ -59,10 +60,7 @@ public class FcmService {
                         "token", token,
                         "notification", Map.of(
                                 "title", titulo,
-                                "body", corpo
-                        )
-                )
-        );
+                                "body", corpo)));
         return objectMapper.writeValueAsString(message);
     }
 }

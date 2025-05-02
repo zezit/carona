@@ -86,6 +86,7 @@ public class Carona extends AbstractEntity {
     private Integer tempoGastoSegundos;
 
     @OneToMany(mappedBy = "carona", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PedidoDeEntrada> pedidosEntrada = new ArrayList<>();
     
     @ManyToMany

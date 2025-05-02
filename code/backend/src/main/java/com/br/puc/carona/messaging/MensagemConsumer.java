@@ -1,31 +1,31 @@
 package com.br.puc.carona.messaging;
 
-import com.br.puc.carona.service.NotificacaoService;
-import com.br.puc.carona.service.PedidoDeEntradaService;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import com.br.puc.carona.service.PedidoDeEntradaService;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class MensagemConsumer {
 
-    private final NotificacaoService notificacaoService;
     private final PedidoDeEntradaService pedidoEntradaService;
 
     @RabbitListener(queues = "${app.rabbitmq.queues.notifications}")
-    public void processarMensagem(Message<?> mensagem) {
+    public void processarMensagem(Message<Map<String, Object>> mensagem) {
         log.info("Mensagem recebida: {}", mensagem.getPayload());
 
         try {
             // Verifica se o payload é um Map
-            if (mensagem.getPayload() instanceof Map) {
-                Map<String, Object> payload = (Map<String, Object>) mensagem.getPayload();
+            if (mensagem.getPayload() != null) {
+                Map<String, Object> payload = mensagem.getPayload();
 
                 // Lida com caronaId e solicitacaoId, fazendo a verificação de tipo
                 Object caronaIdObj = payload.get("caronaId");

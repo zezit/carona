@@ -1,4 +1,4 @@
-package com.br.puc.carona.messaging.contract.v1;
+package com.br.puc.carona.messaging.contract;
 
 import lombok.*;
 

@@ -1,12 +1,11 @@
 package com.br.puc.carona.mapper;
 
-import com.br.puc.carona.model.Estudante;
 import org.springframework.stereotype.Component;
 
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
-import com.br.puc.carona.model.SolicitacaoCarona;
 import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.model.SolicitacaoCarona;
 
 @Component
 public class SolicitacaoCaronaMapper {
@@ -20,7 +19,7 @@ public class SolicitacaoCaronaMapper {
         solicitacao.setOrigem(request.getOrigem());
         solicitacao.setDestino(request.getDestino());
         solicitacao.setHorarioPartida(request.getHorarioPartida());
-        solicitacao.setStatus(Status.PENDENTE); // padrão inicial
+        solicitacao.setStatus(Status.PENDENTE);
 
         return solicitacao;
     }

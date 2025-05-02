@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "Dados de uma solicitação de carona")
 public class SolicitacaoCaronaDto extends AbstractDto {
 
