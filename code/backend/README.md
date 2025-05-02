@@ -38,11 +38,13 @@ Após criar o arquivo .env, abra-o e preencha os seguintes campos com os valores
 
 - **SUPABASE_USERPHOTOS_BUCKET_NAME:** nome do bucket onde serão armazenadas as imagens de perfil dos usuários
 
+- **FCM_CREDENTIALS_FILE:** caminho para o arquivo de credenciais do Firebase (ex: carona-c9eba-firebase-adminsdk-fbsvc-xxxxxxxx.json)
+
 Certifique-se de **não deixar esses campos em branco** para que a aplicação funcione corretamente.
 
 ---
 
-2. Modifique os valores no arquivo `.env` conforme necessário.
+1. Modifique os valores no arquivo `.env` conforme necessário.
 
 ## Executando os Serviços
 
@@ -64,7 +66,7 @@ chmod +x ./start-db.sh  # Tornar o script executável na primeira vez
 # Exportar variáveis de ambiente
 for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
 
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Executando Apenas o MySQL
@@ -76,7 +78,7 @@ Se você precisar apenas do banco de dados MySQL:
 # Exportar variáveis de ambiente
 export $(grep -v '^#' .env | xargs)
 
-docker-compose up -d mysql
+docker compose up -d mysql
 ```
 
 **Windows:**
@@ -84,7 +86,7 @@ docker-compose up -d mysql
 # Exportar variáveis de ambiente
 for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
 
-docker-compose up -d mysql
+docker compose up -d mysql
 ```
 
 ### Executando Apenas o RabbitMQ
@@ -96,7 +98,7 @@ Se você precisar apenas do RabbitMQ:
 # Exportar variáveis de ambiente
 export $(grep -v '^#' .env | xargs)
 
-docker-compose up -d rabbitmq
+docker compose up -d rabbitmq
 ```
 
 **Windows:**
@@ -104,7 +106,7 @@ docker-compose up -d rabbitmq
 # Exportar variáveis de ambiente
 for /f "tokens=*" %i in ('type .env ^| findstr /v "#"') do set %i
 
-docker-compose up -d rabbitmq
+docker compose up -d rabbitmq
 ```
 
 ### Parando os Serviços
@@ -113,7 +115,7 @@ Para parar todos os serviços:
 
 **Linux/macOS/Windows:**
 ```bash
-docker-compose down
+docker compose down
 ```
 
 Para parar apenas um serviço específico:
@@ -121,10 +123,10 @@ Para parar apenas um serviço específico:
 **Linux/macOS/Windows:**
 ```bash
 # Para parar apenas o MySQL
-docker-compose stop mysql
+docker compose stop mysql
 
 # Para parar apenas o RabbitMQ
-docker-compose stop rabbitmq
+docker compose stop rabbitmq
 ```
 
 ## Firebase Cloud Messaging (FCM) no Backend (Java)
@@ -141,33 +143,15 @@ __Instruções:__
 ```pgsql
 carona-c9eba-firebase-adminsdk-fbsvc-xxxxxxxx.json
 ```
-5. Coloque esse arquivo na pasta raiz do backend (por exemplo: code/backend/).
+5. Renomeie o arquivo para `carona-firebase-adminsdk.json`.
+6. Coloque esse arquivo na pasta de resources do backend (por exemplo: `code/backend/src/main/resources`).
+7. Ajuste o caminho no arquivo `.env` para apontar para o local correto do arquivo de credenciais.
 
 ### Segurança e .gitignore:
-Esse arquivo contém dados sensíveis, como credenciais da sua conta de serviço no Firebase. **Ele não deve ser versionado no GitHub ou em qualquer outro repositório público.
+Esse arquivo contém dados sensíveis, como credenciais da sua conta de serviço no Firebase. *Ele não deve ser versionado no GitHub ou em qualquer outro repositório público.*
 
-Para evitar isso, foi adicionado essa linha ao seu arquivo .gitignore:
-
-```bash
-/code/backend/carona-c9eba-firebase-adminsdk-*.json
-```
-
-Para impedir que o arquivo seja enviado ao repositório remoto, garantindo segurança para seu projeto.
-
-
-### Estrutura do Projeto
-```bash
-src/
-└── main/
-    └── java/
-        └── com/
-            └── br/
-                └── puc/
-                    └── carona/
-                        └── service/
-                            └── FcmService.java
-carona-c9eba-firebase-adminsdk-fbsvc-36291ddbf8.json
-```
+>[!warning] Atenção
+>Para evitar isso, antes de qualquer commit, verifique >se o seu arquivo de credenciais não foi adicionado para >commit.
 
 
 
@@ -242,5 +226,5 @@ mvnw.cmd test  :: "mvnw.cmd" é o wrapper do Maven para Windows
 
 ## Arquivos Docker
 
-- `docker-compose.yml`: Configuração do ambiente Docker
+- `docker compose.yml`: Configuração do ambiente Docker
 - `start-db.sh`: Script para iniciar o banco de dados e aguardar que esteja pronto

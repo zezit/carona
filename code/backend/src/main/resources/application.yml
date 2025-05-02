@@ -58,3 +58,6 @@ supabase:
   code: ${SUPABASE_PROJECT_CODE}
   api-key: ${SUPABASE_API_KEY}
   userphotos-bucket-name: ${SUPABASE_USERPHOTOS_BUCKET_NAME:userphotos}
+
+fcm:
+  credentials-file: ${FCM_CREDENTIALS_FILE}
