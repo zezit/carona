@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.AllArgsConstructor;
 
-/* Serviço que enviará as mensagens do rabbitmq para o frontend/listeners */
+/* Serviço que enviará as mensagens do rabbitmq para o mobile/listeners */
 @Service
 @AllArgsConstructor
 public class NotificacaoService {

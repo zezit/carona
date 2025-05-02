@@ -39,11 +39,11 @@ As configurações de launch permitem iniciar diferentes partes do projeto diret
   - Selecione "Run Ngrok + API Update" no dropdown
   - Clique no botão de play ou pressione `F5`
 
-### Run Frontend
-- **Descrição**: Inicia a aplicação frontend
+### Run Mobile
+- **Descrição**: Inicia a aplicação mobile
 - **Como executar**:
   - Pressione `F5` ou vá ao menu "Run and Debug"
-  - Selecione "Run Frontend" no dropdown
+  - Selecione "Run mobile" no dropdown
   - Clique no botão de play ou pressione `F5`
 
 ### Run App (Compound)
@@ -51,7 +51,7 @@ As configurações de launch permitem iniciar diferentes partes do projeto diret
 - **O que inclui**:
   1. Backend API
   2. Ngrok + API Update
-  3. Frontend
+  3. mobile
 - **Como executar**:
   - Pressione `F5` ou vá ao menu "Run and Debug"
   - Selecione "Run App" no dropdown
@@ -63,11 +63,11 @@ As configurações de launch permitem iniciar diferentes partes do projeto diret
    - Primeiro: MySQL Database
    - Segundo: Backend API
    - Terceiro: Ngrok + API Update
-   - Quarto: Frontend
+   - Quarto: mobile
 
 2. **Problemas Comuns**:
    - Se o backend não iniciar, verifique se o MySQL está rodando
-   - Se o frontend não conectar, verifique se o Ngrok está ativo e se a API foi atualizada corretamente
+   - Se o mobile não conectar, verifique se o Ngrok está ativo e se a API foi atualizada corretamente
 
 3. **Atalhos Úteis**:
    - `Ctrl+Shift+P` (ou `Cmd+Shift+P` no macOS): Abre a paleta de comandos

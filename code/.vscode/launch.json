@@ -33,7 +33,7 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "yarn start --tunnel",
-      "cwd": "${workspaceFolder}/frontEnd",
+      "cwd": "${workspaceFolder}/mobile",
       "presentation": {
         "hidden": false,
         "group": "carona",

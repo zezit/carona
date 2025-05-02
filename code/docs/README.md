@@ -10,4 +10,4 @@ Documentação sobre como configurar e utilizar as tasks e launch configurations
 - Configuração do ambiente de desenvolvimento
 - Execução do banco de dados MySQL
 - Configuração do Ngrok
-- Inicialização dos serviços (backend, frontend)
+- Inicialização dos serviços (backend, mobile)

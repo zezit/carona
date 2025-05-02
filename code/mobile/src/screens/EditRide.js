@@ -221,7 +221,7 @@ const EditRide = ({ navigation, route }) => {
             );
 
             if (response.data && response.data.length > 0) {
-                // Transform backend data format to frontend expected format
+                // Transform backend data format to mobile expected format
                 const processedRoutes = response.data.map((route, index) => {
                     // Convert coordinates from [[lat, lon], [lat, lon], ...] to [{latitude, longitude}, ...]
                     const pontos = route.coordenadas.map(coord => ({

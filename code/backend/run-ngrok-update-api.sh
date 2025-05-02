@@ -3,13 +3,13 @@
 # This script:
 # 1. Runs ngrok on the backend port
 # 2. Extracts the ngrok URL
-# 3. Updates the frontend API route automatically
+# 3. Updates the mobile API route automatically
 
 # Configuration
 BACKEND_PORT=${1:-8080}
 CONTEXT_PATH=${2:-/api}
-FRONTEND_ENV_FILE="../frontEnd/.env"
-FRONTEND_API_CLIENT="../frontEnd/api/apiClient.js"
+FRONTEND_ENV_FILE="../mobile/.env"
+FRONTEND_API_CLIENT="../mobile/api/apiClient.js"
 
 echo "🚀 Starting ngrok tunnel for backend on port $BACKEND_PORT..."
 
@@ -47,7 +47,7 @@ else
     api_url="${ngrok_url}"
 fi
 
-echo "🔄 Updating frontend API route to: $api_url"
+echo "🔄 Updating mobile API route to: $api_url"
 
 # Update .env file
 if [ -f "$FRONTEND_ENV_FILE" ]; then
@@ -74,7 +74,7 @@ fi
 echo "✅ API route updated successfully!"
 echo "🌐 Your backend is now accessible at: $api_url"
 echo "🔄 Keep this terminal open while you're using ngrok"
-echo "📱 You can now start your frontend application"
+echo "📱 You can now start your mobile application"
 
 # Keep script running to maintain the ngrok tunnel
 echo "Press Ctrl+C to stop ngrok and exit"
