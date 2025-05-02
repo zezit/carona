@@ -1,4 +1,4 @@
-package com.br.puc.carona.util;
+package com.br.puc.carona.utils;
 
 import java.util.regex.Pattern;
 

@@ -8,6 +8,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.br.puc.carona.utils.MD5Util;
+
 class MD5UtilTest {
 
     private final MD5Util md5Util = new MD5Util();

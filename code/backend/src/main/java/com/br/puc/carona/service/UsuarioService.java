@@ -18,7 +18,7 @@ import com.br.puc.carona.mapper.UsuarioMapper;
 import com.br.puc.carona.model.Administrador;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.repository.UsuarioRepository;
-import com.br.puc.carona.util.MD5Util;
+import com.br.puc.carona.utils.MD5Util;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

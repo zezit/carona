@@ -32,7 +32,7 @@ import com.br.puc.carona.model.Administrador;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.Usuario;
 import com.br.puc.carona.repository.UsuarioRepository;
-import com.br.puc.carona.util.MD5Util;
+import com.br.puc.carona.utils.MD5Util;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
