@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZE } from '../../constants';
-import { UserAvatar } from '../common';
+import UserAvatar from '../common/UserAvatar';
 
 /**
  * A reusable profile header component that displays user information and optional edit button

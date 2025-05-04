@@ -19,11 +19,11 @@ import { Ionicons } from '@expo/vector-icons';
 import md5 from 'md5';
 import { COLORS, SPACING, FONT_SIZE, RADIUS } from '../constants';
 import { commonStyles } from '../theme/styles/commonStyles';
-import useAuth from '../hooks/useAuth';
 
 // Import reusable components
 import { FormInput } from '../components/form';
 import { LoadingIndicator } from '../components/ui';
+import { useAuthContext } from '../contexts/AuthContext';
 
 export default function RegisterSecondPage({ navigation, route }) {
   const { username, email, password } = route.params;
@@ -34,7 +34,7 @@ export default function RegisterSecondPage({ navigation, route }) {
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [errors, setErrors] = useState({});
-  const { registerStudent, isLoading, error } = useAuth();
+  const { registerStudent, isLoading } = useAuthContext();
 
   // Animation for modal
   const modalScaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -190,7 +190,7 @@ export default function RegisterSecondPage({ navigation, route }) {
         );
       }
     } catch (err) {
-      // Error is handled by the useAuth hook
+      // Error is handled by the useAuthContext hook
       console.log('Registration error:', err);
     }
   };
