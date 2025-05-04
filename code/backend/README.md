@@ -38,7 +38,11 @@ Após criar o arquivo .env, abra-o e preencha os seguintes campos com os valores
 
 - **SUPABASE_USERPHOTOS_BUCKET_NAME:** nome do bucket onde serão armazenadas as imagens de perfil dos usuários
 
-- **FCM_CREDENTIALS_FILE:** caminho para o arquivo de credenciais do Firebase (ex: carona-c9eba-firebase-adminsdk-fbsvc-xxxxxxxx.json)
+- **FCM_CREDENTIALS_FILE:** caminho para o arquivo de credenciais do Firebase (ex: carona-firebase-adminsdk.json)
+
+- **FCM_PROJECT_NAME:** nome do projeto no Firebase (ex: carona-c9eba)
+
+- **FCM_BASE_URL:** URL base da API do FCM (padrão: https://fcm.googleapis.com/v1/)
 
 Certifique-se de **não deixar esses campos em branco** para que a aplicação funcione corretamente.
 
@@ -145,16 +149,16 @@ carona-c9eba-firebase-adminsdk-fbsvc-xxxxxxxx.json
 ```
 5. Renomeie o arquivo para `carona-firebase-adminsdk.json`.
 6. Coloque esse arquivo na pasta de resources do backend (por exemplo: `code/backend/src/main/resources`).
-7. Ajuste o caminho no arquivo `.env` para apontar para o local correto do arquivo de credenciais.
+7. Configure as variáveis de ambiente no arquivo `.env`:
+   - `FCM_CREDENTIALS_FILE`: caminho para o arquivo de credenciais
+   - `FCM_PROJECT_NAME`: nome do seu projeto Firebase (geralmente é o ID do projeto no formato 'nome-XXXXX')
+   - `FCM_BASE_URL`: URL base da API FCM (manter o valor padrão a menos que seja necessário alterar)
 
 ### Segurança e .gitignore:
 Esse arquivo contém dados sensíveis, como credenciais da sua conta de serviço no Firebase. *Ele não deve ser versionado no GitHub ou em qualquer outro repositório público.*
 
 >[!warning] Atenção
 >Para evitar isso, antes de qualquer commit, verifique >se o seu arquivo de credenciais não foi adicionado para >commit.
-
-
-
 
 ## Executando a Aplicação
 

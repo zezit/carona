@@ -61,3 +61,5 @@ supabase:
 
 fcm:
   credentials-file: ${FCM_CREDENTIALS_FILE}
+  project-name: ${FCM_PROJECT_NAME:carona-c9eba}
+  base-url: ${FCM_BASE_URL:https://fcm.googleapis.com/v1/}

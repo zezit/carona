@@ -223,7 +223,7 @@ public class EstudanteService {
         }
     }
 
-    public String buscarDeviceTokenPorId(final Long estudanteId) throws Exception {
+    public String buscarDeviceTokenPorId(final Long estudanteId) {
         log.info("Buscando device token do estudante por ID: {}", estudanteId);
         final Estudante estudante = repository.findById(estudanteId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId));
