@@ -442,11 +442,19 @@ const RegisterRidePage = ({ route }) => {
 
     try {
       setLoading(true);
+     
+   
 
       // Get arrival date by adding the duration to the departure date
-      const departureDateTime = departureDate instanceof Date ? departureDate : new Date(departureDate);
-      const arrivalDateTime = new Date(departureDateTime.getTime() + (duration * 1000));
+      let departureDateTime = departureDate instanceof Date ? departureDate : new Date(departureDate);
+      let arrivalDateTime = new Date(departureDateTime.getTime() + (duration * 1000));
       
+      const now = new Date();
+      //previne erro 400 de post de data de saida no passado
+      if (departureDateTime < now) {
+        departureDateTime = now;
+        arrivalDateTime = new Date(departureDateTime.getTime() + (duration * 1000));
+      }
       // Ensure both dates are valid
       if (isNaN(departureDateTime.getTime()) || isNaN(arrivalDateTime.getTime())) {
         Alert.alert('Erro', 'Datas de partida ou chegada inválidas.');
@@ -474,23 +482,26 @@ const RegisterRidePage = ({ route }) => {
       };
       
       console.debug('Submitting ride data:', rideData);
-      
-      await apiClient.post('/carona', rideData, options);
-
-      Alert.alert(
-        'Sucesso',
-        'Sua carona foi registrada com sucesso!',
-        [{
-          text: 'OK',
-          onPress: () => navigation.navigate('TabNavigator', {
-            screen: 'Rides',
-            params: {
-              refresh: Date.now(),
-              updated: true
-            }
-          })
-        }]
-      );
+      const response = await apiClient.post('/carona', rideData, options);
+      if (response.success) {
+        Alert.alert(
+          'Sucesso',
+          'Sua carona foi registrada com sucesso!',
+          [{
+            text: 'OK',
+            onPress: () => navigation.navigate('TabNavigator', {
+              screen: 'Rides',
+              params: {
+                refresh: Date.now(),
+                updated: true
+              }
+            })
+          }]
+        );
+      } else {
+        console.error('Erro ao registrar carona:', response.error.message);
+        Alert.alert('Erro', 'Não foi possível registrar a carona. Tente novamente.');
+      }
 
     } catch (error) {
       console.error('Error creating ride:', error);
@@ -624,6 +635,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   topBar: {
+    
     position: 'absolute',
     top: Platform.OS === 'ios' ? 50 : 40,
     left: 16,
