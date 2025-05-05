@@ -209,31 +209,38 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMo
       )}
 
       {Platform.OS === 'ios' ? (
-        <Modal
-          transparent={true}
-          visible={showPicker}
-          animationType="slide"
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {activeMode === 'departure' ? 'Selecionar hora de partida' : 'Selecionar hora de chegada'}
-                </Text>
-                <TouchableOpacity 
-                  style={styles.doneButton} 
-                  onPress={() => {
-                    setShowPicker(false);
-                    onDateChange(activeMode, tempDate);
-                  }}
-                >
-                  <Text style={styles.doneButtonText}>Confirmar</Text>
-                </TouchableOpacity>
-              </View>
-              {renderDatePicker()}
-            </View>
-          </View>
-        </Modal>
+       <Modal
+       transparent={true}
+       visible={showPicker}
+       animationType="slide"
+     >
+       <View style={styles.modalContainer}>
+         <View style={styles.modalContent}>
+           <View style={styles.modalHeader}>
+             <Text style={styles.modalTitle}>
+               {activeMode === 'departure' ? 'Selecionar horário de partida' : 'Selecionar horário de chegada'}
+             </Text>
+             <TouchableOpacity
+               style={styles.doneButton}
+               onPress={() => {
+                 if (currentMode === 'date') {
+                   setCurrentMode('time');
+                 } else {
+                   setShowPicker(false);
+                   onDateChange(activeMode, tempDate);
+                   setCurrentMode('date');
+                 }
+               }}
+             >
+               <Text style={styles.doneButtonText}>
+                 {currentMode === 'date' ? 'Próximo' : 'Confirmar'}
+               </Text>
+             </TouchableOpacity>
+           </View>
+           {renderDatePicker()}
+         </View>
+       </View>
+     </Modal>
       ) : (
         showPicker && renderDatePicker()
       )}
