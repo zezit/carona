@@ -115,6 +115,7 @@ public class Carona extends AbstractEntity {
             
         }
         this.passageiros.add(estudante);
+        this.vagas--;
     }
     
     public void adicionarTrajeto(final Trajeto trajeto) {
