@@ -13,5 +13,5 @@ public class CaronaRequestMessage {
     private Long estudanteId;
     private String origem;
     private String destino;
-    private LocalDateTime dataHoraPartida;
+    private LocalDateTime horarioChegada;
 }

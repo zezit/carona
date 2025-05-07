@@ -27,8 +27,8 @@ public class SolicitacaoCaronaDto extends AbstractDto {
     @Schema(description = "Destino da carona", example = "Shopping Del Rey")
     private String destino;
 
-    @Schema(description = "Horário de partida", example = "2025-04-20T18:30:00")
-    private LocalDateTime horarioPartida;
+    @Schema(description = "Hora desejada para chegada", example = "2025-04-20T19:00:00")
+    private LocalDateTime horarioChegada;
 
     @Schema(description = "Status atual da solicitação", example = "PENDENTE")
     private Status status;

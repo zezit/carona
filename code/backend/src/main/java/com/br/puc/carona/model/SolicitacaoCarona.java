@@ -40,10 +40,22 @@ public class SolicitacaoCarona extends AbstractEntity {
     private String origem;
 
     @Column(nullable = false)
+    private Double origemLatitude;
+
+    @Column(nullable = false)
+    private Double origemLongitude;
+
+    @Column(nullable = false)
     private String destino;
 
     @Column(nullable = false)
-    private LocalDateTime horarioPartida;
+    private Double destinoLatitude;
+
+    @Column(nullable = false)
+    private Double destinoLongitude;
+
+    @Column(nullable = false)
+    private LocalDateTime horarioChegada;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -60,7 +72,4 @@ public class SolicitacaoCarona extends AbstractEntity {
             pedidosEntrada.add(pedido);
         }
     }
-
-
-
 }

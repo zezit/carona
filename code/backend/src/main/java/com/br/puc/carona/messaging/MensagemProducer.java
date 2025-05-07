@@ -5,8 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.br.puc.carona.dto.MessageDTO;
-import com.br.puc.carona.messaging.contract.CaronaRequestMessage;
-import com.br.puc.carona.model.SolicitacaoCarona;
+import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,17 +29,8 @@ public class MensagemProducer {
         rabbitTemplate.convertAndSend(notificationsQueue, mensagem);
     }
 
-    public void enviarMensagemParaCaronaRequestQueue(final SolicitacaoCarona sc) {
+    public void enviarMensagemParaCaronaRequestQueue(final SolicitacaoCaronaRequest msg) {
         log.info("Enviando para a fila2: {}", ridesRequestQueue);
-
-        CaronaRequestMessage msg = CaronaRequestMessage.builder()
-                .solicitacaoId(sc.getId())
-                .estudanteId(sc.getEstudante().getId())
-                .origem(sc.getOrigem())
-                .destino(sc.getDestino())
-                .dataHoraPartida(sc.getHorarioPartida())
-                .build();
-
         rabbitTemplate.convertAndSend(ridesRequestQueue, msg);
     }
 }

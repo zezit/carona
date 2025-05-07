@@ -132,4 +132,8 @@ public class RabbitMQConfig {
                 .with("ride.request");
     }
 
+    @Bean(name = "ridesRequestQueueName")
+    public String newRideRequestQueueName() {
+        return ridesRequestQueue;
+    }
 }

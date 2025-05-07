@@ -30,7 +30,4 @@ public class PedidoDeEntrada extends AbstractEntity {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-
-
-
 }

@@ -44,7 +44,7 @@ public class SolicitacaoCaronaService {
 
         solicitacaoRepository.save(solicitacao);
 
-        mensagemProducer.enviarMensagemParaCaronaRequestQueue(solicitacao);
+        mensagemProducer.enviarMensagemParaCaronaRequestQueue(request);
 
         log.info("Solicitação de carona criada com sucesso para estudante ID: {}", estudanteId);
 

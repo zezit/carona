@@ -16,9 +16,9 @@ public class SolicitacaoCaronaMapper {
         }
 
         final SolicitacaoCarona solicitacao = new SolicitacaoCarona();
-        solicitacao.setOrigem(request.getOrigem());
-        solicitacao.setDestino(request.getDestino());
-        solicitacao.setHorarioPartida(request.getHorarioPartida());
+        solicitacao.setOrigem(request.getOrigem().getName());
+        solicitacao.setDestino(request.getDestino().getName());
+        solicitacao.setHorarioChegada(request.getHorarioChegadaPrevisto());
         solicitacao.setStatus(Status.PENDENTE);
 
         return solicitacao;
@@ -33,7 +33,7 @@ public class SolicitacaoCaronaMapper {
         dto.setId(solicitacao.getId());
         dto.setOrigem(solicitacao.getOrigem());
         dto.setDestino(solicitacao.getDestino());
-        dto.setHorarioPartida(solicitacao.getHorarioPartida());
+        dto.setHorarioChegada(solicitacao.getHorarioChegada());
         dto.setStatus(solicitacao.getStatus());
         dto.setDataCriacao(solicitacao.getDataCriacao());
         dto.setDataAtualizacao(solicitacao.getDataAtualizacao());
