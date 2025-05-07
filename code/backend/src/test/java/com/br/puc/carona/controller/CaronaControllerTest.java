@@ -50,7 +50,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @WebMvcTest(CaronaController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import({MockMvcSecurityConfig.class})
+@Import({ MockMvcSecurityConfig.class })
 @AutoConfigureJsonTesters
 @ActiveProfiles("test")
 @DisplayName("Teste Controller: Carona")
@@ -114,21 +114,21 @@ class CaronaControllerTest {
         coordenadas.add(Arrays.asList(-23.5505, -46.6333));
         coordenadas.add(Arrays.asList(-23.5550, -46.6400));
         coordenadas.add(Arrays.asList(-23.5605, -46.6450));
-        
+
         trajetoPrincipal = TrajetoDto.builder()
                 .descricao("Principal")
                 .distanciaKm(15.5)
                 .tempoSegundos(1200)
                 .coordenadas(coordenadas)
                 .build();
-        
+
         trajetos = new ArrayList<>();
         trajetos.add(trajetoPrincipal);
 
         // Create sample CaronaDto using builder with proper format for dates
         LocalDateTime dataPartida = LocalDateTime.of(2025, 10, 1, 10, 0, 0);
         LocalDateTime dataChegada = LocalDateTime.of(2025, 10, 1, 12, 0, 0);
-        
+
         caronaDto = CaronaDto.builder()
                 .id(1L)
                 .motorista(perfilMotoristaDto)
@@ -171,7 +171,8 @@ class CaronaControllerTest {
     void deveCriarCaronaComSucesso() throws Exception {
         // Given
         List<TrajetoDto> trajetosDtosSemPrincipal = trajetos.stream()
-                .filter(t -> t.getDescricao() == null || !t.getDescricao().equalsIgnoreCase("Principal"))
+                .filter(t -> t.getDescricao() == null
+                        || !t.getDescricao().equalsIgnoreCase("Principal"))
                 .toList();
 
         when(caronaService.criarCarona(any(CaronaRequest.class)))
@@ -324,7 +325,7 @@ class CaronaControllerTest {
         Long motoristaId = 5L;
         List<CaronaDto> caronas = List.of(caronaDto);
         Page<CaronaDto> caronasPage = new PageImpl<>(caronas, PageRequest.of(0, 10), caronas.size());
-        
+
         when(caronaService.buscarCaronasDoMotorista(eq(motoristaId), any(Pageable.class)))
                 .thenReturn(caronasPage);
 
@@ -347,7 +348,7 @@ class CaronaControllerTest {
         // Given
         Long motoristaId = 5L;
         Page<CaronaDto> paginaVazia = new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10), 0);
-        
+
         when(caronaService.buscarCaronasDoMotorista(eq(motoristaId), any(Pageable.class)))
                 .thenReturn(paginaVazia);
 
@@ -368,7 +369,7 @@ class CaronaControllerTest {
     void deveRetornarErro404QuandoMotoristaNaoEncontrado() throws Exception {
         // Given
         Long motoristaId = 999L;
-        
+
         when(caronaService.buscarCaronasDoMotorista(eq(motoristaId), any(Pageable.class)))
                 .thenThrow(new EntidadeNaoEncontrada(MensagensResposta.ESTUDANTE_NAO_E_MOTORISTA));
 
@@ -407,7 +408,7 @@ class CaronaControllerTest {
                 .trajetos(trajetos)
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();
-        
+
         when(caronaService.atualizarCarona(eq(caronaId), any(CaronaRequest.class)))
                 .thenReturn(caronaAtualizada);
 
@@ -429,7 +430,7 @@ class CaronaControllerTest {
     void deveRetornarErro404QuandoCaronaNaoEncontradaAoAtualizar() throws Exception {
         // Given
         Long caronaId = 999L;
-        
+
         when(caronaService.atualizarCarona(eq(caronaId), any(CaronaRequest.class)))
                 .thenThrow(new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA));
 
@@ -448,7 +449,7 @@ class CaronaControllerTest {
     void deveRetornarErro400QuandoCaronaNaoPertenceAoMotorista() throws Exception {
         // Given
         Long caronaId = 1L;
-        
+
         when(caronaService.atualizarCarona(eq(caronaId), any(CaronaRequest.class)))
                 .thenThrow(new ErroDeCliente(MensagensResposta.CARONA_NAO_PERTENCE_AO_MOTORISTA));
 
@@ -468,7 +469,7 @@ class CaronaControllerTest {
         // Given
         Long caronaId = 1L;
         StatusCarona novoStatus = StatusCarona.EM_ANDAMENTO;
-        
+
         CaronaDto caronaComNovoStatus = CaronaDto.builder()
                 .id(1L)
                 .motorista(perfilMotoristaDto)
@@ -490,7 +491,7 @@ class CaronaControllerTest {
                 .trajetos(trajetos)
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();
-        
+
         when(caronaService.alterarStatusCarona(caronaId, novoStatus))
                 .thenReturn(caronaComNovoStatus);
 
@@ -511,7 +512,7 @@ class CaronaControllerTest {
         // Given
         Long caronaId = 1L;
         StatusCarona novoStatus = StatusCarona.FINALIZADA;
-        
+
         doThrow(new ErroDeCliente(MensagensResposta.ALTERACAO_STATUS_CARONA_INVALIDA))
                 .when(caronaService).alterarStatusCarona(caronaId, novoStatus);
 
@@ -530,7 +531,7 @@ class CaronaControllerTest {
         // Given
         Long caronaId = 1L;
         StatusCarona novoStatus = StatusCarona.EM_ANDAMENTO;
-        
+
         doThrow(new ErroDeCliente(MensagensResposta.CARONA_NAO_PERTENCE_AO_MOTORISTA))
                 .when(caronaService).alterarStatusCarona(caronaId, novoStatus);
 
@@ -548,7 +549,7 @@ class CaronaControllerTest {
     void deveCancelarCaronaComSucesso() throws Exception {
         // Given
         Long caronaId = 1L;
-        
+
         // When & Then
         mockMvc.perform(delete("/carona/{id}", caronaId)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -563,7 +564,7 @@ class CaronaControllerTest {
     void deveRetornarErro400QuandoCaronaNaoPodeSerCancelada() throws Exception {
         // Given
         Long caronaId = 1L;
-        
+
         doThrow(new ErroDeCliente(MensagensResposta.ALTERACAO_STATUS_CARONA_INVALIDA))
                 .when(caronaService).alterarStatusCarona(caronaId, StatusCarona.CANCELADA);
 
@@ -581,7 +582,7 @@ class CaronaControllerTest {
     void deveRetornarErro404QuandoCaronaNaoEncontradaAoCancelar() throws Exception {
         // Given
         Long caronaId = 999L;
-        
+
         doThrow(new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA))
                 .when(caronaService).alterarStatusCarona(caronaId, StatusCarona.CANCELADA);
 
@@ -599,7 +600,7 @@ class CaronaControllerTest {
     void deveRetornarErro400QuandoCaronaNaoPertenceAoMotoristaAoCancelar() throws Exception {
         // Given
         Long caronaId = 1L;
-        
+
         doThrow(new ErroDeCliente(MensagensResposta.CARONA_NAO_PERTENCE_AO_MOTORISTA))
                 .when(caronaService).alterarStatusCarona(caronaId, StatusCarona.CANCELADA);
 
@@ -610,5 +611,30 @@ class CaronaControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(caronaService).alterarStatusCarona(caronaId, StatusCarona.CANCELADA);
+    }
+
+    @Test
+    @DisplayName("GET /carona/motorista/{motoristaId}/proximas - Deve listar próximas caronas do motorista com sucesso")
+    void deveListarProximasCaronasDoMotoristaComSucesso() throws Exception {
+        // Given
+        Long motoristaId = 5L;
+        List<CaronaDto> caronas = List.of(caronaDto);
+
+        when(caronaService.buscarProximasCaronasDoMotorista(motoristaId))
+                .thenReturn(caronas);
+
+        // When & Then
+        mockMvc.perform(get("/carona/motorista/{motoristaId}/proximas", motoristaId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id").value(caronaDto.getId()))
+                .andExpect(jsonPath("$[0].motorista.id").value(perfilMotoristaDto.getId()))
+                .andExpect(jsonPath("$[0].pontoPartida").value(caronaDto.getPontoPartida()))
+                .andExpect(jsonPath("$[0].pontoDestino").value(caronaDto.getPontoDestino()))
+                .andExpect(jsonPath("$[0].status").value(caronaDto.getStatus().toString()));
+
+        verify(caronaService).buscarProximasCaronasDoMotorista(motoristaId);
     }
 }

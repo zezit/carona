@@ -1,7 +1,6 @@
 package com.br.puc.carona.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,14 +23,15 @@ import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.dto.request.CaronaRequest;
 import com.br.puc.carona.dto.response.CaronaDto;
-import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.CaronaMapper;
 import com.br.puc.carona.mapper.TrajetoMapper;
+import com.br.puc.carona.mock.CaronaMock;
+import com.br.puc.carona.mock.PerfilMotoristaMock;
+import com.br.puc.carona.mock.TrajetoMock;
 import com.br.puc.carona.model.Carona;
-import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.PerfilMotorista;
 import com.br.puc.carona.model.Trajeto;
 import com.br.puc.carona.repository.CaronaRepository;
@@ -70,56 +70,20 @@ class CaronaServiceTest {
     @DisplayName("Deve criar carona com sucesso")
     void deveCriarCaronaComSucesso() {
         // Given
-        final CaronaRequest request = CaronaRequest.builder()
-                .pontoPartida("Rua A, 123")
-                .latitudePartida(-19.9227318)
-                .longitudePartida(-43.9908267)
-                .pontoDestino("Praça da Liberdade")
-                .dataHoraChegada(LocalDateTime.now().plusHours(1).plusMinutes(30))
-                .latitudeDestino(-19.9325933)
-                .longitudeDestino(-43.9360532)
-                .vagas(3)
-                .build();
-
-        final PerfilMotorista motorista = PerfilMotorista.builder()
-                .id(1L)
-                .estudante(Estudante.builder()
-                        .statusCadastro(Status.APROVADO)
-                        .build())
-                .build();
-
-        final Carona carona = Carona.builder()
-                .id(1L)
-                .motorista(motorista)
-                .status(StatusCarona.AGENDADA)
-                .latitudeDestino(request.getLatitudeDestino())
-                .longitudeDestino(request.getLongitudeDestino())
-                .latitudePartida(request.getLatitudePartida())
-                .longitudePartida(request.getLongitudePartida())
-                .trajetos(new ArrayList<Trajeto>())
-                .build();
-
+        final CaronaRequest request = CaronaMock.createValidRequest();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+        final Carona carona = CaronaMock.createAgendada();
         final CaronaDto caronaDto = CaronaDto.builder()
                 .id(1L)
                 .status(StatusCarona.AGENDADA)
                 .build();
-
-        final List<TrajetoDto> trajetos = List.of(TrajetoDto.builder()
-                .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
-                .build());
-
-        final Trajeto trajetoEntity = Trajeto.builder()
-                .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
-                .principal(true)
-                .build();
+        final List<TrajetoDto> trajetos = List.of(TrajetoMock.createTrajetoPrincipalDto());
+        final Trajeto trajetoEntity = TrajetoMock.createTrajetoPrincipalEntity();
 
         Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
         Mockito.when(caronaMapper.toEntity(request)).thenReturn(carona);
-        Mockito.when(mapService.calculateTrajectories(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(mapService.calculateTrajectories(Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any()))
                 .thenReturn(trajetos);
         Mockito.when(caronaRepository.save(Mockito.any(Carona.class))).thenReturn(carona);
         Mockito.when(caronaMapper.toDto(carona)).thenReturn(caronaDto);
@@ -152,12 +116,8 @@ class CaronaServiceTest {
     @DisplayName("Deve lançar exceção ao tentar criar carona quando motorista não está aprovado")
     void deveLancarExcecaoAoCriarCaronaQuandoMotoristaNaoEstaAprovado() {
         // Given
-        final CaronaRequest request = CaronaRequest.builder().build();
-        final PerfilMotorista motorista = PerfilMotorista.builder()
-                .estudante(Estudante.builder()
-                        .statusCadastro(Status.PENDENTE)
-                        .build())
-                .build();
+        final CaronaRequest request = CaronaMock.createValidRequest();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createPendenteMotorista();
 
         Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
 
@@ -173,16 +133,117 @@ class CaronaServiceTest {
     }
 
     @Test
+    @DisplayName("Deve lançar exceção ao tentar criar com data de partida no passado")
+    void deveLancarExcecaoAoCriarCaronaComDataPartidaNoPassado() {
+        // Given
+        final CaronaRequest request = CaronaRequest.builder()
+                .dataHoraPartida(LocalDateTime.now().minusDays(1))
+                .build();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+
+        // When & Then
+        final ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            caronaService.criarCarona(request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.DATA_PARTIDA_INVALIDA, exception.getMessage());
+        Mockito.verify(caronaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar criar carona com data de chegada no passado")
+    void deveLancarExcecaoAoCriarCaronaComDataChegadaNoPassado() {
+        // Given
+        final CaronaRequest request = CaronaRequest.builder()
+                .dataHoraChegada(LocalDateTime.now().minusDays(1))
+                .build();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+
+        // When & Then
+        final ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            caronaService.criarCarona(request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.DATA_CHEGADA_INVALIDA, exception.getMessage());
+        Mockito.verify(caronaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar criar carona com data de chegada antes da partida")
+    void deveLancarExcecaoAoCriarCaronaComDataChegadaAntesDaPartida() {
+        // Given
+        final CaronaRequest request = CaronaMock.createInvalidRequest();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+
+        // When & Then
+        final ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            caronaService.criarCarona(request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.DATA_CHEGADA_ANTERIOR_PARTIDA, exception.getMessage());
+        Mockito.verify(caronaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar criar carona com vagas inválidas")
+    void deveLancarExcecaoAoCriarCaronaComVagasInvalidas() {
+        // Given
+        final CaronaRequest request = CaronaRequest.builder()
+                .dataHoraPartida(LocalDateTime.now().plusHours(2))
+                .dataHoraChegada(LocalDateTime.now().plusHours(3))
+                .vagas(0)
+                .build();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+
+        // When & Then
+        final ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            caronaService.criarCarona(request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.VAGAS_INSUFICIENTES, exception.getMessage());
+        Mockito.verify(caronaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar criar carona com quantidade maiores que a capacidade do carro")
+    void deveLancarExcecaoAoCriarCaronaComQuantidadeMaioresQueACapacidadeDoCarro() {
+        // Given
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+        final CaronaRequest request = CaronaMock.createInvalidRequest();
+        request.setDataHoraChegada(request.getDataHoraPartida().plusHours(1));
+        request.setVagas(motorista.getCarro().getCapacidadePassageiros() + 1);
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+
+        // When & Then
+        final ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            caronaService.criarCarona(request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.QUANTIDADE_VAGAS_INVALIDAS, exception.getMessage());
+        Mockito.verify(caronaMapper, Mockito.never()).toEntity(Mockito.any());
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
     @DisplayName("Deve buscar carona por ID com sucesso")
     void deveBuscarCaronaPorIdComSucesso() {
         // Given
         final Long caronaId = 1L;
-        final Carona carona = Carona.builder()
-                .id(caronaId)
-                .build();
-        final CaronaDto caronaDto = CaronaDto.builder()
-                .id(caronaId)
-                .build();
+        final Carona carona = CaronaMock.createAgendada();
+        final CaronaDto caronaDto = CaronaMock.createAgendadaDto();
 
         Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.of(carona));
         Mockito.when(caronaMapper.toDto(carona)).thenReturn(caronaDto);
@@ -221,9 +282,9 @@ class CaronaServiceTest {
         // Given
         final Long motoristaId = 1L;
         final Pageable pageable = Pageable.unpaged();
-        final Carona carona = Carona.builder().id(1L).build();
+        final Carona carona = CaronaMock.createAgendada();
         final Page<Carona> caronaPage = new PageImpl<>(List.of(carona));
-        final CaronaDto caronaDto = CaronaDto.builder().id(1L).build();
+        final CaronaDto caronaDto = CaronaMock.createAgendadaDto();
 
         Mockito.when(perfilMotoristaRepository.existsById(motoristaId)).thenReturn(true);
         Mockito.when(caronaRepository.findByMotoristaIdOrderByDataHoraPartidaDesc(motoristaId, pageable))
@@ -268,15 +329,9 @@ class CaronaServiceTest {
     void deveAlterarStatusDaCaronaComSucesso() {
         // Given
         final Long caronaId = 1L;
-        final PerfilMotorista motorista = PerfilMotorista.builder()
-                .id(1L)
-                .build();
-
-        final Carona carona = Carona.builder()
-                .id(caronaId)
-                .motorista(motorista)
-                .status(StatusCarona.AGENDADA)
-                .build();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+        final Carona carona = CaronaMock.createAgendada();
+        carona.setMotorista(motorista);
 
         final CaronaDto caronaDto = CaronaDto.builder()
                 .id(caronaId)
@@ -309,19 +364,10 @@ class CaronaServiceTest {
     void deveLancarExcecaoAoAlterarStatusDeCaronaQueNaoPertenceAoMotorista() {
         // Given
         final Long caronaId = 1L;
-        final PerfilMotorista motorista = PerfilMotorista.builder()
-                .id(1L)
-                .build();
-
-        final PerfilMotorista outroMotorista = PerfilMotorista.builder()
-                .id(2L)
-                .build();
-
-        final Carona carona = Carona.builder()
-                .id(caronaId)
-                .motorista(outroMotorista)
-                .status(StatusCarona.AGENDADA)
-                .build();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+        final PerfilMotorista outroMotorista = PerfilMotoristaMock.createMotoristaWithId(2L);
+        final Carona carona = CaronaMock.createAgendada();
+        carona.setMotorista(outroMotorista);
 
         Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
         Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.of(carona));
@@ -342,15 +388,9 @@ class CaronaServiceTest {
     void deveLancarExcecaoAoAlterarStatusDeCaronaParaAgendada() {
         // Given
         final Long caronaId = 1L;
-        final PerfilMotorista motorista = PerfilMotorista.builder()
-                .id(1L)
-                .build();
-
-        final Carona carona = Carona.builder()
-                .id(caronaId)
-                .motorista(motorista)
-                .status(StatusCarona.EM_ANDAMENTO)
-                .build();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+        final Carona carona = CaronaMock.createEmAndamento();
+        carona.setMotorista(motorista);
 
         Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
         Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.of(carona));
@@ -371,15 +411,9 @@ class CaronaServiceTest {
     void deveLancarExcecaoAoAlterarStatusDeCaronaJaCancelada() {
         // Given
         final Long caronaId = 1L;
-        final PerfilMotorista motorista = PerfilMotorista.builder()
-                .id(1L)
-                .build();
-
-        final Carona carona = Carona.builder()
-                .id(caronaId)
-                .motorista(motorista)
-                .status(StatusCarona.CANCELADA)
-                .build();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+        final Carona carona = CaronaMock.createCancelada();
+        carona.setMotorista(motorista);
 
         Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
         Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.of(carona));
@@ -394,4 +428,107 @@ class CaronaServiceTest {
         Mockito.verify(caronaRepository).findById(caronaId);
         Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
     }
+
+    @Test
+    @DisplayName("Deve atualizar carona com sucesso")
+    void deveAtualizarCaronaComSucesso() {
+        // Given
+        final Long caronaId = 1L;
+        final CaronaRequest request = CaronaMock.createUpdateRequest();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createValidMotorista();
+        final Carona caronaExistente = CaronaMock.createAgendada();
+        caronaExistente.setMotorista(motorista);
+
+        final CaronaDto caronaDto = CaronaMock.createAgendadaDto();
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+        Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.of(caronaExistente));
+        Mockito.when(caronaRepository.save(Mockito.any(Carona.class))).thenReturn(caronaExistente);
+        Mockito.when(caronaMapper.toDto(caronaExistente)).thenReturn(caronaDto);
+
+        // When
+        final CaronaDto resultado = caronaService.atualizarCarona(caronaId, request);
+
+        // Then
+        Assertions.assertNotNull(resultado);
+        Assertions.assertEquals(caronaId, resultado.getId());
+
+        Mockito.verify(currentUserService).getCurrentMotorista();
+        Mockito.verify(caronaRepository).findById(caronaId);
+        Mockito.verify(caronaRepository).save(caronaCaptor.capture());
+        Mockito.verify(caronaMapper).toDto(caronaExistente);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar atualizar carona inexistente")
+    void deveLancarExcecaoAoAtualizarCaronaInexistente() {
+        // Given
+        final Long caronaId = 1L;
+        final CaronaRequest request = CaronaMock.createUpdateRequest();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createMotoristaWithId(1L);
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+        Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.empty());
+
+        // When & Then
+        final EntidadeNaoEncontrada exception = Assertions.assertThrows(EntidadeNaoEncontrada.class, () -> {
+            caronaService.atualizarCarona(caronaId, request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.CARONA_NAO_ENCONTRADA + "{1}", exception.getMessage());
+        Mockito.verify(currentUserService).getCurrentMotorista();
+        Mockito.verify(caronaRepository).findById(caronaId);
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar atualizar carona de outro motorista")
+    void deveLancarExcecaoAoAtualizarCaronaDeOutroMotorista() {
+        // Given
+        final Long caronaId = 1L;
+        final CaronaRequest request = CaronaMock.createUpdateRequest();
+        final PerfilMotorista motoristaAtual = PerfilMotoristaMock.createMotoristaWithId(1L);
+        final PerfilMotorista outroMotorista = PerfilMotoristaMock.createMotoristaWithId(2L);
+
+        final Carona carona = CaronaMock.createAgendada();
+        carona.setMotorista(outroMotorista);
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motoristaAtual);
+        Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.of(carona));
+
+        // When & Then
+        final ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            caronaService.atualizarCarona(caronaId, request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.CARONA_NAO_PERTENCE_AO_MOTORISTA, exception.getMessage());
+        Mockito.verify(currentUserService).getCurrentMotorista();
+        Mockito.verify(caronaRepository).findById(caronaId);
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar atualizar carona com data de chegada anterior à partida")
+    void deveLancarExcecaoAoAtualizarCaronaComDataChegadaAnteriorPartida() {
+        // Given
+        final Long caronaId = 1L;
+        final CaronaRequest request = CaronaMock.createInvalidRequest();
+        final PerfilMotorista motorista = PerfilMotoristaMock.createMotoristaWithId(1L);
+        final Carona carona = CaronaMock.createAgendada();
+        carona.setMotorista(motorista);
+
+        Mockito.when(currentUserService.getCurrentMotorista()).thenReturn(motorista);
+        Mockito.when(caronaRepository.findById(caronaId)).thenReturn(Optional.of(carona));
+
+        // When & Then
+        final ErroDeCliente exception = Assertions.assertThrows(ErroDeCliente.class, () -> {
+            caronaService.atualizarCarona(caronaId, request);
+        });
+
+        Assertions.assertEquals(MensagensResposta.DATA_CHEGADA_ANTERIOR_PARTIDA, exception.getMessage());
+        Mockito.verify(currentUserService).getCurrentMotorista();
+        Mockito.verify(caronaRepository).findById(caronaId);
+        Mockito.verify(caronaRepository, Mockito.never()).save(Mockito.any());
+    }
+
 }
