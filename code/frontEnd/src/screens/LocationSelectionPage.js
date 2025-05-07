@@ -27,6 +27,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
     arrival: initialArrival,
     arrivalLocation: initialArrivalLocation,
     comingFromRegisterRide,
+    comingFromFindRidesPage,
     carAvailableSeats,
     isEditingRide,
     rideId
@@ -174,6 +175,9 @@ const LocationSelectionPage = ({ navigation, route }) => {
           rideId,
           isReturningFromLocationSelection: true
         });
+      }
+      else if(comingFromFindRidesPage){
+       navigation.navigate('FindRides',locationData)
       } else {
         // Otherwise navigate to RegisterRide (new ride creation)
         navigation.navigate('RegisterRide', locationData);
