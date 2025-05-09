@@ -31,6 +31,7 @@ public class CaronaMapper {
                 .latitudeDestino(request.getLatitudeDestino())
                 .longitudeDestino(request.getLongitudeDestino())
                 .dataHoraPartida(request.getDataHoraPartida())
+                .dataHoraChegada(request.getDataHoraChegada())
                 .vagas(request.getVagas())
                 .observacoes(request.getObservacoes())
                 .status(StatusCarona.AGENDADA)

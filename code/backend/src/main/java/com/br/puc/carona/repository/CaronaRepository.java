@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.br.puc.carona.dto.LocationDTO;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.model.Carona;
 
@@ -42,16 +43,14 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
     boolean isPassangerAlreadyInRide(Long passageiroId, LocalDateTime dataAtual);
 
     @Query("""
-               SELECT c
-                 FROM Carona c
-                WHERE c.status        = com.br.puc.carona.enums.StatusCarona.AGENDADA
-                  AND c.vagas         > SIZE(c.passageiros)
-                  AND (EXTRACT(HOUR FROM c.dataHoraPartida) * 3600
-                     + EXTRACT(MINUTE FROM c.dataHoraPartida) * 60
-                     + EXTRACT(SECOND FROM c.dataHoraPartida)
-                     + c.tempoEstimadoSegundos)
-                    <= :arrivalEpochSec
+                SELECT c
+                  FROM Carona c
+                 WHERE c.status = com.br.puc.carona.enums.StatusCarona.AGENDADA
+                   AND c.vagas > SIZE(c.passageiros)
+                   AND c.dataHoraChegada BETWEEN :lowerBound AND :upperBound
             """)
-    List<Carona> findViableCaronas(int arrivalEpochSec);
-
+    List<Carona> findViableCaronas(LocalDateTime lowerBound,
+            LocalDateTime upperBound,
+            LocationDTO studentOrigin,
+            LocationDTO studentDestination);
 }

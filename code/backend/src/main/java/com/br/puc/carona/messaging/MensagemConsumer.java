@@ -7,7 +7,6 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
-import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.service.PedidoDeEntradaService;
 import com.br.puc.carona.service.RideMatchingService;
 
@@ -65,8 +64,8 @@ public class MensagemConsumer {
         log.info("Processing new ride request from student ID: {}", request.getEstudanteId());
         
         try {
-            Carona matchedRide = rideMatchingService.matchAndAssign(request);
-            log.info("Successfully matched ride request. Assigned to ride ID: {}", matchedRide.getId());
+            rideMatchingService.matchAndAssign(request);
+            log.info("Successfully matched ride request for student ID: {}", request.getEstudanteId());
         } catch (Exception e) {
             log.error("Error processing ride request for student {}: {}", 
                 request.getEstudanteId(), e.getMessage(), e);

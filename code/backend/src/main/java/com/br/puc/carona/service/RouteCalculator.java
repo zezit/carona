@@ -23,7 +23,7 @@ public class RouteCalculator {
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("Main route not found"));
         
-        return new RouteDetails(mainRoute.getDistanciaKm(), mainRoute.getTempoSegundos());
+        return new RouteDetails(mainRoute.getDistanciaMetros(), mainRoute.getTempoSegundos());
     }
 
     public RouteDetails calculateDetourRoute(Carona ride, LocationDTO origin, LocationDTO destination) {
@@ -42,11 +42,6 @@ public class RouteCalculator {
             ride.getLatitudeDestino(), ride.getLongitudeDestino(), 
             waypoints).get(0);
 
-        return new RouteDetails(detourRoute.getDistanciaKm(), detourRoute.getTempoSegundos());
+        return new RouteDetails(detourRoute.getDistanciaMetros(), detourRoute.getTempoSegundos());
     }
 }
-
-/**
- * Record to store route calculation results.
- */
-record RouteDetails(double totalDistance, int totalSeconds) {}

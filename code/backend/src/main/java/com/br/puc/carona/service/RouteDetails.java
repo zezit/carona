@@ -3,4 +3,4 @@ package com.br.puc.carona.service;
 /**
  * Record holding route calculation details.
  */
-public record RouteDetails(double totalDistance, int totalSeconds) {}
+public record RouteDetails(double totalDistance, double totalSeconds) {}

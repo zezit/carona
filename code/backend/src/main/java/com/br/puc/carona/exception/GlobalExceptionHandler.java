@@ -21,7 +21,9 @@ import com.br.puc.carona.exception.custom.ImagemInvalidaException;
 import com.br.puc.carona.exception.custom.UnauthenticatedUserException;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -126,11 +128,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+        log.error("Erro interno do servidor", ex);
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 LocalDateTime.now(),
                 request.getDescription(false),
-                MensagensResposta.ERRO_INTERNO);
+                MensagensResposta.ERRO_INTERNO,
+                ex.getLocalizedMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

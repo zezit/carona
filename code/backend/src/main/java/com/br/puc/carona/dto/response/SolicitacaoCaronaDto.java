@@ -27,6 +27,18 @@ public class SolicitacaoCaronaDto extends AbstractDto {
     @Schema(description = "Destino da carona", example = "Shopping Del Rey")
     private String destino;
 
+    @Schema(description = "Latitudae de origem", example = "-19.999999")
+    private Double latitudeOrigem;
+
+    @Schema(description = "Longitude de origem", example = "-43.999999")
+    private Double longitudeOrigem;
+
+    @Schema(description = "Latitude de destino", example = "-19.999999")
+    private Double latitudeDestino;
+
+    @Schema(description = "Longitude de destino", example = "-43.999999")
+    private Double longitudeDestino;
+
     @Schema(description = "Hora desejada para chegada", example = "2025-04-20T19:00:00")
     private LocalDateTime horarioChegada;
 
