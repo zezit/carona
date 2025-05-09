@@ -117,8 +117,8 @@ class CaronaControllerTest {
 
         trajetoPrincipal = TrajetoDto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .coordenadas(coordenadas)
                 .build();
 
@@ -145,8 +145,8 @@ class CaronaControllerTest {
                 .observacoes("Carona para São Paulo")
                 .passageiros(passageiros)
                 .vagasDisponiveis(2)
-                .distanciaEstimadaKm(15.5)
-                .tempoEstimadoSegundos(1200)
+                .distanciaEstimadaMetros(15.5)
+                .tempoEstimadoSegundos(1200.0)
                 .trajetos(new ArrayList<>())
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();
@@ -403,8 +403,8 @@ class CaronaControllerTest {
                 .observacoes("Carona para São Paulo")
                 .passageiros(passageiros)
                 .vagasDisponiveis(3)
-                .distanciaEstimadaKm(15.5)
-                .tempoEstimadoSegundos(1200)
+                .distanciaEstimadaMetros(15.5)
+                .tempoEstimadoSegundos(1200.0)
                 .trajetos(trajetos)
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();
@@ -486,8 +486,8 @@ class CaronaControllerTest {
                 .observacoes("Carona para São Paulo")
                 .passageiros(passageiros)
                 .vagasDisponiveis(2)
-                .distanciaEstimadaKm(15.5)
-                .tempoEstimadoSegundos(1200)
+                .distanciaEstimadaMetros(15.5)
+                .tempoEstimadoSegundos(1200.0)
                 .trajetos(trajetos)
                 .trajetoPrincipal(trajetoPrincipal)
                 .build();

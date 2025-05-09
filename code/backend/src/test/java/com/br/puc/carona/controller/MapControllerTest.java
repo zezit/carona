@@ -47,8 +47,8 @@ class MapControllerTest {
         // Principal trajectory
         TrajetoDto trajetoPrincipal = new TrajetoDto();
         trajetoPrincipal.setDescricao("Principal");
-        trajetoPrincipal.setDistanciaKm(15.5);
-        trajetoPrincipal.setTempoSegundos(1200);
+        trajetoPrincipal.setDistanciaMetros(15.5);
+        trajetoPrincipal.setTempoSegundos(1200.0);
         List<List<Double>> coordenadas1 = new ArrayList<>();
         coordenadas1.add(Arrays.asList(-19.9322507, -43.9408341));
         coordenadas1.add(Arrays.asList(-19.9350000, -43.9400000));
@@ -58,8 +58,8 @@ class MapControllerTest {
         // Alternative trajectory
         TrajetoDto trajetoAlternativo = new TrajetoDto();
         trajetoAlternativo.setDescricao("Alternativa 1");
-        trajetoAlternativo.setDistanciaKm(16.8);
-        trajetoAlternativo.setTempoSegundos(1320);
+        trajetoAlternativo.setDistanciaMetros(16.8);
+        trajetoAlternativo.setTempoSegundos(1320.0);
         List<List<Double>> coordenadas2 = new ArrayList<>();
         coordenadas2.add(Arrays.asList(-19.9322507, -43.9408341));
         coordenadas2.add(Arrays.asList(-19.9340000, -43.9390000));
