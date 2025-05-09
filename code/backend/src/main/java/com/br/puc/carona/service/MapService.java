@@ -64,7 +64,6 @@ public class MapService {
             final Double endLat, final Double endLon, final List<Double[]> waypoints) {
         log.info("Calculando trajetórias com pontos de passagem de [{}, {}] para [{}, {}]", startLat, startLon, endLat,
                 endLon);
-
         try {
             final JsonNode response = fetchRouteData(startLat, startLon, endLat, endLon, waypoints);
             if (response != null && "Ok".equals(response.get("code").asText())) {
@@ -104,6 +103,7 @@ public class MapService {
 
     private JsonNode fetchRouteData(final Double startLat, final Double startLon, final Double endLat,
             final Double endLon, final List<Double[]> waypoints) {
+
         // Start building the coordinates string with the start point
         StringBuilder coordinatesBuilder = new StringBuilder();
         coordinatesBuilder.append(startLon).append(",").append(startLat).append(";");
@@ -150,12 +150,8 @@ public class MapService {
         final double distanceMeters = route.get("distance").asDouble();
         final double durationSeconds = route.get("duration").asDouble();
 
-        // Converter para km com 1 casa decimal
-        final double distanceKm = Math.round(distanceMeters / 100) / 10.0;
-        final int durationSecs = (int) Math.round(durationSeconds);
-
-        trajetoria.setDistanciaKm(distanceKm);
-        trajetoria.setTempoSegundos(durationSecs);
+        trajetoria.setDistanciaMetros(distanceMeters);
+        trajetoria.setTempoSegundos(durationSeconds);
         trajetoria.setDescricao(routeIndex == 0 ? "Principal" : "Alternativa " + routeIndex);
         trajetoria.setCoordenadas(extractCoordinates(route.get("geometry")));
 

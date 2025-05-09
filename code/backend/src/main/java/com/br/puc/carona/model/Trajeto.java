@@ -30,11 +30,11 @@ public class Trajeto extends AbstractEntity {
     @Column(name = "coordenadas", columnDefinition = "TEXT")
     private String coordenadas;
     
-    @Column(name = "distancia_km")
-    private Double distanciaKm;
+    @Column(name = "distancia_metros")
+    private Double distanciaMetros;
     
     @Column(name = "tempo_segundos")
-    private Integer tempoSegundos;
+    private Double tempoSegundos;
     
     @Column
     private String descricao;

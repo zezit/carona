@@ -274,7 +274,7 @@ public class CaronaService {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException(MensagensResposta.ERRO_INTERNO));
 
-            carona.setDistanciaEstimadaKm(trajetoPrincipal.getDistanciaKm());
+            carona.setDistanciaEstimadaMetros(trajetoPrincipal.getDistanciaMetros());
             carona.setTempoEstimadoSegundos(trajetoPrincipal.getTempoSegundos());
 
             log.info("Trajetos calculadas e adicionadas: {}", trajetosDto.size());

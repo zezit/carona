@@ -340,7 +340,7 @@ const RegisterRidePage = ({ route }) => {
             ...route,
             pontos,
             // Ensure distance and duration fields are correctly mapped
-            distanciaMetros: route.distanciaKm ? route.distanciaKm * 1000 : 0,
+            distanciaMetros: route.distanciaMetros ?? 0,
             duracaoSegundos: route.tempoSegundos || 0,
             descricao: description
           };

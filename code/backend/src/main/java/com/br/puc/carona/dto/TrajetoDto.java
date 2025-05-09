@@ -23,7 +23,7 @@ public class TrajetoDto {
      */
     @Builder.Default
     private List<List<Double>> coordenadas = new ArrayList<>();
-    private Double distanciaKm;
-    private Integer tempoSegundos;
+    private Double distanciaMetros;
+    private Double tempoSegundos;
     private String descricao;
 }

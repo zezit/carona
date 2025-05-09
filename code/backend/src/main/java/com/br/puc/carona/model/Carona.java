@@ -77,13 +77,13 @@ public class Carona extends AbstractEntity {
     private String observacoes;
     
     @Column
-    private Double distanciaEstimadaKm;
+    private Double distanciaEstimadaMetros;
     
     @Column
-    private Integer tempoEstimadoSegundos;
+    private Double tempoEstimadoSegundos;
 
     @Column
-    private Integer tempoGastoSegundos;
+    private Double tempoGastoSegundos;
 
     @OneToMany(mappedBy = "carona", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

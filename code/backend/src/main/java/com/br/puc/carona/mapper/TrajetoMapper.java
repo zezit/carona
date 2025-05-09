@@ -28,7 +28,7 @@ public class TrajetoMapper {
         
         final TrajetoDto dto = new TrajetoDto();
         dto.setDescricao(trajeto.getDescricao());
-        dto.setDistanciaKm(trajeto.getDistanciaKm());
+        dto.setDistanciaMetros(trajeto.getDistanciaMetros());
         dto.setTempoSegundos(trajeto.getTempoSegundos());
         
         try {
@@ -68,7 +68,7 @@ public class TrajetoMapper {
         
         final Trajeto trajeto = new Trajeto();
         trajeto.setDescricao(dto.getDescricao());
-        trajeto.setDistanciaKm(dto.getDistanciaKm());
+        trajeto.setDistanciaMetros(dto.getDistanciaMetros());
         trajeto.setTempoSegundos(dto.getTempoSegundos());
         trajeto.setPrincipal(dto.getDescricao() != null && dto.getDescricao().equalsIgnoreCase("Principal"));
         

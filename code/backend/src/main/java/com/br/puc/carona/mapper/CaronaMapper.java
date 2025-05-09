@@ -66,7 +66,7 @@ public class CaronaMapper {
                 .observacoes(carona.getObservacoes())
                 .passageiros(estudanteMapper.toDtos(carona.getPassageiros()))
                 .vagasDisponiveis(carona.getVagasDisponiveis())
-                .distanciaEstimadaKm(carona.getDistanciaEstimadaKm())
+                .distanciaEstimadaMetros(carona.getDistanciaEstimadaMetros())
                 .tempoEstimadoSegundos(carona.getTempoEstimadoSegundos())
                 .trajetos(trajetoDtos.stream()
                         .filter(t -> t.getDescricao() != null && !t.getDescricao().equalsIgnoreCase("Principal"))

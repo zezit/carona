@@ -41,8 +41,8 @@ class TrajetoMapperTest {
         // Given
         final Trajeto trajeto = Trajeto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .coordenadas("[['-19.9322507','-43.9408341']]")
                 .principal(true)
                 .build();
@@ -67,7 +67,7 @@ class TrajetoMapperTest {
         // Then
         Assertions.assertNotNull(dto);
         Assertions.assertEquals(trajeto.getDescricao(), dto.getDescricao());
-        Assertions.assertEquals(trajeto.getDistanciaKm(), dto.getDistanciaKm());
+        Assertions.assertEquals(trajeto.getDistanciaMetros(), dto.getDistanciaMetros());
         Assertions.assertEquals(trajeto.getTempoSegundos(), dto.getTempoSegundos());
         Assertions.assertEquals(coordenadas, dto.getCoordenadas());
         
@@ -105,8 +105,8 @@ class TrajetoMapperTest {
         // Given
         final Trajeto trajeto = Trajeto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .coordenadas("[['-19.9322507','-43.9408341']]")
                 .principal(true)
                 .build();
@@ -131,7 +131,7 @@ class TrajetoMapperTest {
         Assertions.assertNotNull(dtos);
         Assertions.assertEquals(1, dtos.size());
         Assertions.assertEquals(trajeto.getDescricao(), dtos.get(0).getDescricao());
-        Assertions.assertEquals(trajeto.getDistanciaKm(), dtos.get(0).getDistanciaKm());
+        Assertions.assertEquals(trajeto.getDistanciaMetros(), dtos.get(0).getDistanciaMetros());
         Assertions.assertEquals(trajeto.getTempoSegundos(), dtos.get(0).getTempoSegundos());
         Assertions.assertEquals(coordenadas, dtos.get(0).getCoordenadas());
     }
@@ -143,8 +143,8 @@ class TrajetoMapperTest {
         final List<List<Double>> coordenadas = List.of(List.of(-19.9322507, -43.9408341));
         final TrajetoDto dto = TrajetoDto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .coordenadas(coordenadas)
                 .build();
 
@@ -156,7 +156,7 @@ class TrajetoMapperTest {
         // Then
         Assertions.assertNotNull(trajeto);
         Assertions.assertEquals(dto.getDescricao(), trajeto.getDescricao());
-        Assertions.assertEquals(dto.getDistanciaKm(), trajeto.getDistanciaKm());
+        Assertions.assertEquals(dto.getDistanciaMetros(), trajeto.getDistanciaMetros());
         Assertions.assertEquals(dto.getTempoSegundos(), trajeto.getTempoSegundos());
         Assertions.assertTrue(trajeto.getPrincipal());
         Assertions.assertNotNull(trajeto.getCoordenadas());
@@ -178,8 +178,8 @@ class TrajetoMapperTest {
         // Given
         final TrajetoDto dto = TrajetoDto.builder()
                 .descricao("Alternativo")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .build();
 
         // When
@@ -196,8 +196,8 @@ class TrajetoMapperTest {
         // Given
         final TrajetoDto dto = TrajetoDto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .coordenadas(List.of(List.of(-19.9322507, -43.9408341)))
                 .build();
 
