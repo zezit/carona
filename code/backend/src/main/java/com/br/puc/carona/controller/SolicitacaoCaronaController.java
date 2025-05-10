@@ -44,9 +44,7 @@ public class SolicitacaoCaronaController {
             @PathVariable final Long estudanteId,
             @Valid @RequestBody final SolicitacaoCaronaRequest request) {
         log.info("Iniciando requisição de criação de solicitação de carona para estudante ID: {}", estudanteId);
-        SolicitacaoCaronaDto solicitacao = solicitacaoService.criarSolicitacao(estudanteId, request);
-
-
+        final SolicitacaoCaronaDto solicitacao = solicitacaoService.criarSolicitacao(estudanteId, request);
         log.info("Finalizando requisição de criação de solicitação de carona para estudante ID: {}", estudanteId);
         return ResponseEntity.status(HttpStatus.CREATED).body(solicitacao);
     }
@@ -59,7 +57,7 @@ public class SolicitacaoCaronaController {
     })
     public ResponseEntity<SolicitacaoCaronaDto> buscarPorId(@PathVariable final Long id) {
         log.info("Iniciando requisição de busca de solicitação ID: {}", id);
-        SolicitacaoCaronaDto solicitacao = solicitacaoService.buscarPorId(id);
+        final SolicitacaoCaronaDto solicitacao = solicitacaoService.buscarPorId(id);
         log.info("Finalizando requisição de busca de solicitação ID: {}", id);
         return ResponseEntity.ok(solicitacao);
     }
@@ -72,7 +70,7 @@ public class SolicitacaoCaronaController {
     })
     public ResponseEntity<List<SolicitacaoCaronaDto>> buscarPorEstudante(@PathVariable final Long estudanteId) {
         log.info("Iniciando requisição de busca de solicitações para estudante ID: {}", estudanteId);
-        List<SolicitacaoCaronaDto> solicitacoes = solicitacaoService.buscarPorEstudante(estudanteId);
+        final List<SolicitacaoCaronaDto> solicitacoes = solicitacaoService.buscarPorEstudante(estudanteId);
         log.info("Finalizando requisição de busca de solicitações para estudante ID: {}", estudanteId);
         return ResponseEntity.ok(solicitacoes);
     }
@@ -87,6 +85,6 @@ public class SolicitacaoCaronaController {
         log.info("Iniciando requisição de cancelamento da solicitação ID: {}", id);
         solicitacaoService.cancelarSolicitacao(id);
         log.info("Finalizando requisição de cancelamento da solicitação ID: {}", id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }
