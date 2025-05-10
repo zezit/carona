@@ -95,10 +95,10 @@ class MapControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(trajetosDto.size()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].descricao").value("Principal"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].distanciaKm").value(15.5))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].distanciaMetros").value(15.5))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].tempoSegundos").value(1200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[1].descricao").value("Alternativa 1"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].distanciaKm").value(16.8))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].distanciaMetros").value(16.8))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[1].tempoSegundos").value(1320));
 
         Mockito.verify(mapService).calculateTrajectories(startLat, startLon, endLat, endLon);
