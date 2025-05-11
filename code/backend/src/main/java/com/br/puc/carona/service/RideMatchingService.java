@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.br.puc.carona.annotation.LogExecutionTime;
 import com.br.puc.carona.dto.LocationDTO;
+import com.br.puc.carona.dto.RouteDetails;
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.mapper.SolicitacaoCaronaMapper;
 import com.br.puc.carona.model.Carona;
@@ -17,6 +18,7 @@ import com.br.puc.carona.model.SolicitacaoCarona;
 import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.EstudanteRepository;
 import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
+import com.br.puc.carona.utils.RouteCalculatorUtil;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,7 @@ public class RideMatchingService {
     private final CaronaRepository caronaRepository;
     private final EstudanteRepository estudanteRepository;
     private final SolicitacaoCaronaRepository solicitacaoCaronaRepository;
-    private final RouteCalculator routeCalculator;
+    private final RouteCalculatorUtil routeCalculator;
 
     private final SolicitacaoCaronaMapper solicitacaoCaronaMapper;
 
@@ -122,15 +124,15 @@ public class RideMatchingService {
         RouteDetails detourRoute = routeCalculator.calculateDetourRoute(ride, studentOrigin, studentDestination);
 
         log.debug("Ride ID {}: Original route - Duration: {}s, Distance: {}km", ride.getId(),
-                originalRoute.totalSeconds(), originalRoute.totalDistance());
-        log.debug("Ride ID {}: Detour route - Duration: {}s, Distance: {}km", ride.getId(), detourRoute.totalSeconds(),
-                detourRoute.totalDistance());
+                originalRoute.getTotalSeconds(), originalRoute.getTotalDistance());
+        log.debug("Ride ID {}: Detour route - Duration: {}s, Distance: {}km", ride.getId(), detourRoute.getTotalSeconds(),
+                detourRoute.getTotalDistance());
 
-        double detourSeconds = detourRoute.totalSeconds() - originalRoute.totalSeconds();
-        double detourMeters = detourRoute.totalDistance() - originalRoute.totalDistance();
+        double detourSeconds = detourRoute.getTotalSeconds() - originalRoute.getTotalSeconds();
+        double detourMeters = detourRoute.getTotalDistance() - originalRoute.getTotalDistance();
         LocalTime estimatedArrivalWithDetour = ride.getDataHoraPartida()
                 .toLocalTime()
-                .plusSeconds(Math.round(detourRoute.totalSeconds()));
+                .plusSeconds(Math.round(detourRoute.getTotalSeconds()));
 
         log.debug("Ride ID {}: Detour minutes: {}, Detour meters: {}, Estimated arrival with detour: {}",
                 ride.getId(), detourSeconds, detourMeters, estimatedArrivalWithDetour);
@@ -154,9 +156,9 @@ public class RideMatchingService {
                 ride.getId(), studentOrigin, studentDestination);
         RouteDetails originalRoute = routeCalculator.getOriginalRoute(ride);
         RouteDetails detourRoute = routeCalculator.calculateDetourRoute(ride, studentOrigin, studentDestination);
-        double detourMinutes = (detourRoute.totalSeconds() - originalRoute.totalSeconds()) / 60;
+        double detourMinutes = (detourRoute.getTotalSeconds() - originalRoute.getTotalSeconds()) / 60;
         log.debug("Ride ID {}: Original route seconds: {}, Detour route seconds: {}, Calculated detour minutes: {}",
-                ride.getId(), originalRoute.totalSeconds(), detourRoute.totalSeconds(), detourMinutes);
+                ride.getId(), originalRoute.getTotalSeconds(), detourRoute.getTotalSeconds(), detourMinutes);
         return detourMinutes;
     }
 }

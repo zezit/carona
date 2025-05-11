@@ -40,4 +40,8 @@ public class ErrorResponse {
     public String getCodigo() {
         return codigo;
     }
+
+    public String getMensagem() {
+        return mensagem;
+    }
 }
