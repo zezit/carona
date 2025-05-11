@@ -161,6 +161,7 @@ const RegisterRidePage = ({ route }) => {
       arrival,
       arrivalLocation,
       comingFromRegisterRide: true,  // Flag to indicate we're coming from RegisterRidePage
+      comingFromFindRidesPage:false,
       carAvailableSeats: initialCarAvailableSeats // Pass car available seats to LocationSelectionPage
     });
   };
