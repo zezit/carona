@@ -39,6 +39,8 @@ public class RideMatchingService {
 
     private final SolicitacaoCaronaMapper solicitacaoCaronaMapper;
 
+    private final WebsocketService websocketService;
+
     /**
      * Matches a ride request with the best available ride and assigns the student.
      * 
@@ -102,6 +104,9 @@ public class RideMatchingService {
         bestMatch.addPedidoDeEntrada(pedidoDeEntrada);
 
         Carona savedCarona = caronaRepository.save(bestMatch);
+
+        websocketService.sendRideMatchNotification(pedidoDeEntrada);
+        
         log.info("Ride ID {} updated and saved successfully.", savedCarona.getId());
     }
 
