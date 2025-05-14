@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import UserApproval from "./pages/UserApproval";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
+import Report from "./pages/Report";
 
 // Configuração do React Query com opções mais estáveis
 const queryClient = new QueryClient({
@@ -35,6 +35,7 @@ const App = () => (
               <Route path="/home" element={<Index />} />
               <Route path="/approval" element={<UserApproval />} />
               <Route path="/users" element={<UserManagement />} />
+              <Route path="/report" element={<Report />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </UserProvider>
