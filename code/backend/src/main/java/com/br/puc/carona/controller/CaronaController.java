@@ -4,13 +4,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.br.puc.carona.dto.request.CaronaRequest;
 import com.br.puc.carona.dto.response.CaronaDto;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.service.CaronaService;
 import com.br.puc.carona.controller.docs.CaronaExamples;
+
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,7 +46,7 @@ public class CaronaController {
     @Operation(summary = "Criar carona", description = "Cria uma nova carona para um motorista. A carona é criada com status AGENDADA por padrão.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Carona criada com sucesso",
-            content = @Content(mediaType = "application/json", 
+            content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = CaronaDto.class),
                 examples = @ExampleObject(value = CaronaExamples.CARONA_CRIADA))),
         @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos"),
@@ -57,7 +66,7 @@ public class CaronaController {
     @Operation(summary = "Buscar carona", description = "Busca uma carona pelo ID, retornando todos os detalhes incluindo motorista, trajetos e status atual")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Carona encontrada",
-            content = @Content(mediaType = "application/json", 
+            content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = CaronaDto.class),
                 examples = @ExampleObject(value = CaronaExamples.CARONA_ENCONTRADA))),
         @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
@@ -75,7 +84,7 @@ public class CaronaController {
     @Operation(summary = "Listar caronas de motorista", description = "Lista todas as caronas de um motorista, ordenadas por data/hora de partida decrescente. Suporta paginação via parâmetros 'page', 'size' e 'sort'.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lista de caronas obtida com sucesso",
-            content = @Content(mediaType = "application/json", 
+            content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = Page.class),
                 examples = @ExampleObject(value = CaronaExamples.LISTA_CARONAS_MOTORISTA))),
         @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
@@ -94,7 +103,7 @@ public class CaronaController {
     @Operation(summary = "Listar próximas caronas de motorista", description = "Lista as próximas caronas agendadas de um motorista, ordenadas por data/hora de partida crescente.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lista de próximas caronas obtida com sucesso",
-            content = @Content(mediaType = "application/json", 
+            content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = List.class),
                 examples = @ExampleObject(value = CaronaExamples.LISTA_PROXIMAS_CARONAS_MOTORISTA))),
         @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
@@ -129,7 +138,7 @@ public class CaronaController {
     }
 
     @PatchMapping("/{id}/status/{status}")
-    @Operation(summary = "Alterar status da carona", 
+    @Operation(summary = "Alterar status da carona",
         description = "Altera o status de uma carona. Transições: AGENDADA → EM_ANDAMENTO → FINALIZADA ou AGENDADA → CANCELADA")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Status alterado com sucesso",
@@ -148,20 +157,100 @@ public class CaronaController {
         return ResponseEntity.ok(caronaAtualizada);
     }
 
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Cancelar carona", description = "Cancela uma carona, alterando seu status para CANCELADA. Apenas o motorista que criou a carona pode cancelá-la. Não é possível cancelar uma carona que já esteja com status FINALIZADA ou CANCELADA.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Carona cancelada com sucesso"),
-        @ApiResponse(responseCode = "400", description = "Não foi possível cancelar a carona"),
-        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-        @ApiResponse(responseCode = "403", description = "Usuário não tem permissão"),
-        @ApiResponse(responseCode = "404", description = "Carona não encontrada"),
-        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+                    @ApiResponse(responseCode = "204", description = "Carona cancelada com sucesso"),
+                    @ApiResponse(responseCode = "400", description = "Não foi possível cancelar a carona (já finalizada ou já cancelada)"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para cancelar esta carona"),
+                    @ApiResponse(responseCode = "404", description = "Carona não encontrada"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
     })
     public ResponseEntity<Void> cancelarCarona(@PathVariable Long id) {
-        log.info("Cancelando carona com ID: {}", id);
-        caronaService.alterarStatusCarona(id, StatusCarona.CANCELADA);
-        log.info("Carona cancelada com sucesso. ID: {}", id);
+            log.info("Cancelando carona com ID: {}", id);
+            caronaService.alterarStatusCarona(id, StatusCarona.CANCELADA);
+            log.info("Carona cancelada com sucesso. ID: {}", id);
+            return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/iniciar")
+    @Operation(summary = "Iniciar carona", description = "Inicia uma carona agendada, alterando seu status para EM_ANDAMENTO. Verifica se o horário atual está dentro de uma janela aceitável em relação ao horário programado (até 15 minutos antes ou após). Apenas o motorista da carona pode iniciar a viagem.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Carona iniciada com sucesso", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = CaronaDto.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Carona iniciada com sucesso",
+                                            description = "Exemplo de resposta após iniciar uma carona",
+                                            value = """
+                                        {
+                                            "id": 1,
+                                            "motorista": {
+                                                "id": 5,
+                                                "carro": {
+                                                    "id": 3,
+                                                    "modelo": "Onix",
+                                                    "placa": "ABC1234",
+                                                    "cor": "Prata",
+                                                    "capacidadePassageiros": 4
+                                                },
+                                                "cnh": "12345678910",
+                                                "whatsapp": "31998765432",
+                                                "mostrarWhatsapp": true
+                                            },
+                                            "pontoPartida": "Rua A, 123",
+                                            "latitudePartida": -23.5505,
+                                            "longitudePartida": -46.6333,
+                                            "pontoDestino": "Avenida B, 456",
+                                            "latitudeDestino": -23.5505,
+                                            "longitudeDestino": -46.6333,
+                                            "dataHoraPartida": "01-10-2025T10:00:00",
+                                            "dataHoraChegada": "01-10-2025T12:00:00",
+                                            "vagas": 3,
+                                            "status": "EM_ANDAMENTO",
+                                            "observacoes": "Carona para São Paulo",
+                                            "passageiros": [
+                                                {
+                                                    "id": 2,
+                                                    "nome": "José Silva",
+                                                    "email": "jose.silva@email.com",
+                                                    "dataDeNascimento": "1995-05-15",
+                                                    "matricula": "20230002",
+                                                    "avaliacaoMedia": 4.7,
+                                                    "curso": "Engenharia de Software"
+                                                }
+                                            ],
+                                            "vagasDisponiveis": 2,
+                                            "distanciaEstimadaKm": 15.5,
+                                            "tempoEstimadoSegundos": 1200,
+                                            "trajetorias": [
+                                                {
+                                                    "coordenadas": [
+                                                        [-23.5505, -46.6333],
+                                                        [-23.5550, -46.6400],
+                                                        [-23.5605, -46.6450]
+                                                    ],
+                                                    "distanciaKm": 15.5,
+                                                    "tempoSegundos": 1200,
+                                                    "descricao": "Principal"
+                                                }
+                                            ]
+                                        }
+                                        """
+                                    )
+                            }) }),
+            @ApiResponse(responseCode = "400", description = "Carona não pode ser iniciada fora da janela de tempo permitida ou já está em andamento/finalizada/cancelada"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para iniciar esta carona"),
+            @ApiResponse(responseCode = "404", description = "Carona não encontrada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<Void> iniciarCarona(@PathVariable Long id) {
+        log.info("Solicitação para iniciar carona com ID: {}", id);
+        caronaService.iniciarCarona(id);
+        log.info("Carona iniciada com sucesso. ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,6 +1,7 @@
 package com.br.puc.carona.service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -48,6 +49,7 @@ public class EstudanteService {
         }
 
         final Estudante estudante = mapper.toEntity(cadastroRequest);
+
 
         repository.save(estudante);
 
