@@ -1,6 +1,11 @@
 package com.br.puc.carona.config;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -27,6 +32,21 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.queues.rides-request}")
     private String ridesRequestQueue;
 
+    @Value("${app.rabbitmq.virtual-host}")
+    private String virtualHost;
+
+    @Value("${spring.rabbitmq.host}")
+    private String ampqHost;
+
+    @Value("${spring.rabbitmq.port}")
+    private int ampqPort;
+
+    @Value("${spring.rabbitmq.username}")
+    private String ampqUsername;
+
+    @Value("${spring.rabbitmq.password}")
+    private String ampqPassword;
+
     // Message converter
     @Bean
     public MessageConverter jsonMessageConverter() {
@@ -35,10 +55,21 @@ public class RabbitMQConfig {
 
     // Configure RabbitTemplate
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(jsonMessageConverter());
-        return rabbitTemplate;
+    public RabbitTemplate rabbitTemplate() {
+        return new RabbitTemplate(connectionFactory());
+    }
+    
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+        if(virtualHost != null && !virtualHost.isEmpty()) {
+            connectionFactory.setVirtualHost(virtualHost);
+        }
+        connectionFactory.setHost(ampqHost);
+        connectionFactory.setPort(ampqPort);
+        connectionFactory.setUsername(ampqUsername);
+        connectionFactory.setPassword(ampqPassword);
+        return connectionFactory;
     }
 
     // Exchanges
