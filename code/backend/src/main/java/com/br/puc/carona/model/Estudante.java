@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -15,10 +16,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Data
@@ -46,7 +43,8 @@ public class Estudante extends Usuario {
     private PerfilMotorista perfilMotorista;
 
     @Column(nullable = false)
-    private String fcmToken;
+    @Builder.Default
+    private String fcmToken = "fcmToken";
 
     public boolean isMotorista() {
         return perfilMotorista != null;

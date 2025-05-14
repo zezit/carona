@@ -19,6 +19,8 @@ import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.exception.custom.ErroUploadImage;
 import com.br.puc.carona.exception.custom.ImagemInvalidaException;
 import com.br.puc.carona.exception.custom.UnauthenticatedUserException;
+import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
+import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
@@ -160,5 +162,28 @@ public class GlobalExceptionHandler {
                 ex.getLocalizedMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(CaronaStatusInvalido.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleCaronaStatusInvalido(CaronaStatusInvalido ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now(),
+                ex.getLocalizedMessage(),
+                MensagensResposta.CARONA_STATUS_INVALIDO);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CaronaForaDoHorarioPermitido.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleCaronaForaDoHorarioPermitido(CaronaForaDoHorarioPermitido ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now(),
+                ex.getLocalizedMessage(),
+                MensagensResposta.CARONA_HORARIO_FORA_DA_JANELA);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
 
 }

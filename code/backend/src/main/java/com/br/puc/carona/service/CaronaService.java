@@ -3,6 +3,9 @@ package com.br.puc.carona.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
+import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,6 +45,8 @@ public class CaronaService {
 
     private final CurrentUserService currentUserService;
     private final MapService mapService;
+
+    private final WebSocketService webSocketService;
 
     @Transactional
     public CaronaDto criarCarona(final CaronaRequest request) {
@@ -91,6 +96,7 @@ public class CaronaService {
             throw new ErroDeCliente(MensagensResposta.CARONA_NAO_PERTENCE_AO_MOTORISTA);
         }
 
+        // Validar datas da carona
         validarDatasCarona(request.getDataHoraPartida(), request.getDataHoraChegada());
         validarVagas(request.getVagas(), motorista.getCarro().getCapacidadePassageiros());
 
@@ -333,6 +339,44 @@ public class CaronaService {
         // Persistir a atualização
         caronaRepository.save(carona);
         log.info("Passageiro adicionado com sucesso à carona. ID: {}", carona.getId());
+    }
+
+    @Transactional
+    public CaronaDto iniciarCarona(Long idCarona) {
+        log.info("Iniciando carona com ID: {}", idCarona);
+        Carona carona = caronaRepository.findById(idCarona)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
+
+        validarPermissaoMotorista();
+        validarStatus(carona);
+        validarHorarioPermitido(carona.getDataHoraPartida());
+
+        if(carona.getStatus() != StatusCarona.AGENDADA) {
+            throw new CaronaStatusInvalido();
+        }
+
+
+        CaronaDto caronaAtualizada = alterarStatusCarona(idCarona, StatusCarona.EM_ANDAMENTO);
+
+        webSocketService.emitirEventoCaronaAtualizada(caronaAtualizada);
+
+        return caronaAtualizada;
+
+    }
+
+    private void validarStatus(Carona carona) {
+        if (carona.getStatus() != StatusCarona.AGENDADA) {
+            throw new CaronaStatusInvalido();
+        }
+    }
+    private void validarHorarioPermitido(LocalDateTime horarioPartida) {
+        LocalDateTime agora = LocalDateTime.now();
+        if (agora.isBefore(horarioPartida.minusMinutes(15)) || agora.isAfter(horarioPartida.plusMinutes(15))) {
+            throw new CaronaForaDoHorarioPermitido();
+        }
+    }
+    private void validarPermissaoMotorista(){
+        // IMPLEMENTAR ISSO
     }
 
     /**
