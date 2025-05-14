@@ -1,0 +1,12 @@
+package com.br.puc.carona.enums;
+
+public enum TipoDenuncia {
+    COMPORTAMENTO_INADEQUADO,
+    ATRASO_EXCESSIVO,
+    DESVIO_ROTA,
+    CANCELAMENTO_INJUSTIFICADO,
+    VEICULO_NAO_CONFORME,
+    COBRANCA_INDEVIDA,
+    DADOS_FALSOS,
+    OUTROS
+}
