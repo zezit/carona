@@ -18,6 +18,6 @@ public class MapConfig {
     
     @Bean(name = "osrmWebClient")
     public WebClient osrmWebClient(WebClient.Builder builder) {
-        return builder.baseUrl("https://router.project-osrm.org").build();
+        return builder.baseUrl("https://routing.openstreetmap.de/routed-car").build();
     }
 }
