@@ -69,7 +69,7 @@ class CaronaMapperTest {
         Assertions.assertEquals(carona.getVagas(), dto.getVagas());
         Assertions.assertEquals(carona.getStatus(), dto.getStatus());
         Assertions.assertEquals(carona.getObservacoes(), dto.getObservacoes());
-        Assertions.assertEquals(carona.getDistanciaEstimadaKm(), dto.getDistanciaEstimadaKm());
+        Assertions.assertEquals(carona.getDistanciaEstimadaMetros(), dto.getDistanciaEstimadaMetros());
         Assertions.assertEquals(carona.getTempoEstimadoSegundos(), dto.getTempoEstimadoSegundos());
         Assertions.assertEquals(trajetosSemPrincipal, dto.getTrajetos());
         
@@ -172,13 +172,13 @@ class CaronaMapperTest {
         final Carona carona = CaronaMock.createValidCarona();
         final TrajetoDto trajetoPrincipal = TrajetoDto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .build();
         final TrajetoDto trajetoAlternativo = TrajetoDto.builder()
                 .descricao("Alternativo")
-                .distanciaKm(18.0)
-                .tempoSegundos(1500)
+                .distanciaMetros(18.0)
+                .tempoSegundos(1500.0)
                 .build();
         final List<TrajetoDto> trajetosDto = List.of(trajetoAlternativo, trajetoPrincipal);
 
@@ -199,13 +199,13 @@ class CaronaMapperTest {
         final Carona carona = CaronaMock.createValidCarona();
         final TrajetoDto trajeto1 = TrajetoDto.builder()
                 .descricao("Rota 1")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .build();
         final TrajetoDto trajeto2 = TrajetoDto.builder()
                 .descricao("Rota 2")
-                .distanciaKm(18.0)
-                .tempoSegundos(1500)
+                .distanciaMetros(18.0)
+                .tempoSegundos(1500.0)
                 .build();
         final List<TrajetoDto> trajetosDto = List.of(trajeto1, trajeto2);
 

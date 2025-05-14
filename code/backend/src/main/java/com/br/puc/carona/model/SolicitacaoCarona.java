@@ -1,18 +1,27 @@
 package com.br.puc.carona.model;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.br.puc.carona.enums.Status;
-import jakarta.persistence.*;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Data
 @SuperBuilder
@@ -31,16 +40,29 @@ public class SolicitacaoCarona extends AbstractEntity {
     private String origem;
 
     @Column(nullable = false)
+    private Double origemLatitude;
+
+    @Column(nullable = false)
+    private Double origemLongitude;
+
+    @Column(nullable = false)
     private String destino;
 
     @Column(nullable = false)
-    private LocalDateTime horarioPartida;
+    private Double destinoLatitude;
+
+    @Column(nullable = false)
+    private Double destinoLongitude;
+
+    @Column(nullable = false)
+    private LocalDateTime horarioChegada;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status;
 
     @OneToMany(mappedBy = "solicitacao", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PedidoDeEntrada> pedidosEntrada = new ArrayList<>();
 
     public void addPedidoDeEntrada(PedidoDeEntrada pedido) {
@@ -50,7 +72,4 @@ public class SolicitacaoCarona extends AbstractEntity {
             pedidosEntrada.add(pedido);
         }
     }
-
-
-
 }

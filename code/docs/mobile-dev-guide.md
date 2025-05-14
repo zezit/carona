@@ -125,7 +125,7 @@ Você tem duas opções para configurar sua aplicação mobile para usar a API v
 
 #### Opção 1: Atualizar o arquivo .env
 
-Edite o arquivo `.env` no diretório do frontend:
+Edite o arquivo `.env` no diretório do mobile:
 
 ```properties
 # Atual configuração no .env
@@ -161,7 +161,7 @@ return 'https://seu-url-ngrok-aqui.ngrok-free.app/api';
 Depois de atualizar a configuração da API:
 
 ```bash
-cd ../frontEnd
+cd ../mobile
 npm install
 npm start --tunnel
 ```

@@ -11,7 +11,7 @@ Aplicação para coordenação e compartilhamento de caronas entre estudantes un
 │   ├── pom.xml           # Dependências Maven
 │   └── docker-compose.yml # Configuração do ambiente Docker
 │
-├── frontEnd/             # Aplicativo Mobile (React Native)
+├── mobile/             # Aplicativo Mobile (React Native)
 │   ├── api/              # Configuração e cliente para API
 │   ├── assets/           # Imagens e recursos estáticos
 │   ├── components/       # Componentes React reutilizáveis

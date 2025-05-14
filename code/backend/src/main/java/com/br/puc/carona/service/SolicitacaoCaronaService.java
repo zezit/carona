@@ -1,5 +1,11 @@
 package com.br.puc.carona.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
@@ -15,12 +21,6 @@ import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -35,16 +35,15 @@ public class SolicitacaoCaronaService {
     public SolicitacaoCaronaDto criarSolicitacao(final Long estudanteId, final SolicitacaoCaronaRequest request) {
         log.info("Criando solicitação de carona para estudante ID: {}", estudanteId);
 
-        Estudante estudante = estudanteRepository.findById(estudanteId)
+        final Estudante estudante = estudanteRepository.findById(estudanteId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId));
 
-        SolicitacaoCarona solicitacao = mapper.toEntity(request);
+        final SolicitacaoCarona solicitacao = mapper.toEntity(request);
         solicitacao.setEstudante(estudante);
-        solicitacao.setStatus(Status.PENDENTE); // status inicial
 
         solicitacaoRepository.save(solicitacao);
 
-        mensagemProducer.enviarMensagemParaCaronaRequestQueue(solicitacao);
+        mensagemProducer.enviarMensagemParaCaronaRequestQueue(request);
 
         log.info("Solicitação de carona criada com sucesso para estudante ID: {}", estudanteId);
 
@@ -53,16 +52,20 @@ public class SolicitacaoCaronaService {
 
     public SolicitacaoCaronaDto buscarPorId(final Long id) {
         log.info("Buscando solicitação de carona ID: {}", id);
-        SolicitacaoCarona solicitacao = solicitacaoRepository.findById(id)
+        
+        final SolicitacaoCarona solicitacao = solicitacaoRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA, id));
 
+        log.info("Solicitação de carona ID: {} encontrada com sucesso", id);
         return mapper.toDto(solicitacao);
     }
 
     public List<SolicitacaoCaronaDto> buscarPorEstudante(final Long estudanteId) {
         log.info("Buscando solicitações de carona do estudante ID: {}", estudanteId);
-        List<SolicitacaoCarona> solicitacoes = solicitacaoRepository.findByEstudanteId(estudanteId);
+        
+        final List<SolicitacaoCarona> solicitacoes = solicitacaoRepository.findByEstudanteId(estudanteId);
 
+        log.info("Solicitações de carona do estudante ID: {} encontradas com sucesso", estudanteId);
         return solicitacoes.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
@@ -71,7 +74,8 @@ public class SolicitacaoCaronaService {
     @Transactional
     public void cancelarSolicitacao(final Long id) {
         log.info("Cancelando solicitação de carona ID: {}", id);
-        SolicitacaoCarona solicitacao = solicitacaoRepository.findById(id)
+        
+        final SolicitacaoCarona solicitacao = solicitacaoRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA, id));
 
         solicitacao.setStatus(Status.CANCELADO);
@@ -79,14 +83,14 @@ public class SolicitacaoCaronaService {
         log.info("Solicitação ID: {} cancelada com sucesso", id);
     }
 
+    @Transactional
     public void cancelarSolicitacoesDeCaronaDoEstudante(Estudante estudante) {
         log.info("Cancelando solicitações de carona do estudante ID: {}", estudante.getId());
-        List<SolicitacaoCarona> solicitacoes = solicitacaoRepository.findByEstudante(estudante)
-                .map(List::of)
-                .orElseGet(List::of);
+        final List<SolicitacaoCarona> solicitacoes = solicitacaoRepository.findByEstudante(estudante);
 
         for (SolicitacaoCarona solicitacao : solicitacoes) {
-            cancelarSolicitacao(solicitacao.getId());
+            solicitacao.setStatus(Status.CANCELADO);
+            solicitacaoRepository.save(solicitacao);
         }
 
         log.info("Todas as solicitações de carona do estudante ID: {} foram canceladas", estudante.getId());

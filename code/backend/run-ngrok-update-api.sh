@@ -3,13 +3,12 @@
 # This script:
 # 1. Runs ngrok on the backend port
 # 2. Extracts the ngrok URL
-# 3. Updates the frontend API route automatically
+# 3. Updates the mobile API route automatically
 
 # Configuration
 BACKEND_PORT=${1:-8080}
 CONTEXT_PATH=${2:-/api}
-FRONTEND_ENV_FILE="../frontEnd/.env"
-FRONTEND_API_CLIENT="../frontEnd/api/apiClient.js"
+MOBILE_API_CLIENT="../mobile/src/services/api/apiClient.js"
 
 echo "🚀 Starting ngrok tunnel for backend on port $BACKEND_PORT..."
 
@@ -47,34 +46,23 @@ else
     api_url="${ngrok_url}"
 fi
 
-echo "🔄 Updating frontend API route to: $api_url"
-
-# Update .env file
-if [ -f "$FRONTEND_ENV_FILE" ]; then
-    # Replace the API_BASE_URL line or add it if it doesn't exist
-    if grep -q "API_BASE_URL=" "$FRONTEND_ENV_FILE"; then
-        sed -i "s|API_BASE_URL=.*|API_BASE_URL=$api_url|g" "$FRONTEND_ENV_FILE"
-    else
-        echo "API_BASE_URL=$api_url" >> "$FRONTEND_ENV_FILE"
-    fi
-    echo "✅ Updated $FRONTEND_ENV_FILE"
-else
-    echo "API_BASE_URL=$api_url" > "$FRONTEND_ENV_FILE"
-    echo "✅ Created $FRONTEND_ENV_FILE"
-fi
+echo "🔄 Updating mobile API route to: $api_url"
 
 # Update apiClient.js to use the environment variable
-if [ -f "$FRONTEND_API_CLIENT" ]; then
-    # Replace the hardcoded URL with the environment variable
-    sed -i "s|return '.*'|return API_BASE_URL;|" "$FRONTEND_API_CLIENT"
-    sed -i "s|return ' .*'|return API_BASE_URL;|" "$FRONTEND_API_CLIENT"
-    echo "✅ Updated $FRONTEND_API_CLIENT to use environment variable"
+if [ -f "$MOBILE_API_CLIENT" ]; then
+    # Get the current URL from the file
+    current_url=$(grep -A1 "NGROK ROUTE HERE" "$MOBILE_API_CLIENT" | tail -n1)
+    echo "Previous API URL: $current_url"
+    
+    # Replace the line after the comment with the new ngrok URL
+    sed -i "/NGROK ROUTE HERE/!b;n;c\  return \"$api_url\";" "$MOBILE_API_CLIENT"
+    echo "✅ Updated $MOBILE_API_CLIENT with new URL: \"$api_url\""
 fi
 
 echo "✅ API route updated successfully!"
-echo "🌐 Your backend is now accessible at: $api_url"
+echo " 🌐 Your backend is now accessible at: $api_url"
 echo "🔄 Keep this terminal open while you're using ngrok"
-echo "📱 You can now start your frontend application"
+echo "📱 You can now start your mobile application"
 
 # Keep script running to maintain the ngrok tunnel
 echo "Press Ctrl+C to stop ngrok and exit"

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "Dados de uma solicitação de carona")
 public class SolicitacaoCaronaDto extends AbstractDto {
 
@@ -26,8 +27,20 @@ public class SolicitacaoCaronaDto extends AbstractDto {
     @Schema(description = "Destino da carona", example = "Shopping Del Rey")
     private String destino;
 
-    @Schema(description = "Horário de partida", example = "2025-04-20T18:30:00")
-    private LocalDateTime horarioPartida;
+    @Schema(description = "Latitudae de origem", example = "-19.999999")
+    private Double latitudeOrigem;
+
+    @Schema(description = "Longitude de origem", example = "-43.999999")
+    private Double longitudeOrigem;
+
+    @Schema(description = "Latitude de destino", example = "-19.999999")
+    private Double latitudeDestino;
+
+    @Schema(description = "Longitude de destino", example = "-43.999999")
+    private Double longitudeDestino;
+
+    @Schema(description = "Hora desejada para chegada", example = "2025-04-20T19:00:00")
+    private LocalDateTime horarioChegada;
 
     @Schema(description = "Status atual da solicitação", example = "PENDENTE")
     private Status status;

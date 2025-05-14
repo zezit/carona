@@ -59,16 +59,73 @@ public class MapService {
         throw new TrajetoNaoEncontradoException();
     }
 
+    // calculate trajectories with waypoints
+    public List<TrajetoDto> calculateTrajectories(final Double startLat, final Double startLon,
+            final Double endLat, final Double endLon, final List<Double[]> waypoints) {
+        log.info("Calculando trajetórias com pontos de passagem de [{}, {}] para [{}, {}]", startLat, startLon, endLat,
+                endLon);
+        try {
+            final JsonNode response = fetchRouteData(startLat, startLon, endLat, endLon, waypoints);
+            if (response != null && "Ok".equals(response.get("code").asText())) {
+                final List<TrajetoDto> trajetorias = processRoutes(response.get("routes"));
+                log.info("Trajetórias calculadas com sucesso: {} rotas encontradas", trajetorias.size());
+                return trajetorias;
+            } else {
+                log.warn("Não foi possível calcular trajetórias");
+            }
+        } catch (Exception e) {
+            log.error("Erro ao calcular trajetórias", e);
+        }
+
+        throw new TrajetoNaoEncontradoException();
+    }
+
     private JsonNode fetchRouteData(final Double startLat, final Double startLon, final Double endLat,
             final Double endLon) {
+        // Format coordinates as longitude,latitude;longitude,latitude
+        String coordinates = String.format("%f,%f;%f,%f", 
+                startLon, startLat, endLon, endLat);
+            
+        log.debug("OSRM API request path: /route/v1/driving/{}", coordinates);
+            
         return osrmWebClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/route/v1/driving/{startLon},{startLat};{endLon},{endLat}")
+                        .path("/route/v1/driving/{coordinates}")
                         .queryParam("overview", "full")
                         .queryParam("alternatives", "true")
                         .queryParam("geometries", "geojson")
-                        .queryParam("steps", "false")
-                        .build(startLon, startLat, endLon, endLat))
+                        .queryParam("steps", "true")
+                        .build(coordinates))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+    }
+
+    private JsonNode fetchRouteData(final Double startLat, final Double startLon, final Double endLat,
+            final Double endLon, final List<Double[]> waypoints) {
+
+        // Start building the coordinates string with the start point
+        StringBuilder coordinatesBuilder = new StringBuilder();
+        coordinatesBuilder.append(startLon).append(",").append(startLat).append(";");
+        
+        // Add all waypoints
+        for (Double[] waypoint : waypoints) {
+            coordinatesBuilder.append(waypoint[1]).append(",").append(waypoint[0]).append(";");
+        }
+        
+        // Add the end point
+        coordinatesBuilder.append(endLon).append(",").append(endLat);
+        
+        String coordinates = coordinatesBuilder.toString();
+        log.debug("OSRM API request with waypoints path: /route/v1/driving/{}", coordinates);
+        
+        return osrmWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/route/v1/driving/{coordinates}")
+                        .queryParam("overview", "false")
+                        .queryParam("alternatives", "true")
+                        .queryParam("steps", "true")
+                        .build(coordinates))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
@@ -93,12 +150,8 @@ public class MapService {
         final double distanceMeters = route.get("distance").asDouble();
         final double durationSeconds = route.get("duration").asDouble();
 
-        // Converter para km com 1 casa decimal
-        final double distanceKm = Math.round(distanceMeters / 100) / 10.0;
-        final int durationSecs = (int) Math.round(durationSeconds);
-
-        trajetoria.setDistanciaKm(distanceKm);
-        trajetoria.setTempoSegundos(durationSecs);
+        trajetoria.setDistanciaMetros(distanceMeters);
+        trajetoria.setTempoSegundos(durationSeconds);
         trajetoria.setDescricao(routeIndex == 0 ? "Principal" : "Alternativa " + routeIndex);
         trajetoria.setCoordenadas(extractCoordinates(route.get("geometry")));
 

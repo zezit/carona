@@ -32,6 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CaronaService {
 
+    private static final int MINIMUM_VAGAS = 1;
+
     private final CaronaRepository caronaRepository;
     private final PerfilMotoristaRepository perfilMotoristaRepository;
 
@@ -54,8 +56,9 @@ public class CaronaService {
 
         // Validar datas da carona
         validarDatasCarona(request.getDataHoraPartida(), request.getDataHoraChegada());
-        
-                // Criar a carona
+        validarVagas(request.getVagas(), perfilMotorista.getCarro().getCapacidadePassageiros());
+
+        // Criar a carona
         final Carona carona = caronaMapper.toEntity(request);
         carona.setMotorista(perfilMotorista);
         carona.setStatus(StatusCarona.AGENDADA);
@@ -88,13 +91,14 @@ public class CaronaService {
             throw new ErroDeCliente(MensagensResposta.CARONA_NAO_PERTENCE_AO_MOTORISTA);
         }
 
-        // Validar datas da carona
         validarDatasCarona(request.getDataHoraPartida(), request.getDataHoraChegada());
-        
-                // Atualizar a carona
+        validarVagas(request.getVagas(), motorista.getCarro().getCapacidadePassageiros());
+
+        // Atualizar a carona
         caronaMapper.updateEntity(carona, request);
 
-        // Recalcular estimativas de distância e tempo e trajetos se pontos de partida ou destino foram
+        // Recalcular estimativas de distância e tempo e trajetos se pontos de partida
+        // ou destino foram
         // alterados
         if (pontosForamAlterados(carona, request)) {
             // Remover trajetos existentes
@@ -176,10 +180,11 @@ public class CaronaService {
         }
 
         // Buscar caronas agendadas com data de partida no futuro
-        final List<Carona> caronas = caronaRepository.findByMotoristaIdAndStatusAndDataHoraPartidaAfterOrderByDataHoraPartidaAsc(
-                motoristaId,
-                StatusCarona.AGENDADA,
-                LocalDateTime.now());
+        final List<Carona> caronas = caronaRepository
+                .findByMotoristaIdAndStatusAndDataHoraPartidaAfterOrderByDataHoraPartidaAsc(
+                        motoristaId,
+                        StatusCarona.AGENDADA,
+                        LocalDateTime.now());
 
         return caronas.stream()
                 .map(caronaMapper::toDto)
@@ -269,7 +274,7 @@ public class CaronaService {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException(MensagensResposta.ERRO_INTERNO));
 
-            carona.setDistanciaEstimadaKm(trajetoPrincipal.getDistanciaKm());
+            carona.setDistanciaEstimadaMetros(trajetoPrincipal.getDistanciaMetros());
             carona.setTempoEstimadoSegundos(trajetoPrincipal.getTempoSegundos());
 
             log.info("Trajetos calculadas e adicionadas: {}", trajetosDto.size());
@@ -322,11 +327,29 @@ public class CaronaService {
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
 
         // Adicionar o passageiro à carona
-        
+
         carona.adicionarPassageiro(estudante);
 
         // Persistir a atualização
         caronaRepository.save(carona);
         log.info("Passageiro adicionado com sucesso à carona. ID: {}", carona.getId());
+    }
+
+    /**
+     * Validates the number of available seats for a ride.
+     *
+     * @param vagas                 The number of available seats to validate
+     * @param capacidadePassageiros The maximum passenger capacity of the vehicle
+     * @throws ErroDeCliente if the number of seats is null, less than 1, or exceeds
+     *                       vehicle capacity
+     */
+    private void validarVagas(final Integer vagas, final Integer capacidadePassageiros) {
+        if (vagas == null || vagas < MINIMUM_VAGAS) {
+            throw new ErroDeCliente(MensagensResposta.VAGAS_INSUFICIENTES);
+        }
+
+        if (vagas > capacidadePassageiros) {
+            throw new ErroDeCliente(MensagensResposta.QUANTIDADE_VAGAS_INVALIDAS);
+        }
     }
 }

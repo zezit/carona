@@ -49,6 +49,8 @@ public final class MensagensResposta {
     public static final String CARONA_NAO_PERTENCE_AO_MOTORISTA = "carona.nao_pertence_motorista";
     public static final String ALTERACAO_STATUS_CARONA_INVALIDA = "carona.alteracao_status_invalida";
     public static final String CARONA_NAO_PERMITE_ADICIONAR_PASSAGEIRO = "carona.nao_permite_adicionar_passageiro";
+    public static final String QUANTIDADE_VAGAS_INVALIDAS = "carona.quantidade_vagas.invalida";
+    public static final String PASSAGEIRO_JA_EM_CARONA = "carona.estudante.ja_em_carona";
 
     // Mensagens relacionadas a trajetos
     public static final String TRAJETO_NAO_ENCONTRADO = "carona.trajeto.nao_encontrado";

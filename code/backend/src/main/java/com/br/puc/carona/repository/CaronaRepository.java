@@ -2,6 +2,7 @@ package com.br.puc.carona.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.br.puc.carona.dto.LocationDTO;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.model.Carona;
 
@@ -24,4 +26,31 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
     // New method to find active caronas for conflict checking
     List<Carona> findByMotoristaIdAndStatusNotInAndDataHoraChegadaAfter(
             Long motoristaId, List<StatusCarona> statusList, LocalDateTime dataAtual);
+
+    Set<Carona> findByStatusAndDataHoraPartidaAfter(StatusCarona agendada, LocalDateTime minusMinutes);
+
+    @Query("SELECT COUNT(c) > 0 FROM Carona c " +
+            "WHERE c.motorista.id = :motoristaId " +
+            "AND c.status = com.br.puc.carona.enums.StatusCarona.EM_ANDAMENTO")
+    boolean driverIsAlreadyDriving(Long motoristaId);
+
+    @Query("SELECT COUNT(c) > 0 FROM Carona c " +
+            "JOIN c.passageiros p " +
+            "WHERE p.id = :passageiroId " +
+            "AND (c.status = com.br.puc.carona.enums.StatusCarona.EM_ANDAMENTO OR c.status = com.br.puc.carona.enums.StatusCarona.AGENDADA) "
+            +
+            "AND :dataAtual BETWEEN c.dataHoraPartida AND c.dataHoraChegada")
+    boolean isPassangerAlreadyInRide(Long passageiroId, LocalDateTime dataAtual);
+
+    @Query("""
+                SELECT c
+                  FROM Carona c
+                 WHERE c.status = com.br.puc.carona.enums.StatusCarona.AGENDADA
+                   AND c.vagas > SIZE(c.passageiros)
+                   AND c.dataHoraChegada BETWEEN :lowerBound AND :upperBound
+            """)
+    List<Carona> findViableCaronas(LocalDateTime lowerBound,
+            LocalDateTime upperBound,
+            LocationDTO studentOrigin,
+            LocationDTO studentDestination);
 }

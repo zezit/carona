@@ -10,8 +10,8 @@ public class TrajetoMock {
     public static Trajeto createTrajetoPrincipalEntity() {
         return Trajeto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .coordenadas("[['-19.9322507','-43.9408341']]")
                 .principal(true)
                 .build();
@@ -20,8 +20,8 @@ public class TrajetoMock {
     public static TrajetoDto createTrajetoPrincipalDto() {
         return TrajetoDto.builder()
                 .descricao("Principal")
-                .distanciaKm(15.5)
-                .tempoSegundos(1200)
+                .distanciaMetros(15.5)
+                .tempoSegundos(1200.0)
                 .coordenadas(List.of(List.of(-19.9322507, -43.9408341)))
                 .build();
     }
