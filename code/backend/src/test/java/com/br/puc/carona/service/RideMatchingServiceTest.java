@@ -53,6 +53,9 @@ public class RideMatchingServiceTest {
     @Mock
     private SolicitacaoCaronaMapper solicitacaoCaronaMapper;
 
+    @Mock
+    private WebsocketService websocketService;
+
     @InjectMocks
     private RideMatchingService rideMatchingService;
 
@@ -135,7 +138,8 @@ public class RideMatchingServiceTest {
                 estudanteRepository,
                 solicitacaoCaronaRepository,
                 routeCalculator,
-                solicitacaoCaronaMapper);
+                solicitacaoCaronaMapper,
+                websocketService);
     }
 
     @Test
@@ -182,6 +186,7 @@ public class RideMatchingServiceTest {
                 Mockito.any(Estudante.class));
         Mockito.verify(solicitacaoCaronaRepository).save(solicitacaoCaptor.capture());
         Mockito.verify(caronaRepository).save(caronaCaptor.capture());
+        Mockito.verify(websocketService).sendRideMatchNotification(Mockito.any(PedidoDeEntrada.class));
 
         final SolicitacaoCarona savedSolicitacao = solicitacaoCaptor.getValue();
         final Carona savedCarona = caronaCaptor.getValue();
@@ -228,6 +233,8 @@ public class RideMatchingServiceTest {
 
         // Then
         Mockito.verify(caronaRepository).save(caronaCaptor.capture());
+        Mockito.verify(websocketService).sendRideMatchNotification(Mockito.any(PedidoDeEntrada.class));
+
         final Carona savedCarona = caronaCaptor.getValue();
 
         // Verify that carona1 was chosen (the one with smaller detour)
