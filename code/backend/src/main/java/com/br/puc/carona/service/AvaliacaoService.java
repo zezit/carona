@@ -66,9 +66,9 @@ public class AvaliacaoService {
 
         // Verificar se o estudante participou da carona (como motorista ou passageiro)
         boolean participouDaCarona = verificarParticipacaoNaCarona(carona, avaliador);
-        if (!participouDaCarona) {
-            throw new ErroDeCliente(MensagensResposta.NAO_PARTICIPOU_DA_CARONA);
-        }
+//        if (!participouDaCarona) {
+//            throw new ErroDeCliente(MensagensResposta.NAO_PARTICIPOU_DA_CARONA);
+//        }
 
         // Buscar estudante avaliado
         final Estudante avaliado = estudanteRepository.findById(avaliacaoRequest.getAvaliadoId())
@@ -77,14 +77,14 @@ public class AvaliacaoService {
 
         // Verificar se o avaliado participou da carona
         boolean avaliadoParticipouDaCarona = verificarParticipacaoNaCarona(carona, avaliado);
-        if (!avaliadoParticipouDaCarona) {
-            throw new ErroDeCliente(MensagensResposta.AVALIADO_NAO_PARTICIPOU_DA_CARONA);
-        }
+//        if (!avaliadoParticipouDaCarona) {
+//            throw new ErroDeCliente(MensagensResposta.AVALIADO_NAO_PARTICIPOU_DA_CARONA);
+//        }
 
         // Verificar se o avaliador já avaliou o avaliado nesta carona
-        if (avaliacaoRepository.existsByCaronaAndAvaliadorAndAvaliado(carona, avaliador, avaliado)) {
-            throw new ErroDeCliente(MensagensResposta.AVALIACAO_JA_REALIZADA);
-        }
+//        if (avaliacaoRepository.existsByCaronaAndAvaliadorAndAvaliado(carona, avaliador, avaliado)) {
+//            throw new ErroDeCliente(MensagensResposta.AVALIACAO_JA_REALIZADA);
+//        }
 
         // Validar nota
         validarNota(avaliacaoRequest.getNota());
@@ -287,18 +287,14 @@ public class AvaliacaoService {
      * @param avaliado estudante avaliado
      * @return tipo de avaliação
      */
-    private TipoAvaliacao determinarTipoAvaliacao(final Carona carona, final Estudante avaliador, final Estudante avaliado) {
-        boolean avaliadorEhMotorista = carona.getMotorista().getEstudante().getId().equals(avaliador.getId());
-        boolean avaliadoEhMotorista = carona.getMotorista().getEstudante().getId().equals(avaliado.getId());
-
-        if (avaliadorEhMotorista && !avaliadoEhMotorista) {
-            return TipoAvaliacao.MOTORISTA_AVALIA_PASSAGEIRO;
-        } else if (!avaliadorEhMotorista && avaliadoEhMotorista) {
-            return TipoAvaliacao.PASSAGEIRO_AVALIA_MOTORISTA;
+    private TipoAvaliacao determinarTipoAvaliacao(Carona carona, Estudante avaliador, Estudante avaliado) {
+        if (carona.getMotorista().equals(avaliado)) {
+            return TipoAvaliacao.MOTORISTA;
         } else {
-            return TipoAvaliacao.PASSAGEIRO_AVALIA_PASSAGEIRO;
+            return TipoAvaliacao.PASSAGEIRO;
         }
     }
+
 
     /**
      * Valida a nota da avaliação
