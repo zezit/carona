@@ -3,10 +3,12 @@ package com.br.puc.carona.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.br.puc.carona.messaging.contract.AvaliacaoMessageDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.request.AvaliacaoRequest;
@@ -16,6 +18,7 @@ import com.br.puc.carona.enums.TipoAvaliacao;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.AvaliacaoMapper;
+import com.br.puc.carona.messaging.MensagemProducer;
 import com.br.puc.carona.model.Avaliacao;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
@@ -40,17 +43,17 @@ public class AvaliacaoService {
 
     private final AvaliacaoMapper avaliacaoMapper;
     private final CurrentUserService currentUserService;
+    private final MensagemProducer mensagemProducer;
 
     /**
-     * Cria uma nova avaliação
+     * Método para validar os dados da avaliação e enviar para processamento assíncrono
      *
      * @param caronaId ID da carona
      * @param avaliacaoRequest dados da avaliação
-     * @return DTO da avaliação criada
+     * @return DTO da avaliação
      */
-    @Transactional
-    public AvaliacaoDto criarAvaliacao(final Long caronaId, final AvaliacaoRequest avaliacaoRequest) {
-        log.info("Criando nova avaliação para carona ID: {}", caronaId);
+    public void validarEEnviarAvaliacao(final Long caronaId, final AvaliacaoRequest avaliacaoRequest) {
+        log.info("Validando avaliação para carona ID: {}", caronaId);
 
         // Buscar carona
         final Carona carona = caronaRepository.findById(caronaId)
@@ -65,7 +68,7 @@ public class AvaliacaoService {
         final Estudante avaliador = currentUserService.getCurrentEstudante();
 
         // Verificar se o estudante participou da carona (como motorista ou passageiro)
-        boolean participouDaCarona = verificarParticipacaoNaCarona(carona, avaliador);
+//        boolean participouDaCarona = verificarParticipacaoNaCarona(carona, avaliador);
 //        if (!participouDaCarona) {
 //            throw new ErroDeCliente(MensagensResposta.NAO_PARTICIPOU_DA_CARONA);
 //        }
@@ -82,12 +85,49 @@ public class AvaliacaoService {
 //        }
 
         // Verificar se o avaliador já avaliou o avaliado nesta carona
-//        if (avaliacaoRepository.existsByCaronaAndAvaliadorAndAvaliado(carona, avaliador, avaliado)) {
-//            throw new ErroDeCliente(MensagensResposta.AVALIACAO_JA_REALIZADA);
-//        }
+        if (avaliacaoRepository.existsByCaronaAndAvaliadorAndAvaliado(carona, avaliador, avaliado)) {
+            throw new ErroDeCliente(MensagensResposta.AVALIACAO_JA_REALIZADA);
+        }
 
         // Validar nota
         validarNota(avaliacaoRequest.getNota());
+
+        // Todas as validações passaram, criar o DTO para enviar à fila
+        AvaliacaoMessageDTO mensagem = AvaliacaoMessageDTO.builder()
+                .caronaId(caronaId)
+                .avaliadoId(avaliacaoRequest.getAvaliadoId())
+                .nota(avaliacaoRequest.getNota())
+                .comentario(avaliacaoRequest.getComentario())
+                .avaliadorId(avaliador.getId())
+                .build();
+
+        // Enviar mensagem para processamento assíncrono
+        log.info("Enviando avaliação para processamento assíncrono. Carona ID: {}, Avaliado ID: {}",
+                caronaId, avaliacaoRequest.getAvaliadoId());
+        mensagemProducer.enviarMensagemParaAvaliacaoQueue(mensagem);
+    }
+
+    /**
+     * Método para processar a criação de uma avaliação (chamado pelo consumer)
+     *
+     * @param avaliacaoMessage mensagem com dados da avaliação
+     * @return DTO da avaliação criada
+     */
+    @Transactional
+    public AvaliacaoDto processarCriacaoAvaliacao(final AvaliacaoMessageDTO avaliacaoMessage) {
+        log.info("Processando criação de avaliação para carona ID: {}", avaliacaoMessage.getCaronaId());
+
+        // Buscar carona
+        final Carona carona = caronaRepository.findById(avaliacaoMessage.getCaronaId())
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, avaliacaoMessage.getCaronaId()));
+
+        // Buscar avaliador
+        final Estudante avaliador = estudanteRepository.findById(avaliacaoMessage.getAvaliadorId())
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, avaliacaoMessage.getAvaliadorId()));
+
+        // Buscar avaliado
+        final Estudante avaliado = estudanteRepository.findById(avaliacaoMessage.getAvaliadoId())
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, avaliacaoMessage.getAvaliadoId()));
 
         // Determinar o tipo de avaliação
         final TipoAvaliacao tipoAvaliacao = determinarTipoAvaliacao(carona, avaliador, avaliado);
@@ -97,8 +137,8 @@ public class AvaliacaoService {
         avaliacao.setCarona(carona);
         avaliacao.setAvaliador(avaliador);
         avaliacao.setAvaliado(avaliado);
-        avaliacao.setNota(avaliacaoRequest.getNota());
-        avaliacao.setComentario(avaliacaoRequest.getComentario());
+        avaliacao.setNota(avaliacaoMessage.getNota());
+        avaliacao.setComentario(avaliacaoMessage.getComentario());
         avaliacao.setDataHora(LocalDateTime.now());
         avaliacao.setTipo(tipoAvaliacao);
 
@@ -288,13 +328,12 @@ public class AvaliacaoService {
      * @return tipo de avaliação
      */
     private TipoAvaliacao determinarTipoAvaliacao(Carona carona, Estudante avaliador, Estudante avaliado) {
-        if (carona.getMotorista().equals(avaliado)) {
+        if (carona.getMotorista().getEstudante().getId().equals(avaliado.getId())) {
             return TipoAvaliacao.MOTORISTA;
         } else {
             return TipoAvaliacao.PASSAGEIRO;
         }
     }
-
 
     /**
      * Valida a nota da avaliação

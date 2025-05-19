@@ -47,13 +47,13 @@ public class AvaliacaoController {
             @ApiResponse(responseCode = "404", description = "Carona ou usuário avaliado não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
     })
-    public ResponseEntity<AvaliacaoDto> criarAvaliacao(
+    public ResponseEntity<Void> criarAvaliacao(
             @PathVariable final Long caronaId,
             @Valid @RequestBody final AvaliacaoRequest request) {
         log.info("Criando avaliação para carona ID: {}", caronaId);
-        final AvaliacaoDto avaliacaoDto = avaliacaoService.criarAvaliacao(caronaId, request);
-        log.info("Avaliação criada com sucesso. ID: {}", avaliacaoDto.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(avaliacaoDto);
+        avaliacaoService.validarEEnviarAvaliacao(caronaId, request);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")
