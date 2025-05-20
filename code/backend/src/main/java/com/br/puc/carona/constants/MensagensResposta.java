@@ -92,6 +92,14 @@ public final class MensagensResposta {
     // Mensagens relacionadas a solicitação de caronas
     public static final String SOLICITACAO_CARONA_NAO_ENCONTRADA = "solicitacao_carona.nao.encontrada";
 
+    // Mensagens para avaliação
+    public static final String AVALIACAO_NAO_ENCONTRADA = "avaliacao.nao.encontrada";
+    public static final String CARONA_NAO_FINALIZADA = "avaliacao.carona.nao.finalizada";
+    public static final String NAO_PARTICIPOU_DA_CARONA = "avaliacao.usuario.nao.participou";
+    public static final String AVALIADO_NAO_PARTICIPOU_DA_CARONA = "avaliacao.avaliado.nao.participou";
+    public static final String AVALIACAO_JA_REALIZADA = "avaliacao.ja.realizada";
+    public static final String NOTA_INVALIDA = "avaliacao.nota.invalida";
+    public static final String NAO_E_AVALIADOR = "avaliacao.usuario.nao.avaliador";
 
     private MensagensResposta() {
         throw new IllegalStateException("Utility class");

@@ -32,6 +32,9 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.queues.rides-request}")
     private String ridesRequestQueue;
 
+    @Value("${app.rabbitmq.queues.avaliacoes}")
+    private String avaliacaoQueue;
+
     @Value("${app.rabbitmq.virtual-host}")
     private String virtualHost;
 
@@ -53,12 +56,14 @@ public class RabbitMQConfig {
         return new Jackson2JsonMessageConverter();
     }
 
-    // Configure RabbitTemplate
     @Bean
     public RabbitTemplate rabbitTemplate() {
-        return new RabbitTemplate(connectionFactory());
+        RabbitTemplate template = new RabbitTemplate(connectionFactory());
+        template.setMessageConverter(jsonMessageConverter());
+        return template;
     }
-    
+
+
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
@@ -130,6 +135,19 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(ridesUpdatedQueue + ".dlq").build();
     }
 
+    @Bean
+    public Queue avaliacaoQueue() {
+        return QueueBuilder.durable(avaliacaoQueue)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", avaliacaoQueue + ".dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue avaliacaoDlq() {
+        return QueueBuilder.durable(avaliacaoQueue + ".dlq").build();
+    }
+
     // Bindings
     @Bean
     public Binding notificationsBinding() {
@@ -163,8 +181,21 @@ public class RabbitMQConfig {
                 .with("ride.request");
     }
 
+    @Bean
+    public Binding avaliacaoBinding() {
+        return BindingBuilder
+                .bind(avaliacaoQueue())
+                .to(carpoolExchange())
+                .with("avaliacao.#");
+    }
+
     @Bean(name = "ridesRequestQueueName")
     public String newRideRequestQueueName() {
         return ridesRequestQueue;
+    }
+
+    @Bean(name = "avaliacaoQueueName")
+    public String avaliacaoQueueName() {
+        return avaliacaoQueue;
     }
 }
