@@ -19,6 +19,7 @@ import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.EstudanteRepository;
 import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
 import com.br.puc.carona.utils.RouteCalculatorUtil;
+import com.br.puc.carona.service.WebsocketService2;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class RideMatchingService {
 
     private final SolicitacaoCaronaMapper solicitacaoCaronaMapper;
 
-    private final WebsocketService websocketService;
+    private final WebsocketService2 websocketService;
 
     /**
      * Matches a ride request with the best available ride and assigns the student.
