@@ -253,4 +253,21 @@ public class CaronaController {
         log.info("Carona iniciada com sucesso. ID: {}", id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/finalizar")
+    @Operation(summary = "Finalizar carona", description = "Finaliza uma carona em andamento, alterando seu status para FINALIZADA. Apenas o motorista da carona pode finalizar a viagem e a carona deve estar com status EM_ANDAMENTO.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Carona finalizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Carona não pode ser finalizada (não está em andamento)"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para finalizar esta carona"),
+            @ApiResponse(responseCode = "404", description = "Carona não encontrada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<Void> finalizarCarona(@PathVariable Long id) {
+        log.info("Solicitação para finalizar carona com ID: {}", id);
+        caronaService.finalizarCarona(id);
+        log.info("Carona finalizada com sucesso. ID: {}", id);
+        return ResponseEntity.noContent().build();
+    }
 }

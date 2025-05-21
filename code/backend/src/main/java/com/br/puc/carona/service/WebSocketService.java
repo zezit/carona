@@ -25,6 +25,7 @@ public class WebSocketService {
     }
 
     public void emitirEventoCaronaAtualizada(CaronaDto caronadto) {
+        log.info("Emitindo evento de carona atualizada com sucesso. ID: {}", caronadto.getId());
         messagingTemplate.convertAndSend("/topic/carona/" + caronadto.getId() + "/iniciada", caronadto);
     }
 
