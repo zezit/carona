@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { reportServer } from '@/mocks/reportServer';
+import { CreateReportDTO, UpdateReportDTO } from '@/types/report';
 
 // Set base URL from environment or use default
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
@@ -112,7 +113,6 @@ export const api = {
     // Get all reports
     getAllReports: async () => {
       try {
-        // Usando o servidor mock
         const response = reportServer.getAllReports();
         return response;
       } catch (error) {
@@ -131,7 +131,7 @@ export const api = {
       }
     },
     // Create new report
-    createReport: async (reportData: any) => {
+    createReport: async (reportData: CreateReportDTO) => {
       try {
         const response = reportServer.createReport(reportData);
         return response;
@@ -141,7 +141,7 @@ export const api = {
       }
     },
     // Update report
-    updateReport: async (reportId: string, reportData: any) => {
+    updateReport: async (reportId: string, reportData: UpdateReportDTO) => {
       try {
         const response = reportServer.updateReport(reportId, reportData);
         return response;
@@ -157,6 +157,26 @@ export const api = {
         return response;
       } catch (error) {
         console.error('Error deleting report:', error);
+        return { success: false, error };
+      }
+    },
+    // Approve report
+    approveReport: async (reportId: string) => {
+      try {
+        const response = reportServer.approveReport(reportId);
+        return response;
+      } catch (error) {
+        console.error('Error approving report:', error);
+        return { success: false, error };
+      }
+    },
+    // Reject report
+    rejectReport: async (reportId: string) => {
+      try {
+        const response = reportServer.rejectReport(reportId);
+        return response;
+      } catch (error) {
+        console.error('Error rejecting report:', error);
         return { success: false, error };
       }
     }

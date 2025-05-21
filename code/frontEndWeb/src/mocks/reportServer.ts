@@ -1,5 +1,7 @@
+import { Report, CreateReportDTO, UpdateReportDTO } from '@/types/report';
+
 // Simulação de banco de dados em memória
-let reports: any[] = [];
+let reports: Report[] = [];
 
 // Funções do servidor mock
 export const reportServer = {
@@ -7,7 +9,7 @@ export const reportServer = {
   getAllReports: () => {
     return {
       success: true,
-      data: reports
+      data: reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     };
   },
 
@@ -21,10 +23,11 @@ export const reportServer = {
   },
 
   // Criar novo relatório
-  createReport: (reportData: any) => {
-    const newReport = {
-      id: Date.now().toString(), // ID simples baseado no timestamp
+  createReport: (reportData: CreateReportDTO) => {
+    const newReport: Report = {
+      id: Date.now().toString(),
       ...reportData,
+      status: 'PENDENTE',
       createdAt: new Date().toISOString()
     };
     reports.push(newReport);
@@ -35,7 +38,7 @@ export const reportServer = {
   },
 
   // Atualizar relatório
-  updateReport: (id: string, reportData: any) => {
+  updateReport: (id: string, reportData: UpdateReportDTO) => {
     const index = reports.findIndex(r => r.id === id);
     if (index === -1) {
       return {
@@ -70,6 +73,50 @@ export const reportServer = {
     return {
       success: true,
       data: null
+    };
+  },
+
+  // Aprovar relatório
+  approveReport: (id: string) => {
+    const index = reports.findIndex(r => r.id === id);
+    if (index === -1) {
+      return {
+        success: false,
+        error: 'Relatório não encontrado'
+      };
+    }
+
+    reports[index] = {
+      ...reports[index],
+      status: 'APROVADO',
+      updatedAt: new Date().toISOString()
+    };
+
+    return {
+      success: true,
+      data: reports[index]
+    };
+  },
+
+  // Rejeitar relatório
+  rejectReport: (id: string) => {
+    const index = reports.findIndex(r => r.id === id);
+    if (index === -1) {
+      return {
+        success: false,
+        error: 'Relatório não encontrado'
+      };
+    }
+
+    reports[index] = {
+      ...reports[index],
+      status: 'REJEITADO',
+      updatedAt: new Date().toISOString()
+    };
+
+    return {
+      success: true,
+      data: reports[index]
     };
   }
 }; 
