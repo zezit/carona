@@ -23,6 +23,9 @@ import RegisterRidePage from '../screens/RegisterRidePage';
 import RideModeSelectionPage from '../screens/RideModeSelectionPage';
 import ScheduledRides from '../screens/ScheduledRides';
 import EditRide from '../screens/EditRide';
+import MyDrives from '../screens/MyDrives';
+import ManagePassengersHome from '../screens/managePassagers/ManagePassengersHome';
+import ManageRequests from '../screens/managePassagers/ManageRequests';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -118,7 +121,13 @@ const MainStack = () => (
     <Stack.Screen name="ScheduledRides" component={ScheduledRides} options={{ headerShown: false }} />
     <Stack.Screen name="EditRide" component={EditRide} options={{ headerShown: false }} />
     <Stack.Screen name="FindRides" component={FindRides}/>
+
+    <Stack.Screen name="MyDrives" component={MyDrives} />
+    <Stack.Screen name="ManagePassengersHome" component={ManagePassengersHome} />
+    <Stack.Screen name="ManageRequests" component={ManageRequests} />
+
     <Stack.Screen name="MyRequests" component={MyRideRequestsPage}/>
+
   </Stack.Navigator>
 );
 

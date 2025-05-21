@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.dto.request.CaronaRequest;
 import com.br.puc.carona.dto.response.CaronaDto;
+import com.br.puc.carona.dto.response.CaronaSemTrajetoDTO;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.model.Carona;
 
@@ -94,5 +95,29 @@ public class CaronaMapper {
         entity.setDataHoraPartida(request.getDataHoraPartida());
         entity.setVagas(request.getVagas());
         entity.setObservacoes(request.getObservacoes());
+    }
+
+    public CaronaSemTrajetoDTO toSemTrajetoDto(Carona carona) {
+        if (carona == null) {
+            return null;
+        }
+        return CaronaSemTrajetoDTO.builder()
+                .id(carona.getId())
+                .motorista(perfilMotoristaMapper.toDto(carona.getMotorista()))
+                .pontoPartida(carona.getPontoPartida())
+                .latitudePartida(carona.getLatitudePartida())
+                .longitudePartida(carona.getLongitudePartida())
+                .pontoDestino(carona.getPontoDestino())
+                .latitudeDestino(carona.getLatitudeDestino())
+                .longitudeDestino(carona.getLongitudeDestino())
+                .dataHoraPartida(carona.getDataHoraPartida())
+                .vagas(carona.getVagas())
+                .status(carona.getStatus())
+                .observacoes(carona.getObservacoes())
+                .passageiros(estudanteMapper.toDtos(carona.getPassageiros()))
+                .vagasDisponiveis(carona.getVagasDisponiveis())
+                .distanciaEstimadaMetros(carona.getDistanciaEstimadaMetros())
+                .tempoEstimadoSegundos(carona.getTempoEstimadoSegundos())
+                .build();
     }
 }

@@ -54,7 +54,7 @@ public class RideMatchingServiceTest {
     private SolicitacaoCaronaMapper solicitacaoCaronaMapper;
 
     @Mock
-    private WebsocketService websocketService;
+    private WebsocketService2 websocketService;
 
     @InjectMocks
     private RideMatchingService rideMatchingService;

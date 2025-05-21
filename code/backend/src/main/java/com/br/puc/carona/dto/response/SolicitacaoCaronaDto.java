@@ -44,4 +44,16 @@ public class SolicitacaoCaronaDto extends AbstractDto {
 
     @Schema(description = "Status atual da solicitação", example = "PENDENTE")
     private Status status;
+
+    public String toStringBaseInfo() {
+        return new StringBuilder()
+                .append("SolicitacaoCaronaDto{")
+                .append("id=").append(getId())
+                .append(", nomeEstudante='").append(nomeEstudante).append('\'')
+                .append(", origem='").append(origem).append('\'')
+                .append(", destino='").append(destino).append('\'')
+                .append(", status=").append(status)
+                .append('}')
+                .toString();
+    }
 }

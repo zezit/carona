@@ -118,8 +118,8 @@ const RideModeSelectionPage = ({ navigation, route }) => {
   }, [navigation, upcomingRides, driverDetails]);
 
   const handleHistoryRide = useCallback((mode) => {
-    // TODO:  navigation.navigate('RidesPage', { mode });
-    Alert.alert('Em breve!', 'Essa funcionalidade ainda está em desenvolvimento.');
+      navigation.navigate('MyDrives', { mode });
+    // Alert.alert('Em breve!', 'Essa funcionalidade ainda está em desenvolvimento.');
   }, [navigation]);
 
   const handleSearchRide = useCallback(() => {

@@ -1,5 +1,7 @@
 package com.br.puc.carona.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -9,8 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.br.puc.carona.dto.response.PedidoDeEntradaCompletoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.StatusAprovarPedidoCarona;
+import com.br.puc.carona.model.PedidoDeEntrada;
 import com.br.puc.carona.service.PedidoDeEntradaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,6 +69,19 @@ public class PedidoDeEntradaController {
         pedidoDeEntradaService.aprovarPedidoDeEntrada(idPedido, status);
         return ResponseEntity.ok().build();
 
+    }
+
+    
+    @GetMapping("/motorista/{motoristaId}")
+    @Operation(summary = "Buscar pedidos de entrada por motorista", description = "Recupera todos os pedidos de entrada pendentes de um motorista específico")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de pedidos de entrada encontrados"),
+            @ApiResponse(responseCode = "404", description = "Nenhum pedido de entrada encontrado")
+    })
+    public ResponseEntity<List<PedidoDeEntradaCompletoDto>> buscarPedidosPorMotorista(@PathVariable Long motoristaId ) {
+        log.info("Buscando pedidos de entrada pendentes do motorista com ID: {}", motoristaId);
+        List<PedidoDeEntradaCompletoDto> pedidos = pedidoDeEntradaService.getPedidoDeEntradasPorMotoristaId(motoristaId);
+        return ResponseEntity.ok(pedidos);
     }
 
 

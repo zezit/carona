@@ -1,17 +1,25 @@
 package com.br.puc.carona.mapper;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.br.puc.carona.dto.response.PedidoDeEntradaCompletoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.model.PedidoDeEntrada;
 
 @Component
 public class PedidoDeEntradaMapper {
 
+    @Autowired
+    private CaronaMapper caronaMapper;
+    @Autowired
+    private SolicitacaoCaronaMapper solicitacaoCaronaMapper;
+
     public PedidoDeEntradaDto toDto(final PedidoDeEntrada pedidoDeEntrada) {
         if (pedidoDeEntrada == null) {
             return null;
         }
+        
 
         return PedidoDeEntradaDto.builder()
                 .id(pedidoDeEntrada.getId())
@@ -34,5 +42,18 @@ public class PedidoDeEntradaMapper {
         pedidoDeEntrada.setStatus(dto.getStatus());
 
         return pedidoDeEntrada;
+    }
+
+    public PedidoDeEntradaCompletoDto toCompletoDto(final PedidoDeEntrada pedidoDeEntrada) {
+        if (pedidoDeEntrada == null) {
+            return null;
+        }
+
+        return PedidoDeEntradaCompletoDto.builder()
+                .id(pedidoDeEntrada.getId())
+                .carona(pedidoDeEntrada.getCarona() != null ? caronaMapper.toSemTrajetoDto(pedidoDeEntrada.getCarona()) : null)
+                .solicitacao(pedidoDeEntrada.getSolicitacao() != null ? solicitacaoCaronaMapper.toDto(pedidoDeEntrada.getSolicitacao()) : null)
+                .status(pedidoDeEntrada.getStatus())
+                .build();
     }
 }

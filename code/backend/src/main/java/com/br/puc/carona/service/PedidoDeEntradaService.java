@@ -1,5 +1,6 @@
 package com.br.puc.carona.service;
 
+import com.br.puc.carona.dto.response.PedidoDeEntradaCompletoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.StatusAprovarPedidoCarona;
@@ -14,6 +15,9 @@ import com.br.puc.carona.repository.PedidoDeEntradaRepository;
 import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,6 +59,22 @@ public class PedidoDeEntradaService {
 
         log.info("PedidoDeEntrada criado com sucesso entre carona {} e solicitação {}",
                 caronaId, solicitacaoId);
+    }
+
+        // Método para obter todos os pedidos de entrada pendentes de um motorista específico
+    public List<PedidoDeEntradaCompletoDto> getPedidoDeEntradasPorMotoristaId(Long motoristaId) {
+        List<PedidoDeEntrada> pedidos = pedidoEntradaRepository.findAll()
+                .stream()
+                .filter(pedido -> pedido.getStatus().equals(Status.PENDENTE))
+                .filter(pedido -> pedido.getCarona().getMotorista().getId().equals(motoristaId) && pedido.getCarona().getStatus().equals(StatusCarona.AGENDADA))
+                .toList();
+
+        // Mapeando cada PedidoDeEntrada para PedidoDeEntradaDto
+        return pedidos.stream()
+                .map(pedidoDeEntradaMapper::toCompletoDto)
+                .toList();
+
+        // return pedidos;
     }
 
     // Método para obter um pedido de entrada por ID
