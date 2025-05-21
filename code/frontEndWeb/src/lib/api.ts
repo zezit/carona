@@ -179,7 +179,19 @@ export const api = {
         console.error('Error rejecting report:', error);
         return { success: false, error };
       }
-    }
+    },
+    getRideMetrics: async (period: 'daily' | 'weekly' | 'monthly') => {
+      try {
+        const response = await reportServer.getRideMetrics(period);
+        return response;
+      } catch (error) {
+        console.error('Error fetching ride metrics:', error);
+        return {
+          success: false,
+          data: null,
+        };
+      }
+    },
   },
 };
 
