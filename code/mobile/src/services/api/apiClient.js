@@ -245,3 +245,45 @@ export const getUpcomingRides = async (motoristaId, authToken) => {
     };
   }
 };
+
+export const getDriverRides = async (motoristaId, authToken, pageable = {}) => {
+  try {
+    // Build query params for pagination
+    const params = new URLSearchParams();
+    if (typeof pageable.page === 'number') params.append('page', pageable.page);
+    if (typeof pageable.size === 'number') params.append('size', pageable.size);
+    if (Array.isArray(pageable.sort)) {
+      pageable.sort.forEach(sortValue => params.append('sort', sortValue));
+    }
+
+    const url = `${BASE_URL}/carona/motorista/${motoristaId}${params.toString() ? `?${params.toString()}` : ''}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar caronas agendadas'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching driver rides:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+}

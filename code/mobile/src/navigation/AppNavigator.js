@@ -22,6 +22,7 @@ import RegisterRidePage from '../screens/RegisterRidePage';
 import RideModeSelectionPage from '../screens/RideModeSelectionPage';
 import ScheduledRides from '../screens/ScheduledRides';
 import EditRide from '../screens/EditRide';
+import MyDrives from '../screens/MyDrives';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -117,6 +118,7 @@ const MainStack = () => (
     <Stack.Screen name="ScheduledRides" component={ScheduledRides} options={{ headerShown: false }} />
     <Stack.Screen name="EditRide" component={EditRide} options={{ headerShown: false }} />
     <Stack.Screen name="FindRides" component={FindRides}/>
+    <Stack.Screen name="MyDrives" component={MyDrives} />
   </Stack.Navigator>
 );
 
