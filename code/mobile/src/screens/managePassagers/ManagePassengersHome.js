@@ -1,11 +1,20 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, RADIUS } from '../../constants';
 
 const ManagePassengersHome = ({ navigation }) => {
+  const handleEditPassengers = () => {
+    // navigation.navigate('EditPassengers');
+  Alert.alert('Em breve!', 'Essa funcionalidade ainda está em desenvolvimento.');
+  };
+
+  const handleApproveRequests = () => {
+    navigation.navigate('ManageRequests');
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
       <LinearGradient
@@ -28,7 +37,7 @@ const ManagePassengersHome = ({ navigation }) => {
 
         <TouchableOpacity
           style={[styles.button, { backgroundColor: COLORS.primary }]}
-          onPress={() => navigation.navigate('EditPassengers')}
+          onPress={handleEditPassengers}
         >
           <Ionicons name="people" size={20} color={COLORS.text.light} />
           <Text style={styles.buttonText}>Editar Passageiros</Text>
@@ -36,7 +45,7 @@ const ManagePassengersHome = ({ navigation }) => {
 
         <TouchableOpacity
           style={[styles.button, { backgroundColor: COLORS.secondary }]}
-          onPress={() => navigation.navigate('ApproveRequests')}
+          onPress={handleApproveRequests}
         >
           <Ionicons name="checkmark-done" size={20} color={COLORS.text.light} />
           <Text style={styles.buttonText}>Aprovar/Recusar Pedidos</Text>
