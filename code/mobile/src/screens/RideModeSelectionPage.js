@@ -126,6 +126,10 @@ const RideModeSelectionPage = ({ navigation, route }) => {
      navigation.navigate('FindRides', { mode: 'available-rides' });
    
   }, [navigation]);
+  const handleMyRequests = useCallback(() => {
+     navigation.navigate('MyRequests');
+   
+  }, [navigation]);
 
   if (loading) {
     return (
@@ -209,6 +213,13 @@ const RideModeSelectionPage = ({ navigation, route }) => {
             icon="search"
             color={COLORS.success}
             onPress={handleSearchRide}
+          />
+           <OptionButton
+            title="Minhas Solicitações"
+            description="Vizualize suas solicitações de carona"
+            icon="hand-right-outline"
+            color={COLORS.success}
+            onPress={handleMyRequests}
           />
         </View>
       </Animated.ScrollView>

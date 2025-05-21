@@ -152,7 +152,7 @@ const FindRides = ({navigation,  route}) => {
               const limitedRoutes = processedRoutes.slice(0, 2);
       
               setRoutes(limitedRoutes);
-             // setSelectedRoute(limitedRoutes[0]);
+             setSelectedRoute(limitedRoutes[0]);
               setDuration(limitedRoutes[0].duracaoSegundos || 0);
       
               // Fit map to show all routes
@@ -181,7 +181,74 @@ const FindRides = ({navigation,  route}) => {
             animated: true
           });
         };
+const handleSubmitRide = async () => {
+  if (!departureLocation || !arrivalLocation ) {
+    Alert.alert('Erro', 'Por favor, selecione os pontos de partida e chegada e uma rota.');
+    return;
+  }
 
+  try {
+    setLoading(true);
+    
+    // Calculando o horário estimado de chegada com base na hora de partida e duração da rota
+    const arrivalTime = new Date(departureDate.getTime() + (duration * 1000));
+    
+    // Formatando o horário para o formato esperado pela API: "2025-05-21T01:15:25.283Z"
+    const formattedArrivalTime = arrivalTime.toISOString();
+    
+    // Construindo o payload conforme a estrutura da API
+    const payload = {
+      origem: {
+        name: departure,
+        latitude: departureLocation.latitude,
+        longitude: departureLocation.longitude
+      },
+      destino: {
+        name: arrival,
+        latitude: arrivalLocation.latitude,
+        longitude: arrivalLocation.longitude
+      },
+      horarioChegadaPrevisto: formattedArrivalTime,
+      estudanteId: user.id // Assumindo que o ID do usuário está disponível no contexto de autenticação
+    };
+    
+    // Configurando os headers para a requisição
+   const options = {
+  headers: {
+    Authorization: `Bearer ${authToken}`,
+    'Content-Type': 'application/json;charset=UTF-8', // Adicionando charset
+    'Accept': 'application/json'
+  },
+  transformRequest: [(data) => JSON.stringify(data)] // Garantir transformação explícita
+};
+    
+    // Fazendo a requisição para a API
+    const response = await apiClient.post(
+      `/solicitacao_carona/${user.id}`,
+      payload,
+      options
+    );
+    
+    // Verificando se a requisição foi bem-sucedida
+    if (response.status === 200 || response.status === 201) {
+      Alert.alert(
+        'Sucesso', 
+        'Sua solicitação de carona foi registrada com sucesso!',
+        [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
+      );
+    } else {
+      Alert.alert('Erro', 'Houve um erro ao registrar sua solicitação. Tente novamente.');
+    }
+  } catch (error) {
+    console.error('Erro ao submeter solicitação de carona:', error);
+    Alert.alert(
+      'Erro', 
+      'Não foi possível enviar sua solicitação. Verifique sua conexão e tente novamente.'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
     const handleDateChange = (mode, date) => {
       if (mode === 'departure') {
         setDepartureDate(date);
@@ -234,6 +301,23 @@ const FindRides = ({navigation,  route}) => {
             <Ionicons name="locate" size={22} color={COLORS.text.primary} />
           </TouchableOpacity>
         </View>
+         {departureLocation && (
+                    <Marker
+                      coordinate={departureLocation}
+                      title="Partida"
+                      pinColor="#4285F4"
+                    />
+                  )}
+        
+                  {arrivalLocation && (
+                    <Marker
+                      coordinate={arrivalLocation}
+                      title="Chegada"
+                      pinColor="#34A853"
+                    />
+                  )}
+        
+                  
        </MapView>
         <Reanimated.View style={[styles.locationEditButton, locationButtonStyle]}>
                  <LocationSelector
@@ -241,7 +325,7 @@ const FindRides = ({navigation,  route}) => {
                    arrival={arrival}
                   onPress={handleChangeLocations}
                  />
-               </Reanimated.View>
+       </Reanimated.View>
         </View>
       <RideRequestFormBottomSheet
        ref={bottomSheetRef}
@@ -255,10 +339,10 @@ const FindRides = ({navigation,  route}) => {
        setShowDatePicker={setShowDatePicker}
        observations={observations}
        onObservationsChange={setObservations}
-      //  onSubmit={handleSubmitRide}
+        onSubmit={handleSubmitRide}
        loading={loading}
        duration={duration}
-       hasValidRoute={!!selectedRoute}
+       hasValidRoute={!!arrival}
       //  onSelectDepartureAddress={handleSelectDepartureAddress}
       //  onSelectArrivalAddress={handleSelectArrivalAddress}
        activeInput={activeAutocomplete}
@@ -266,7 +350,7 @@ const FindRides = ({navigation,  route}) => {
       //  onSheetChange={handleSheetChanges}
       //  onChangeLocations={handleChangeLocations}
        routes={routes}
-      // selectedRoute={selectedRoute}
+       selectedRoute={selectedRoute}
       //  onSelectRoute={handleSelectRoute}
       //  formatDuration={formatDuration}
       //  formatDistance={formatDistance}

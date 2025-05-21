@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { reportServer } from '@/mocks/reportServer';
+import { CreateReportDTO, UpdateReportDTO } from '@/types/report';
 
 // Set base URL from environment or use default
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
@@ -104,6 +106,90 @@ export const api = {
       } catch (error) {
         console.error('Error deleting student:', error);
         return { success: false, error };
+      }
+    },
+  },
+  reports: {
+    // Get all reports
+    getAllReports: async () => {
+      try {
+        const response = reportServer.getAllReports();
+        return response;
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+        return { success: false, error };
+      }
+    },
+    // Get report by ID
+    getReportById: async (reportId: string) => {
+      try {
+        const response = reportServer.getReportById(reportId);
+        return response;
+      } catch (error) {
+        console.error('Error fetching report:', error);
+        return { success: false, error };
+      }
+    },
+    // Create new report
+    createReport: async (reportData: CreateReportDTO) => {
+      try {
+        const response = reportServer.createReport(reportData);
+        return response;
+      } catch (error) {
+        console.error('Error creating report:', error);
+        return { success: false, error };
+      }
+    },
+    // Update report
+    updateReport: async (reportId: string, reportData: UpdateReportDTO) => {
+      try {
+        const response = reportServer.updateReport(reportId, reportData);
+        return response;
+      } catch (error) {
+        console.error('Error updating report:', error);
+        return { success: false, error };
+      }
+    },
+    // Delete report
+    deleteReport: async (reportId: string) => {
+      try {
+        const response = reportServer.deleteReport(reportId);
+        return response;
+      } catch (error) {
+        console.error('Error deleting report:', error);
+        return { success: false, error };
+      }
+    },
+    // Approve report
+    approveReport: async (reportId: string) => {
+      try {
+        const response = reportServer.approveReport(reportId);
+        return response;
+      } catch (error) {
+        console.error('Error approving report:', error);
+        return { success: false, error };
+      }
+    },
+    // Reject report
+    rejectReport: async (reportId: string) => {
+      try {
+        const response = reportServer.rejectReport(reportId);
+        return response;
+      } catch (error) {
+        console.error('Error rejecting report:', error);
+        return { success: false, error };
+      }
+    },
+    getRideMetrics: async (period: 'daily' | 'weekly' | 'monthly') => {
+      try {
+        const response = await reportServer.getRideMetrics(period);
+        return response;
+      } catch (error) {
+        console.error('Error fetching ride metrics:', error);
+        return {
+          success: false,
+          data: null,
+        };
       }
     },
   },
