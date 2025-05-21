@@ -91,72 +91,84 @@ const ScheduledRides = ({ navigation, route }) => {
     
     return (
       <View style={styles.rideCard}>
-        <View style={styles.rideDateContainer}>
-          <Ionicons name="calendar" size={20} color={COLORS.primary} />
-          <Text style={styles.rideDate}>
-            {formatDate(item.dataHoraPartida)}
+      <View style={styles.rideDateContainer}>
+        <Ionicons name="calendar" size={20} color={COLORS.primary} />
+        <Text style={styles.rideDate}>
+        {formatDate(item.dataHoraPartida)}
+        </Text>
+      </View>
+
+      <View style={styles.rideInfoRow}>
+        <Ionicons name="location" size={18} color={COLORS.secondary} style={styles.infoIcon} />
+        <View style={styles.infoTextContainer}>
+        <Text style={styles.infoLabel}>Partida:</Text>
+        <Text style={styles.infoValue} numberOfLines={2}>
+          {item.pontoPartida || 'Não definido'}
+        </Text>
+        </View>
+      </View>
+
+      <View style={styles.rideInfoRow}>
+        <Ionicons name="flag" size={18} color={COLORS.secondary} style={styles.infoIcon} />
+        <View style={styles.infoTextContainer}>
+        <Text style={styles.infoLabel}>Destino:</Text>
+        <Text style={styles.infoValue} numberOfLines={2}>
+          {item.pontoDestino || 'Não definido'}
+        </Text>
+        </View>
+      </View>
+
+      <View style={styles.rideInfoRow}>
+        <Ionicons name="people" size={18} color={COLORS.secondary} style={styles.infoIcon} />
+        <View style={styles.infoTextContainer}>
+        <Text style={styles.infoLabel}>Passageiros:</Text>
+        <Text style={styles.infoValue}>
+          {`${passengersCount} / ${item.vagas}`}
+        </Text>
+        </View>
+      </View>
+
+      {item.observacoes && (
+        <View style={styles.rideInfoRow}>
+        <Ionicons name="information-circle" size={18} color={COLORS.secondary} style={styles.infoIcon} />
+        <View style={styles.infoTextContainer}>
+          <Text style={styles.infoLabel}>Observações:</Text>
+          <Text style={styles.infoValue} numberOfLines={2}>
+          {item.observacoes}
           </Text>
         </View>
-
-        <View style={styles.rideInfoRow}>
-          <Ionicons name="location" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-          <View style={styles.infoTextContainer}>
-            <Text style={styles.infoLabel}>Partida:</Text>
-            <Text style={styles.infoValue} numberOfLines={2}>
-              {item.pontoPartida || 'Não definido'}
-            </Text>
-          </View>
         </View>
+      )}
 
-        <View style={styles.rideInfoRow}>
-          <Ionicons name="flag" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-          <View style={styles.infoTextContainer}>
-            <Text style={styles.infoLabel}>Destino:</Text>
-            <Text style={styles.infoValue} numberOfLines={2}>
-              {item.pontoDestino || 'Não definido'}
-            </Text>
-          </View>
+      <View style={[styles.actionsContainer, { flexDirection: 'column', gap: 8 }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.editButton]} 
+          onPress={() => handleEditRide(item)}
+        >
+          <Ionicons name="create-outline" size={20} color={COLORS.text.light} />
+          <Text style={styles.actionButtonText}>Editar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.cancelButton]} 
+          onPress={() => handleCancelRide(item)}
+        >
+          <Ionicons name="close-outline" size={20} color={COLORS.text.light} />
+          <Text style={styles.actionButtonText}>Cancelar</Text>
+        </TouchableOpacity>
         </View>
-
-        <View style={styles.rideInfoRow}>
-          <Ionicons name="people" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-          <View style={styles.infoTextContainer}>
-            <Text style={styles.infoLabel}>Passageiros:</Text>
-            <Text style={styles.infoValue}>
-              {`${passengersCount} / ${item.vagas}`}
-            </Text>
-          </View>
-        </View>
-
-        {item.observacoes && (
-          <View style={styles.rideInfoRow}>
-            <Ionicons name="information-circle" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-            <View style={styles.infoTextContainer}>
-              <Text style={styles.infoLabel}>Observações:</Text>
-              <Text style={styles.infoValue} numberOfLines={2}>
-                {item.observacoes}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.editButton]} 
-            onPress={() => handleEditRide(item)}
-          >
-            <Ionicons name="create-outline" size={20} color={COLORS.text.light} />
-            <Text style={styles.actionButtonText}>Editar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.cancelButton]} 
-            onPress={() => handleCancelRide(item)}
-          >
-            <Ionicons name="close-outline" size={20} color={COLORS.text.light} />
-            <Text style={styles.actionButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+        style={[
+          styles.actionButton,
+          { backgroundColor: COLORS.primary, marginTop: 8, alignSelf: 'stretch' }
+        ]}
+        onPress={() => navigation.navigate('ManagePassengersHome', { ride: item })}
+        >
+        <Ionicons name="people-outline" size={20} color={COLORS.text.light} />
+        <Text style={styles.actionButtonText}>Gerenciar Passageiros</Text>
+        </TouchableOpacity>
+      </View>
       </View>
     );
   };
