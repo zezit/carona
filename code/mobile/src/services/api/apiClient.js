@@ -5,7 +5,7 @@ import errorMessages from '../../constants/errors.json';
 // Determine the base URL based on environment
 const getBaseUrl = () => {
   // NGROK ROUTE HERE ↓
-  return "https://2b3f-2804-389-b130-f120-8153-757f-be9d-a4f9.ngrok-free.app/api";
+  return " https://8e22-191-185-84-176.ngrok-free.app/api";
 };
 
 const BASE_URL = getBaseUrl();
