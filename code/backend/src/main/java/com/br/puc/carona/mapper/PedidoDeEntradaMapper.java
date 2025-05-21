@@ -51,7 +51,7 @@ public class PedidoDeEntradaMapper {
 
         return PedidoDeEntradaCompletoDto.builder()
                 .id(pedidoDeEntrada.getId())
-                .carona(pedidoDeEntrada.getCarona() != null ? caronaMapper.toDto(pedidoDeEntrada.getCarona()) : null)
+                .carona(pedidoDeEntrada.getCarona() != null ? caronaMapper.toSemTrajetoDto(pedidoDeEntrada.getCarona()) : null)
                 .solicitacao(pedidoDeEntrada.getSolicitacao() != null ? solicitacaoCaronaMapper.toDto(pedidoDeEntrada.getSolicitacao()) : null)
                 .status(pedidoDeEntrada.getStatus())
                 .build();

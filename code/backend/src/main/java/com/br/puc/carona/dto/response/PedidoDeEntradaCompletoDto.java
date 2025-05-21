@@ -10,7 +10,7 @@ import lombok.Data;
 public class PedidoDeEntradaCompletoDto {
 
     private Long id;
-    private CaronaDto carona;
+    private CaronaSemTrajetoDTO carona;
     private SolicitacaoCaronaDto solicitacao;
     private Status status;
 
