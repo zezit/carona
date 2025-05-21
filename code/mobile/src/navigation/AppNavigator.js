@@ -11,6 +11,7 @@ import LoginPage from '../screens/LoginPage';
 import RegisterPage from '../screens/RegisterPage';
 import RegisterSecondPage from '../screens/RegisterSecondPage';
 import FindRides from '../screens/FindRides';
+import MyRideRequestsPage from '../screens/MyRideRequestsPage';
 // Main app screens
 import HomePage from '../screens/HomePage';
 import ProfilePage from '../screens/ProfilePage';
@@ -117,6 +118,7 @@ const MainStack = () => (
     <Stack.Screen name="ScheduledRides" component={ScheduledRides} options={{ headerShown: false }} />
     <Stack.Screen name="EditRide" component={EditRide} options={{ headerShown: false }} />
     <Stack.Screen name="FindRides" component={FindRides}/>
+    <Stack.Screen name="MyRequests" component={MyRideRequestsPage}/>
   </Stack.Navigator>
 );
 
