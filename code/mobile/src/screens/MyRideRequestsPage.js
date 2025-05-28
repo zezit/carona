@@ -40,6 +40,13 @@ const MyRideRequestsPage = ({ navigation }) => {
       if (response.success && response.data) {
         console.debug('Ride requests response:', JSON.stringify(response.data, null, 2));
         setRideRequests(response.data);
+        if(rideRequests>0)
+        {
+console.log(rideRequests[0])
+        console.log("ORIGEM:",rideRequests[0].origem)
+        }
+        
+        
       } else {
         console.warn('Failed to fetch ride requests:', response.error);
         setRideRequests([]);
@@ -69,7 +76,7 @@ const MyRideRequestsPage = ({ navigation }) => {
           onPress: async () => {
             try {
               setLoading(true);
-              const response = await apiClient.delete(`/solicitacao_carona/${requestId}`, {
+              const response = await apiClient.put(`/solicitacao_carona/${requestId}/cancelar`, {
                 headers: {
                   'Authorization': `Bearer ${authToken}`,
                   'Content-Type': 'application/json'
@@ -140,16 +147,27 @@ const MyRideRequestsPage = ({ navigation }) => {
   };
 
   // Format date to display
-  const formatDate = (dateString) => {
-    try {
-      if (!dateString) return 'Data não disponível';
-      const date = new Date(dateString);
-      return format(date, "dd 'de' MMMM 'às' HH:mm", { locale: ptBR });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return dateString || 'Data não disponível';
-    }
-  };
+  const formatDate = (dateArray) => {
+  try {
+    if (!dateArray || !Array.isArray(dateArray)) return 'Data não disponível';
+
+    const [ano, mes, dia, hora, minuto, segundo] = dateArray;
+
+    const date = new Date(ano, mes - 1, dia , hora, minuto, segundo);
+
+    const diaFormatado = String(date.getDate()).padStart(2, '0');
+    const mesFormatado = String(date.getMonth() + 1).padStart(2, '0');
+    const anoFormatado = String(date.getFullYear()).slice(-2);
+
+    const horaFormatada = String(date.getHours()).padStart(2, '0');
+    const minutoFormatado = String(date.getMinutes()).padStart(2, '0');
+
+    return `${diaFormatado}/${mesFormatado}/${anoFormatado} às ${horaFormatada}:${minutoFormatado}`;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Data não disponível';
+  }
+};
 
   if (loading && !refreshing) {
     return (
@@ -225,10 +243,10 @@ const MyRideRequestsPage = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            rideRequests.map((request) => {
+            rideRequests.slice().reverse().map((request) => {
               const statusInfo = getStatusInfo(request.status);
               const canCancel = request.status?.toLowerCase() === 'pendente';
-              
+              console.log("REQUEST::",request)
               return (
                 <View key={request.id} style={styles.requestCard}>
                   <View style={styles.cardHeader}>
@@ -236,7 +254,7 @@ const MyRideRequestsPage = ({ navigation }) => {
                       <Text style={styles.statusText}>{statusInfo.text}</Text>
                     </View>
                     <Text style={styles.dateText}>
-                      {formatDate(request.carona?.dataHora)}
+                      {formatDate(request.horarioChegada)}
                     </Text>
                   </View>
                   
@@ -244,24 +262,19 @@ const MyRideRequestsPage = ({ navigation }) => {
                     <View style={styles.locationRow}>
                       <Ionicons name="location" size={20} color={COLORS.primary} />
                       <Text style={styles.locationText}>
-                        {request.carona?.origem || 'Origem não especificada'}
+                        {request.origem || 'Origem não especificada'}
                       </Text>
                     </View>
                     <View style={styles.verticalLine} />
                     <View style={styles.locationRow}>
                       <Ionicons name="location" size={20} color={COLORS.secondary} />
                       <Text style={styles.locationText}>
-                        {request.carona?.destino || 'Destino não especificado'}
+                        {request.destino || 'Destino não especificado'}
                       </Text>
                     </View>
                   </View>
                   
-                  <View style={styles.driverInfo}>
-                    <Ionicons name="person-circle-outline" size={24} color={COLORS.text.secondary} />
-                    <Text style={styles.driverName}>
-                      {request.carona?.motorista?.nome || 'Motorista não especificado'}
-                    </Text>
-                  </View>
+                 
                   
                   {canCancel && (
                     <TouchableOpacity
@@ -295,7 +308,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   requestCard: {
-    backgroundColor: COLORS.background.white,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.md,
