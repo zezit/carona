@@ -11,6 +11,8 @@ import { Navigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { AnimatedPage } from "@/components/AnimatedPage";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 
 const UserApproval = () => {
@@ -77,32 +79,17 @@ const UserApproval = () => {
 
   // Show loading state while checking authentication
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin-slow h-8 w-8 border-4 border-carona-500 border-t-transparent rounded-full"></div>
-      </div>
-    );
+    <LoadingSpinner/>
   }
 
   // Redirect if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
-  }
+  // if (!isAuthenticated) {
+  //   return <Navigate to="/" />;
+  // }
 
   // Mostra tela de carregamento se os dados ainda estão sendo carregados
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="text-carona-600 text-xl font-medium"
-        >
-          Carregando...
-        </motion.div>
-      </div>
-    );
+   <LoadingSpinner/>
   }
 
   const handleViewUser = (user: User) => {
@@ -168,12 +155,7 @@ const UserApproval = () => {
   };
 
   return (
-    <motion.div 
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={pageVariants}
-      className="min-h-screen bg-gray-50"
+    <AnimatedPage 
     >
       <Navbar />
       
@@ -201,11 +183,7 @@ const UserApproval = () => {
           showStatusFilter={false}
         />
 
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin-slow h-8 w-8 border-4 border-carona-500 border-t-transparent rounded-full"></div>
-          </div>
-        ) : filteredUsers.length === 0 ? (
+        { filteredUsers.length === 0 ? (
           <div className="bg-white rounded-lg shadow-subtle p-8 text-center">
             <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-carona-50 mb-4">
               <svg
@@ -270,7 +248,7 @@ const UserApproval = () => {
         confirmText={confirmAction.type === "approve" ? "Aprovar" : "Rejeitar"}
         variant={confirmAction.type === "reject" ? "destructive" : "default"}
       />
-    </motion.div>
+    </AnimatedPage>
   );
 };
 

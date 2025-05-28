@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, Users, CheckSquare, Home } from "lucide-react";
+import { LogOut, Users, CheckSquare, Home, BarChart3, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -76,6 +76,33 @@ const Navbar: React.FC = () => {
               <div className="flex items-center space-x-1.5">
                 <Users className="w-4 h-4" />
                 <span>Usuários</span>
+              </div>
+            </Link>
+            <Link 
+              to="/report-test" 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive("/report-test") 
+                  ? "bg-carona-50 text-carona-700" 
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <div className="flex items-center space-x-1.5">
+                <FileText className="w-4 h-4" />
+                <span>Relatórios</span>
+              </div>
+            </Link>
+
+            <Link 
+              to="/report" 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive("/report") 
+                  ? "bg-carona-50 text-carona-700" 
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <div className="flex items-center space-x-1.5">
+                <BarChart3 className="w-4 h-4" />
+                <span>Gráficos</span>
               </div>
             </Link>
             
