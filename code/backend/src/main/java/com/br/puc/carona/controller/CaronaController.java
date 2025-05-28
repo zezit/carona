@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -253,6 +254,22 @@ public class CaronaController {
         log.info("Carona iniciada com sucesso. ID: {}", id);
         return ResponseEntity.noContent().build();
     }
+
+    @Transactional
+    @PatchMapping("remover-passageiro/{idCarona}/{idPassageiro}")
+    @Operation(summary = "Remover passageiro da carona", description = "Remove um passageiro de uma carona. Apenas o motorista da carona pode remover passageiros.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Passageiro removido com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Carona não pode ser modificada (já finalizada ou cancelada)"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para remover este passageiro"),
+            @ApiResponse(responseCode = "404", description = "Carona ou passageiro não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<Void> removerPassageiroDaCarona(@PathVariable Long idCarona, @PathVariable Long idPassageiro) {
+        log.info("Removendo passageiro com ID: {} da carona com ID: {}", idPassageiro, idCarona);
+        caronaService.removerPassageiroDaCarona(idCarona, idPassageiro);
+        log.info("Passageiro removido com sucesso. Carona ID: {}, Passageiro ID: {}", idCarona, idPassageiro);
 
     @PatchMapping("/{id}/finalizar")
     @Operation(summary = "Finalizar carona", description = "Finaliza uma carona em andamento, alterando seu status para FINALIZADA. Apenas o motorista da carona pode finalizar a viagem e a carona deve estar com status EM_ANDAMENTO.")

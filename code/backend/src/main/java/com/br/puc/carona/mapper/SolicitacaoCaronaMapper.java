@@ -52,6 +52,7 @@ public class SolicitacaoCaronaMapper {
 
         if (solicitacao.getEstudante() != null) {
             dto.setNomeEstudante(solicitacao.getEstudante().getNome());
+            dto.setAvaliacaoMedia(solicitacao.getEstudante().getAvaliacaoMedia());
         }
 
         return dto;

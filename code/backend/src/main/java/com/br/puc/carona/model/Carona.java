@@ -116,7 +116,7 @@ public class Carona extends AbstractEntity {
             
         }
         this.passageiros.add(estudante);
-        this.vagas--;
+        // this.vagas--; Possivel quebra no código, pois o número de vagas talvez não deve ser decrementado aqui.
     }
     
     public void adicionarTrajeto(final Trajeto trajeto) {
@@ -139,6 +139,10 @@ public class Carona extends AbstractEntity {
                         p.getSolicitacao().getId().equals(pedido.getSolicitacao().getId()))) {
             pedidosEntrada.add(pedido);
         }
+    }
+
+    public void removerPassageiro(Long idPassageiro) {
+        passageiros.removeIf(passageiro -> passageiro.getId().equals(idPassageiro));
     }
 
 }

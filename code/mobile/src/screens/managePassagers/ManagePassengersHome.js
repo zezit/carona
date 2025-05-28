@@ -5,14 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, RADIUS } from '../../constants';
 
-const ManagePassengersHome = ({ navigation }) => {
+const ManagePassengersHome = ({ navigation, route }) => {
+  const { ride } = route.params || {};
   const handleEditPassengers = () => {
     // navigation.navigate('EditPassengers');
-  Alert.alert('Em breve!', 'Essa funcionalidade ainda está em desenvolvimento.');
+  // Alert.alert('Em breve!', 'Essa funcionalidade ainda está em desenvolvimento.');
+    navigation.navigate('ManagePassagers', { ride });
   };
 
   const handleApproveRequests = () => {
-    navigation.navigate('ManageRequests');
+    navigation.navigate('ManageRequests', { ride });
   };
 
   return (

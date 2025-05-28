@@ -20,6 +20,9 @@ public class SolicitacaoCaronaDto extends AbstractDto {
 
     @Schema(description = "Nome do estudante solicitante", example = "Gabriel Souza")
     private String nomeEstudante;
+    
+    @Schema(description = "Avaliação média do estudante solicitante", example = "4.5")
+    private Float avaliacaoMedia;
 
     @Schema(description = "Origem da carona", example = "PUC Minas - Coração Eucarístico")
     private String origem;

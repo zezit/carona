@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { BASE_URL } from '../services/api/apiClient';
+import { apiClient, BASE_URL } from '../services/api/apiClient';
 
 
 export default function MyDrivesScreen() {
@@ -26,11 +26,16 @@ export default function MyDrivesScreen() {
 
   const fetchDrives = async () => {
     try {
-    // Substitua 'baseurl' pela URL base da sua API e forneça o motoristaId dinamicamente
-    const motoristaId = 12; // TODO: obtenha o ID do motorista dinamicamente
-    const response = await fetch(`https://${BASE_URL}/carona/motorista/${motoristaId}`);
-      const json = await response.json();
-      setDrives(json.content || []);
+      // Substitua 'baseurl' pela URL base da sua API e forneça o motoristaId dinamicamente
+      const motoristaId = 12; // TODO: obtenha o ID do motorista dinamicamente
+      const response = await apiClient.get(`/carona/motorista/${motoristaId}`, {
+        params: {
+          page: 0,
+          size: 1,
+          sort: [],
+        },
+      });
+      setDrives(response.data.content || []);
     } catch (error) {
       console.error('Erro ao buscar caronas:', error);
     } finally {

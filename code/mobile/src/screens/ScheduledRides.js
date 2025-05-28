@@ -18,7 +18,7 @@ const ScheduledRides = ({ navigation, route }) => {
   const [scheduledRides, setScheduledRides] = useState(rides || []);
 
   // Format date for display
-  const formatDate = (dateArray) => {
+  const formatDate = (dateArray) => { 
     if (!dateArray) return 'Data não definida';
     if (Array.isArray(dateArray)) {
       const [year, month, day, hour, minute] = dateArray;

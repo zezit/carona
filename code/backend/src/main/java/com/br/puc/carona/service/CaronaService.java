@@ -418,4 +418,15 @@ public class CaronaService {
             throw new ErroDeCliente(MensagensResposta.QUANTIDADE_VAGAS_INVALIDAS);
         }
     }
+   
+    public void removerPassageiroDaCarona(Long idCarona, Long idPassageiro) {
+
+        final Carona carona = caronaRepository.findById(idCarona)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
+
+        carona.removerPassageiro(idPassageiro);
+
+        caronaRepository.save(carona);
+       
+    }
 }
