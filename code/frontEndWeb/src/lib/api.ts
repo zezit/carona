@@ -182,8 +182,11 @@ export const api = {
     },
     getRideMetrics: async (period: 'daily' | 'weekly' | 'monthly') => {
       try {
-        const response = await reportServer.getRideMetrics(period);
-        return response;
+        const response = await apiClient.get(`/reports/metrics?period=${period}`);
+        return {
+          success: true,
+          data: response.data.data
+        };
       } catch (error) {
         console.error('Error fetching ride metrics:', error);
         return {

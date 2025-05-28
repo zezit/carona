@@ -19,10 +19,18 @@ import { toast } from "sonner";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
 
+interface MetricData {
+  period: string;
+  rides: number;
+  passengers: number;
+  drivers: number;
+}
+
 export default function Report() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
-  const [metrics, setMetrics] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<MetricData[]>([]);
 
   useEffect(() => {
     fetchMetrics();
@@ -30,14 +38,17 @@ export default function Report() {
 
   const fetchMetrics = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await api.reports.getRideMetrics(timeRange);
-      if (response.success) {
+      if (response.success && response.data) {
         setMetrics(response.data);
       } else {
+        setError('Não foi possível carregar as métricas');
         toast.error('Erro ao carregar métricas');
       }
     } catch (err) {
+      setError('Ocorreu um erro ao carregar as métricas');
       toast.error('Erro ao carregar métricas');
     } finally {
       setLoading(false);
@@ -47,11 +58,11 @@ export default function Report() {
   const getXAxisKey = () => {
     switch (timeRange) {
       case 'daily':
-        return 'day';
+        return 'period';
       case 'weekly':
-        return 'week';
+        return 'period';
       case 'monthly':
-        return 'month';
+        return 'period';
     }
   };
 
@@ -65,6 +76,25 @@ export default function Report() {
 
   const totals = getTotalMetrics();
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl shadow-lg border border-red-200 dark:border-red-800">
+            <h2 className="text-2xl font-semibold text-red-700 dark:text-red-300 mb-4">Erro ao carregar dados</h2>
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+            <button
+              onClick={fetchMetrics}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-8">
       <div className="max-w-7xl mx-auto space-y-12">
@@ -73,30 +103,30 @@ export default function Report() {
           <div className="flex gap-2">
             <button
               onClick={() => setTimeRange('daily')}
-              className={`px-4 py-2 rounded ${
+              className={`px-4 py-2 rounded transition-colors ${
                 timeRange === 'daily'
                   ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               Diário
             </button>
             <button
               onClick={() => setTimeRange('weekly')}
-              className={`px-4 py-2 rounded ${
+              className={`px-4 py-2 rounded transition-colors ${
                 timeRange === 'weekly'
                   ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               Semanal
             </button>
             <button
               onClick={() => setTimeRange('monthly')}
-              className={`px-4 py-2 rounded ${
+              className={`px-4 py-2 rounded transition-colors ${
                 timeRange === 'monthly'
                   ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               Mensal
@@ -107,7 +137,11 @@ export default function Report() {
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando dados...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando dados...</p>
+          </div>
+        ) : metrics.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">Nenhum dado disponível para o período selecionado</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

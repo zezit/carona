@@ -53,4 +53,6 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
             LocalDateTime upperBound,
             LocationDTO studentOrigin,
             LocationDTO studentDestination);
+
+    List<Carona> findByDataHoraBetween(LocalDateTime startDate, LocalDateTime endDate);
 }
