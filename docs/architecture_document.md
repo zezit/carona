@@ -321,24 +321,113 @@ Na Figura 3, podemos ver a estrutura do sistema Carona dividida em dois grandes 
 - **Servidor de Aplicação** - Responsável por processar as requisições do cliente e interagir com o banco de dados.
 - **MySQL** - Responsável por armazenar os dados da aplicação.
 
-## 4.3. Modelo de dados (opcional)
-
-_Caso julgue necessário para explicar a arquitetura, apresente o diagrama de classes ou diagrama de Entidade/Relacionamentos ou tabelas do banco de dados. Este modelo pode ser essencial caso a arquitetura utilize uma solução de banco de dados distribuídos ou um banco NoSQL._
-
-![Diagrama de Entidade Relacionamento (ER) ](imagens/der.png "Diagrama de Entidade Relacionamento (ER) ")
-
-**Figura 4 – Diagrama de Entidade Relacionamento (ER) - exemplo. Fonte: o próprio autor.**
-
-Obs: Acrescente uma breve descrição sobre o diagrama apresentado na Figura 3.
-
 <a name="wireframes"></a>
 
 # 5. Wireframes
 
-> Wireframes são protótipos das telas da aplicação usados em design de interface para sugerir a
-> estrutura de um site web e seu relacionamentos entre suas
-> páginas. Um wireframe web é uma ilustração semelhante ao
-> layout de elementos fundamentais na interface.
+Os wireframes apresentados nesta seção ilustram a estrutura e o fluxo das principais interfaces do aplicativo mobile Carona?. Estes protótipos foram desenvolvidos para definir a organização dos elementos visuais e a navegação entre as telas, servindo como base para o desenvolvimento da interface do usuário.
+
+## 5.1. Autenticação
+
+### Login
+![Tela de Login](wireframes/autenticacao/login.jpg "Tela de Login")
+
+A tela de login permite que usuários já cadastrados acessem o sistema utilizando suas credenciais (email e senha). Inclui opções para recuperação de senha e navegação para a tela de cadastro.
+
+### Criar Conta
+![Tela de Criar Conta](wireframes/autenticacao/criar_conta.jpg "Tela de Criar Conta")
+
+Interface para registro de novos usuários no sistema, solicitando informações básicas como nome, email, senha e confirmação de senha.
+
+### Informações Adicionais
+![Tela de Informações Adicionais](wireframes/autenticacao/informações_adicionais.jpg "Tela de Informações Adicionais")
+
+Tela complementar ao cadastro onde o usuário fornece informações adicionais necessárias para completar seu perfil na plataforma.
+
+## 5.2. Homepage
+
+### Tela Principal
+![Homepage](wireframes/homepage/home.jpg "Homepage")
+
+A tela principal do aplicativo apresenta um resumo das funcionalidades disponíveis e serve como ponto de navegação central para as diferentes seções do app.
+
+## 5.3. Gestão de Caronas
+
+### Home Caronas (Passageiro)
+![Home Caronas](wireframes/caronas/caronas.jpg "Home Caronas")
+
+Tela principal para passageiros, onde podem visualizar caronas disponíveis e acessar suas caronas agendadas.
+
+### Home do Motorista
+![Home do Motorista](wireframes/caronas/home-caronas-driver.jpg "Home do Motorista")
+
+Tela principal específica para motoristas, exibindo suas caronas ativas e opções para gerenciamento de viagens.
+
+### Criar Carona
+![Criar Carona - Parte 1](wireframes/caronas/criar-carona.jpg "Criar Carona - Parte 1")
+![Criar Carona - Parte 2](wireframes/caronas/criar-carona-2.jpg "Criar Carona - Parte 2")
+
+Fluxo para criação de novas caronas, onde motoristas definem origem, destino, horário, número de vagas e outras informações relevantes.
+
+### Selecionar Locais
+![Selecionar Locais](wireframes/caronas/selecionar-locais.jpg "Selecionar Locais")
+
+Interface para seleção de pontos de origem e destino das caronas, integrada com mapas para facilitar a escolha dos locais.
+
+### Minhas Caronas Futuras
+![Minhas Caronas Futuras](wireframes/caronas/minhas-caronas-futuras-driver.jpg "Minhas Caronas Futuras")
+
+Visualização das caronas agendadas pelo motorista, permitindo acompanhar e gerenciar viagens futuras.
+
+### Gerenciar Carona Individual
+![Gerenciar Carona Individual](wireframes/caronas/gerenciar-individual.jpg "Gerenciar Carona Individual")
+
+Tela detalhada para gerenciamento de uma carona específica, incluindo informações dos passageiros e opções de edição.
+
+### Editar Carona
+![Editar Carona](wireframes/caronas/editar-carona.jpg "Editar Carona")
+
+Interface para modificação de informações de caronas já criadas, como horário, local de encontro ou número de vagas.
+
+### Avaliar Solicitações
+![Avaliar Solicitações](wireframes/caronas/avaliar-solicitacoes-driver.jpg "Avaliar Solicitações")
+
+Tela onde motoristas podem aceitar ou recusar solicitações de participação em suas caronas.
+
+## 5.4. Notificações
+
+### Central de Notificações
+![Central de Notificações](wireframes/notificacoes/home-notification.jpg "Central de Notificações")
+
+Interface centralizada para visualização de todas as notificações do usuário, incluindo confirmações de carona, mensagens e atualizações do sistema.
+
+### Notificação em Tempo Real
+![Notificação em Tempo Real](wireframes/notificacoes/real-time-notification.jpg "Notificação em Tempo Real")
+
+Exemplo de como as notificações aparecem em tempo real na interface do usuário.
+
+### Filtros de Notificação
+![Filtros de Notificação](wireframes/notificacoes/filters.jpg "Filtros de Notificação")
+
+Opções para filtrar e organizar notificações por tipo, data ou relevância.
+
+## 5.5. Perfil do Usuário
+
+### Visualizar Perfil
+![Perfil do Usuário](wireframes/perfil/perfil.jpg "Perfil do Usuário")
+
+Tela principal do perfil onde usuários podem visualizar suas informações pessoais, avaliações e histórico.
+
+### Informações Pessoais
+![Informações Pessoais](wireframes/perfil/informações_pessoais.jpg "Informações Pessoais")
+
+Interface para edição e atualização das informações pessoais do usuário.
+
+### Tornar-se Motorista
+![Tornar-se Motorista - Parte 1](wireframes/perfil/tornar-se_motorista.jpg "Tornar-se Motorista - Parte 1")
+![Tornar-se Motorista - Parte 2](wireframes/perfil/tornar-se_motorista2.jpg "Tornar-se Motorista - Parte 2")
+
+Fluxo para que passageiros possam se cadastrar como motoristas, fornecendo informações sobre o veículo, documentação e outras informações necessárias.
 
 <a name="solucao"></a>
 
