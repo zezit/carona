@@ -348,7 +348,7 @@ public class CaronaService {
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
 
         validarPermissaoMotorista();
-        validarStatus(carona);
+        validarStatus(carona, StatusCarona.AGENDADA);
         validarHorarioPermitido(carona.getDataHoraPartida());
 
         if(carona.getStatus() != StatusCarona.AGENDADA) {
@@ -364,8 +364,30 @@ public class CaronaService {
 
     }
 
-    private void validarStatus(Carona carona) {
-        if (carona.getStatus() != StatusCarona.AGENDADA) {
+    @Transactional
+    public CaronaDto finalizarCarona(Long idCarona) {
+        log.info("Iniciando carona com ID: {}", idCarona);
+        Carona carona = caronaRepository.findById(idCarona)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
+
+        validarPermissaoMotorista();
+        validarStatus(carona, StatusCarona.EM_ANDAMENTO);
+
+        if(carona.getStatus() != StatusCarona.EM_ANDAMENTO) {
+            throw new CaronaStatusInvalido();
+        }
+
+
+        CaronaDto caronaAtualizada = alterarStatusCarona(idCarona, StatusCarona.FINALIZADA);
+
+        webSocketService.emitirEventoCaronaAtualizada(caronaAtualizada);
+
+        return caronaAtualizada;
+
+    }
+
+    private void validarStatus(Carona carona, StatusCarona status) {
+        if (carona.getStatus() != status) {
             throw new CaronaStatusInvalido();
         }
     }
