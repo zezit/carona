@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { reportServer } from '@/mocks/reportServer';
-import { CreateReportDTO, UpdateReportDTO } from '@/types/report';
+import { CreateReportDTO, MetricData, UpdateReportDTO } from '@/types/report';
+import { ApiResponse } from '@/types/report';
 
 // Set base URL from environment or use default
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
@@ -110,91 +111,159 @@ export const api = {
     },
   },
   reports: {
-    // Get all reports
-    getAllReports: async () => {
+    getAllReports: async (): Promise<ApiResponse<Report[]>> => {
       try {
-        const response = reportServer.getAllReports();
-        return response;
-      } catch (error) {
+        const response = await apiClient.get('/reports');
+        return { 
+          success: true, 
+          data: response.data.data || response.data || []
+        };
+      } catch (error: any) {
         console.error('Error fetching reports:', error);
-        return { success: false, error };
+        return { 
+          success: false, 
+          error,
+          message: error.response?.data?.message || 'Erro ao buscar relatórios'
+        };
       }
     },
     // Get report by ID
-    getReportById: async (reportId: string) => {
+    getReportById: async (reportId: string): Promise<ApiResponse<Report>> => {
       try {
-        const response = reportServer.getReportById(reportId);
-        return response;
-      } catch (error) {
+        const response = await apiClient.get(`/reports/${reportId}`);
+        return { 
+          success: true, 
+          data: response.data.data || response.data
+        };
+      } catch (error: any) {
         console.error('Error fetching report:', error);
-        return { success: false, error };
+        return { 
+          success: false, 
+          error,
+          message: error.response?.data?.message || 'Erro ao buscar relatório'
+        };
       }
     },
     // Create new report
-    createReport: async (reportData: CreateReportDTO) => {
+    createReport: async (reportData: CreateReportDTO): Promise<ApiResponse<Report>> => {
       try {
-        const response = reportServer.createReport(reportData);
-        return response;
-      } catch (error) {
+        const response = await apiClient.post('/reports', reportData);
+        return { 
+          success: true, 
+          data: response.data.data || response.data
+        };
+      } catch (error: any) {
         console.error('Error creating report:', error);
-        return { success: false, error };
+        return { 
+          success: false, 
+          error,
+          message: error.response?.data?.message || 'Erro ao criar relatório'
+        };
       }
     },
     // Update report
-    updateReport: async (reportId: string, reportData: UpdateReportDTO) => {
+    updateReport: async (reportId: string, reportData: UpdateReportDTO): Promise<ApiResponse<Report>> => {
       try {
-        const response = reportServer.updateReport(reportId, reportData);
-        return response;
-      } catch (error) {
+        const response = await apiClient.put(`/reports/${reportId}`, reportData);
+        return { 
+          success: true, 
+          data: response.data.data || response.data
+        };
+      } catch (error: any) {
         console.error('Error updating report:', error);
-        return { success: false, error };
+        return { 
+          success: false, 
+          error,
+          message: error.response?.data?.message || 'Erro ao atualizar relatório'
+        };
       }
     },
     // Delete report
-    deleteReport: async (reportId: string) => {
+    deleteReport: async (reportId: string): Promise<ApiResponse<any>> => {
       try {
-        const response = reportServer.deleteReport(reportId);
-        return response;
-      } catch (error) {
+        const response = await apiClient.delete(`/reports/${reportId}`);
+        return { 
+          success: true, 
+          data: response.data
+        };
+      } catch (error: any) {
         console.error('Error deleting report:', error);
-        return { success: false, error };
+        return { 
+          success: false, 
+          error,
+          message: error.response?.data?.message || 'Erro ao deletar relatório'
+        };
       }
     },
     // Approve report
-    approveReport: async (reportId: string) => {
+    approveReport: async (reportId: string): Promise<ApiResponse<Report>> => {
       try {
-        const response = reportServer.approveReport(reportId);
-        return response;
-      } catch (error) {
+        const response = await apiClient.patch(`/reports/${reportId}/approve`);
+        return { 
+          success: true, 
+          data: response.data.data || response.data
+        };
+      } catch (error: any) {
         console.error('Error approving report:', error);
-        return { success: false, error };
+        return { 
+          success: false, 
+          error,
+          message: error.response?.data?.message || 'Erro ao aprovar relatório'
+        };
       }
     },
     // Reject report
-    rejectReport: async (reportId: string) => {
+    rejectReport: async (reportId: string): Promise<ApiResponse<Report>> => {
       try {
-        const response = reportServer.rejectReport(reportId);
-        return response;
-      } catch (error) {
+        const response = await apiClient.patch(`/reports/${reportId}/reject`);
+        return { 
+          success: true, 
+          data: response.data.data || response.data
+        };
+      } catch (error: any) {
         console.error('Error rejecting report:', error);
-        return { success: false, error };
+        return { 
+          success: false, 
+          error,
+          message: error.response?.data?.message || 'Erro ao rejeitar relatório'
+        };
       }
     },
-    getRideMetrics: async (period: 'daily' | 'weekly' | 'monthly') => {
+    // Get ride metrics for charts
+    getRideMetrics: async (period: 'daily' | 'weekly' | 'monthly'): Promise<ApiResponse<MetricData[]>> => {
       try {
         const response = await apiClient.get(`/reports/metrics?period=${period}`);
         return {
           success: true,
-          data: response.data.data
+          data: response.data.data || response.data || []
         };
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching ride metrics:', error);
         return {
           success: false,
-          data: null,
+          error,
+          message: error.response?.data?.message || 'Erro ao buscar métricas',
+          data: []
         };
       }
     },
+    // Get dashboard summary
+    getDashboardSummary: async (): Promise<ApiResponse<any>> => {
+      try {
+        const response = await apiClient.get('/reports/dashboard');
+        return {
+          success: true,
+          data: response.data.data || response.data
+        };
+      } catch (error: any) {
+        console.error('Error fetching dashboard summary:', error);
+        return {
+          success: false,
+          error,
+          message: error.response?.data?.message || 'Erro ao buscar resumo do dashboard'
+        };
+      }
+    }
   },
 };
 

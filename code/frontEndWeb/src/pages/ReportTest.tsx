@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import { Report, CreateReportDTO } from '@/types/report';
+import { Report as ReportType, CreateReportDTO } from '@/types/report';
 import { toast } from 'sonner';
 import { AnimatedPage } from '@/components/AnimatedPage';
 import { AnimatedCard } from '@/components/AnimatedCard';
@@ -21,10 +21,12 @@ import {
   Trash2,
   Clock
 } from 'lucide-react';
+import { reportServer } from '@/mocks/reportServer';
+//import { reportServer } from '@/mocks/reportServer';
 
 export function ReportTest() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [reports, setReports] = useState<Report[]>([]);
+  const [reports, setReports] = useState<ReportType[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newReport, setNewReport] = useState<CreateReportDTO>({
@@ -53,32 +55,68 @@ export function ReportTest() {
 
   // Função para buscar relatórios
   const fetchReports = async () => {
-    setLoading(true);
-    try {
-      const response = await api.reports.getAllReports();
-      if (response.success) {
-        setReports(response.data);
+  setLoading(true);
+  console.log('Iniciando fetchReports...');
+  
+  try {
+    // <-- alterando
+    // Tenta usar a API real primeiro
+    console.log('Tentando API real para getAllReports...');
+    const response = await api.reports.getAllReports();
+    console.log('Resposta API getAllReports:', response);
+    
+    if (response.success && response.data.length > 0 ) {
+      console.log('API funcionou, usando dados da API:', response.data);
+      setReports((response.data || []) as unknown as ReportType[]);
+    } else {
+      // API não funcionou, usa mock
+      console.warn('API retornou success: false, usando mock:', response);
+
+      const mockResponse = reportServer.getAllReports();
+      console.log('Resposta do mock getAllReports:', mockResponse);
+      
+      if (mockResponse.success) {
+        setReports((mockResponse.data || []) as unknown as ReportType[]);
       } else {
         toast.error('Erro ao carregar relatórios');
       }
-    } catch (err) {
-      toast.error('Erro ao carregar relatórios');
-    } finally {
-      setLoading(false);
     }
-  };
+    // fim da alteração -->
+  } catch (err: any) {
+    console.error('Erro completo em fetchReports:', err);
+    toast.error('Erro ao carregar relatórios');
+  } finally {
+    setLoading(false);
+  }
+};
 
-  // Função para criar relatório
-  const handleCreateReport = async () => {
-    if (!newReport.titulo || !newReport.descricao) {
-      toast.error('Por favor, preencha todos os campos obrigatórios');
-      return;
-    }
+// Função para criar relatório
+const handleCreateReport = async () => {
+  if (!newReport.titulo || !newReport.descricao) {
+    toast.error('Por favor, preencha todos os campos obrigatórios');
+    return;
+  }
 
-    setIsCreating(true);
-    try {
-      const response = await api.reports.createReport(newReport);
-      if (response.success) {
+  setIsCreating(true);
+  
+  try {
+    // Tenta usar a API real primeiro
+    
+    const response = await api.reports.createReport(newReport);
+    if (response.success) {
+      toast.success('Relatório criado com sucesso!');
+      setNewReport({
+        titulo: '',
+        descricao: '',
+        data: new Date().toISOString().split('T')[0],
+        autor: 'Usuário Teste'
+      });
+      fetchReports();
+    } else {
+      // API não funcionou, usa mock
+      const mockResponse = reportServer.createReport(newReport);
+      
+      if (mockResponse.success) {
         toast.success('Relatório criado com sucesso!');
         setNewReport({
           titulo: '',
@@ -88,63 +126,98 @@ export function ReportTest() {
         });
         fetchReports();
       } else {
-        toast.error('Erro ao criar relatório');
+        toast.error(mockResponse.message || 'Erro ao criar relatório');
       }
-    } catch (err) {
-      toast.error('Erro ao criar relatório');
-    } finally {
-      setIsCreating(false);
     }
-  };
+  } catch (err: any) {
+    console.error('Erro completo em createReport:', err);
+    toast.error('Erro ao criar relatório');
+  } finally {
+    setIsCreating(false);
+  }
+};
 
-  // Função para deletar relatório
-  const handleDeleteReport = async (reportId: string) => {
-    if (!confirm('Tem certeza que deseja deletar este relatório?')) {
-      return;
-    }
+// Função para deletar relatório
+const handleDeleteReport = async (reportId: string) => {
+  if (!confirm('Tem certeza que deseja deletar este relatório?')) {
+    return;
+  }
 
-    try {
-      const response = await api.reports.deleteReport(reportId);
-      if (response.success) {
-        toast.success('Relatório deletado com sucesso!');
+  try {
+    const response = await api.reports.deleteReport(reportId);
+    
+    if (response.success) {
+      toast.success(response.message || 'Relatório deletado com sucesso!');
+      fetchReports();
+    } else {
+      // API não funcionou, usa mock
+      const mockResponse = reportServer.deleteReport(reportId);
+      
+      if (mockResponse.success) {
+        toast.success(mockResponse.message || 'Relatório deletado com sucesso!');
         fetchReports();
       } else {
-        toast.error('Erro ao deletar relatório');
+        toast.error(mockResponse.message || 'Erro ao deletar relatório');
       }
-    } catch (err) {
-      toast.error('Erro ao deletar relatório');
     }
-  };
+  } catch (err: any) {
+    console.error('Erro completo em deleteReport:', err);
+    toast.error('Erro ao deletar relatório');
+  }
+};
 
-  // Função para aprovar relatório
-  const handleApproveReport = async (reportId: string) => {
-    try {
-      const response = await api.reports.approveReport(reportId);
-      if (response.success) {
+// Função para aprovar relatório
+const handleApproveReport = async (reportId: string) => {
+  try {
+    const response = await api.reports.approveReport(reportId);
+
+    
+    if (response.success) {
+      toast.success('Relatório aprovado com sucesso!');
+      fetchReports();
+    } else {
+      // API não funcionou, usa mock
+      const mockResponse = reportServer.approveReport(reportId);
+      
+      if (mockResponse.success) {
         toast.success('Relatório aprovado com sucesso!');
         fetchReports();
       } else {
-        toast.error('Erro ao aprovar relatório');
+        toast.error(mockResponse.message || 'Erro ao aprovar relatório');
       }
-    } catch (err) {
-      toast.error('Erro ao aprovar relatório');
     }
-  };
+  } catch (err: any) {
+    console.error('Erro completo em approveReport:', err);
+    toast.error('Erro ao aprovar relatório');
+  }
+};
 
-  // Função para rejeitar relatório
-  const handleRejectReport = async (reportId: string) => {
-    try {
-      const response = await api.reports.rejectReport(reportId);
-      if (response.success) {
+// Função para rejeitar relatório
+const handleRejectReport = async (reportId: string) => {
+  try {
+    
+    const response = await api.reports.rejectReport(reportId);
+    
+    if (response.success) {
+      toast.success('Relatório rejeitado com sucesso!');
+      fetchReports();
+    } else {
+      // API não funcionou, usa mock
+      const mockResponse = reportServer.rejectReport(reportId);
+      
+      if (mockResponse.success) {
         toast.success('Relatório rejeitado com sucesso!');
         fetchReports();
       } else {
-        toast.error('Erro ao rejeitar relatório');
+        toast.error(mockResponse.message || 'Erro ao rejeitar relatório');
       }
-    } catch (err) {
-      toast.error('Erro ao rejeitar relatório');
     }
-  };
+  
+  } catch (err: any) {
+    console.error('Erro completo em rejectReport:', err);
+    toast.error('Erro ao rejeitar relatório');
+  }
+};
 
   // Função para obter a cor e ícone do status
   const getStatusInfo = (status?: string) => {

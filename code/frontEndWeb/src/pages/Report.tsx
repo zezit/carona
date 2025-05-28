@@ -32,6 +32,8 @@ import {
   Calendar,
   AlertTriangle
 } from "lucide-react";
+import { reportServer } from "@/mocks/reportServer";
+import { ApiResponse } from "@/types/report";
 
 const COLORS = ["#DC2626", "#16A34A", "#CA8A04", "#2563EB", "#7C3AED"];
 
@@ -56,23 +58,37 @@ export default function Report() {
   }, [timeRange, isAuthenticated]);
 
   const fetchMetrics = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await api.reports.getRideMetrics(timeRange);
-      if (response.success && response.data) {
-        setMetrics(response.data);
+  setIsLoading(true);
+  setError(null);
+  try {
+    // <-- alterando
+    // Tenta usar a API real primeiro
+    const response = await api.reports.getRideMetrics(timeRange);
+
+    
+    if (response.success && response.data && response.data.length > 0) {
+      console.log('API funcionou, usando dados da API:', response.data);
+      setMetrics(response.data);
+    } else {
+      // API não funcionou, usa mock
+      const mockResponse =  reportServer.getRideMetrics(timeRange);
+      
+      if (mockResponse.success && mockResponse.data) {
+        setMetrics(mockResponse.data);
       } else {
-        setError('Não foi possível carregar as métricas');
-        toast.error('Erro ao carregar métricas');
+        setError(mockResponse.message || 'Não foi possível carregar as métricas');
+        toast.error(mockResponse.message || 'Erro ao carregar métricas');
       }
-    } catch (err) {
-      setError('Ocorreu um erro ao carregar as métricas');
-      toast.error('Erro ao carregar métricas');
-    } finally {
-      setIsLoading(false);
     }
-  };
+    // fim da alteração -->
+  } catch (err: any) {
+    console.error('Erro completo:', err);
+    setError('Ocorreu um erro ao carregar as métricas');
+    toast.error('Erro ao carregar métricas');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Show loading state while checking authentication
   if (authLoading) {

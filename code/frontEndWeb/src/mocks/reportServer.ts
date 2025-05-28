@@ -1,242 +1,224 @@
-import { Report, CreateReportDTO, UpdateReportDTO } from '@/types/report';
+import { Report, CreateReportDTO, UpdateReportDTO, ApiResponse, MetricData } from '@/types/report';
 
-// Mock data for reports
-const reports: Report[] = [
-  {
-    id: 1,
-    title: "Relatório de Viagens - Janeiro",
-    description: "Análise das viagens realizadas em janeiro",
-    status: "APROVADO",
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-01-16T14:30:00Z",
-  },
-  {
-    id: 2,
-    title: "Relatório de Viagens - Fevereiro",
-    description: "Análise das viagens realizadas em fevereiro",
-    status: "PENDENTE",
-    createdAt: "2024-02-01T09:15:00Z",
-    updatedAt: "2024-02-01T09:15:00Z",
-  },
-];
+class ReportServer {
+  private reports: Report[] = [
+    {
+      id: '1',
+      titulo: 'Relatório de Usuários - Janeiro',
+      descricao: 'Análise completa dos usuários cadastrados em janeiro de 2024',
+      data: '2024-01-31',
+      autor: 'Admin Sistema',
+      status: 'APROVADO',
+      createdAt: '2024-01-31T10:00:00Z',
+      updatedAt: '2024-01-31T14:30:00Z'
+    },
+    {
+      id: '2',
+      titulo: 'Relatório de Viagens - Fevereiro',
+      descricao: 'Métricas de viagens realizadas no mês de fevereiro',
+      data: '2024-02-29',
+      autor: 'João Silva',
+      status: 'PENDENTE',
+      createdAt: '2024-02-29T09:15:00Z'
+    },
+    {
+      id: '3',
+      titulo: 'Análise de Performance - Q1',
+      descricao: 'Relatório trimestral de performance da plataforma',
+      data: '2024-03-31',
+      autor: 'Maria Santos',
+      status: 'REJEITADO',
+      createdAt: '2024-03-31T16:45:00Z',
+      updatedAt: '2024-04-01T08:20:00Z'
+    }
+  ];
+    private mockMetrics = {
+    daily: [
+      { period: '2024-05-20', rides: 45, passengers: 78, drivers: 23 },
+      { period: '2024-05-21', rides: 52, passengers: 89, drivers: 28 },
+      { period: '2024-05-22', rides: 38, passengers: 65, drivers: 19 },
+      { period: '2024-05-23', rides: 61, passengers: 102, drivers: 32 },
+      { period: '2024-05-24', rides: 55, passengers: 95, drivers: 29 },
+      { period: '2024-05-25', rides: 43, passengers: 71, drivers: 21 },
+      { period: '2024-05-26', rides: 49, passengers: 84, drivers: 26 }
+    ],
+    weekly: [
+      { period: 'Semana 1', rides: 234, passengers: 412, drivers: 87 },
+      { period: 'Semana 2', rides: 289, passengers: 501, drivers: 102 },
+      { period: 'Semana 3', rides: 267, passengers: 445, drivers: 94 },
+      { period: 'Semana 4', rides: 312, passengers: 578, drivers: 115 }
+    ],
+    monthly: [
+      { period: 'Janeiro', rides: 1245, passengers: 2134, drivers: 345 },
+      { period: 'Fevereiro', rides: 1367, passengers: 2456, drivers: 389 },
+      { period: 'Março', rides: 1523, passengers: 2789, drivers: 423 },
+      { period: 'Abril', rides: 1456, passengers: 2678, drivers: 401 },
+      { period: 'Maio', rides: 1678, passengers: 3012, drivers: 467 }
+    ]
+  };
 
-// Mock data for ride metrics
-const rideMetrics = {
-  monthly: [
-    {
-      month: "Jan",
-      rides: 45,
-      passengers: 120,
-      drivers: 25,
-    },
-    {
-      month: "Fev",
-      rides: 52,
-      passengers: 145,
-      drivers: 28,
-    },
-    {
-      month: "Mar",
-      rides: 48,
-      passengers: 130,
-      drivers: 26,
-    },
-    {
-      month: "Abr",
-      rides: 55,
-      passengers: 160,
-      drivers: 30,
-    },
-    {
-      month: "Mai",
-      rides: 60,
-      passengers: 180,
-      drivers: 32,
-    },
-    {
-      month: "Jun",
-      rides: 65,
-      passengers: 200,
-      drivers: 35,
-    },
-  ],
-  weekly: [
-    {
-      week: "Semana 1",
-      rides: 15,
-      passengers: 40,
-      drivers: 10,
-    },
-    {
-      week: "Semana 2",
-      rides: 18,
-      passengers: 50,
-      drivers: 12,
-    },
-    {
-      week: "Semana 3",
-      rides: 20,
-      passengers: 55,
-      drivers: 13,
-    },
-    {
-      week: "Semana 4",
-      rides: 22,
-      passengers: 60,
-      drivers: 14,
-    },
-  ],
-  daily: [
-    {
-      day: "Segunda",
-      rides: 8,
-      passengers: 25,
-      drivers: 5,
-    },
-    {
-      day: "Terça",
-      rides: 10,
-      passengers: 30,
-      drivers: 6,
-    },
-    {
-      day: "Quarta",
-      rides: 12,
-      passengers: 35,
-      drivers: 7,
-    },
-    {
-      day: "Quinta",
-      rides: 15,
-      passengers: 40,
-      drivers: 8,
-    },
-    {
-      day: "Sexta",
-      rides: 20,
-      passengers: 50,
-      drivers: 10,
-    },
-  ],
-};
-
-// Mock server functions
-export const reportServer = {
-  // Report functions
-  getAllReports: () => {
-    return Promise.resolve({
+  getAllReports(): ApiResponse<Report[]> {
+    return {
       success: true,
-      data: reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    });
-  },
+      data: [...this.reports]
+    };
+  }
 
-  getReportById: (id: number) => {
-    const report = reports.find((r) => r.id === id);
-    return Promise.resolve({
-      success: !!report,
-      data: report || null,
-    });
-  },
+  getReportById(reportId: string): ApiResponse<Report> {
+    const report = this.reports.find(r => r.id === reportId);
+    if (report) {
+      return {
+        success: true,
+        data: report
+      };
+    }
+    return {
+      success: false,
+      message: 'Relatório não encontrado'
+    };
+  }
 
-  createReport: (data: CreateReportDTO) => {
+  createReport(reportData: CreateReportDTO): ApiResponse<Report> {
     const newReport: Report = {
-      id: reports.length + 1,
-      ...data,
-      status: "PENDENTE",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      id: Date.now().toString(),
+      ...reportData,
+      status: 'PENDENTE',
+      createdAt: new Date().toISOString()
     };
-    reports.push(newReport);
-    return Promise.resolve({
+    
+    this.reports.push(newReport);
+    
+    return {
       success: true,
-      data: newReport,
-    });
-  },
+      data: newReport
+    };
+  }
 
-  updateReport: (id: number, data: UpdateReportDTO) => {
-    const index = reports.findIndex((r) => r.id === id);
+  updateReport(reportId: string, reportData: UpdateReportDTO): ApiResponse<Report> {
+    const index = this.reports.findIndex(r => r.id === reportId);
     if (index === -1) {
-      return Promise.resolve({
+      return {
         success: false,
-        data: null,
-      });
+        message: 'Relatório não encontrado'
+      };
     }
 
-    reports[index] = {
-      ...reports[index],
-      ...data,
-      updatedAt: new Date().toISOString(),
+    this.reports[index] = {
+      ...this.reports[index],
+      ...reportData,
+      updatedAt: new Date().toISOString()
     };
 
-    return Promise.resolve({
+    return {
       success: true,
-      data: reports[index],
-    });
-  },
+      data: this.reports[index]
+    };
+  }
 
-  deleteReport: (id: number) => {
-    const index = reports.findIndex((r) => r.id === id);
+  deleteReport(reportId: string): ApiResponse {
+    const index = this.reports.findIndex(r => r.id === reportId);
     if (index === -1) {
-      return Promise.resolve({
+      return {
         success: false,
-        data: null,
-      });
+        message: 'Relatório não encontrado'
+      };
     }
 
-    reports.splice(index, 1);
-    return Promise.resolve({
+    this.reports.splice(index, 1);
+    
+    return {
       success: true,
-      data: null,
-    });
-  },
+      message: 'Relatório deletado com sucesso'
+    };
+  }
 
-  approveReport: (id: number) => {
-    const index = reports.findIndex((r) => r.id === id);
+  approveReport(reportId: string): ApiResponse<Report> {
+    const index = this.reports.findIndex(r => r.id === reportId);
     if (index === -1) {
-      return Promise.resolve({
+      return {
         success: false,
-        data: null,
-      });
+        message: 'Relatório não encontrado'
+      };
     }
 
-    reports[index] = {
-      ...reports[index],
-      status: "APROVADO",
-      updatedAt: new Date().toISOString(),
+    this.reports[index] = {
+      ...this.reports[index],
+      status: 'APROVADO',
+      updatedAt: new Date().toISOString()
     };
 
-    return Promise.resolve({
+    return {
       success: true,
-      data: reports[index],
-    });
-  },
+      data: this.reports[index]
+    };
+  }
 
-  rejectReport: (id: number) => {
-    const index = reports.findIndex((r) => r.id === id);
+  rejectReport(reportId: string): ApiResponse<Report> {
+    const index = this.reports.findIndex(r => r.id === reportId);
     if (index === -1) {
-      return Promise.resolve({
+      return {
         success: false,
-        data: null,
-      });
+        message: 'Relatório não encontrado'
+      };
     }
 
-    reports[index] = {
-      ...reports[index],
-      status: "REJEITADO",
-      updatedAt: new Date().toISOString(),
+    this.reports[index] = {
+      ...this.reports[index],
+      status: 'REJEITADO',
+      updatedAt: new Date().toISOString()
     };
 
-    return Promise.resolve({
+    return {
       success: true,
-      data: reports[index],
-    });
-  },
+      data: this.reports[index]
+    };
+  }
+    getRideMetrics(period: 'daily' | 'weekly' | 'monthly'): ApiResponse<MetricData[]> {
+    console.log('Simple mock getRideMetrics called with period:', period);
+    
+    const data = this.mockMetrics[period];
+    console.log('Simple mock returning data:', data);
+    
+    if (data && data.length > 0) {
+      return {
+        success: true,
+        data: data
+      };
+    } else {
+      return {
+        success: false,
+        message: `Nenhum dado encontrado para o período ${period}`,
+        data: []
+      };
+    }
+  }
 
-  // Ride metrics functions
-  getRideMetrics: (period: 'daily' | 'weekly' | 'monthly') => {
-    return Promise.resolve({
+
+  // NEW: Mock function for dashboard summary
+  getDashboardSummary(): ApiResponse<any> {
+    const totalMetrics = Object.values(this.mockMetrics.monthly).reduce(
+      (acc, curr) => ({
+        rides: acc.rides + curr.rides,
+        passengers: acc.passengers + curr.passengers,
+        drivers: acc.drivers + curr.drivers
+      }),
+      { rides: 0, passengers: 0, drivers: 0 }
+    );
+
+    return {
       success: true,
-      data: rideMetrics[period],
-    });
-  },
-}; 
+      data: {
+        totalUsers: 1247,
+        totalRides: totalMetrics.rides,
+        totalReports: this.reports.length,
+        pendingApprovals: this.reports.filter(r => r.status === 'PENDENTE').length,
+        totalPassengers: totalMetrics.passengers,
+        totalDrivers: totalMetrics.drivers,
+        growthRate: 12.5,
+        satisfaction: 4.7
+      }
+    };
+  }
+}
+
+export const reportServer = new ReportServer();
