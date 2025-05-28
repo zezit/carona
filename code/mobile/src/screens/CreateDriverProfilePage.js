@@ -149,7 +149,7 @@ const CreateDriverProfilePage = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ paddingHorizontal: SPACING.lg }}>
-          <FormCard title="Informações do Motorista" icon="person-circle" iconColor={COLORS.primary}>
+          <FormCard title="Informações do Motorista" icon="person-circle" iconColor={COLORS.primary.main}>
             <FormField
               label="Número da CNH"
               value={cnh}
@@ -172,14 +172,14 @@ const CreateDriverProfilePage = ({ navigation }) => {
               <Switch
                 value={showWhatsapp}
                 onValueChange={setShowWhatsapp}
-                trackColor={{ false: "#767577", true: COLORS.primaryLight }}
-                thumbColor={showWhatsapp ? COLORS.primary : "#f4f3f4"}
+                trackColor={{ false: "#767577", true: COLORS.primary.light }}
+                thumbColor={showWhatsapp ? COLORS.primary.main : "#f4f3f4"}
                 ios_backgroundColor="#3e3e3e"
               />
             </View>
           </FormCard>
 
-          <FormCard title="Informações do Veículo" icon="car" iconColor={COLORS.success}>
+          <FormCard title="Informações do Veículo" icon="car" iconColor={COLORS.success.main}>
             <FormField
               label="Modelo do Carro"
               value={modelo}
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   submitButton: {
-    backgroundColor: COLORS.success,
+    backgroundColor: COLORS.success.main,
     marginTop: SPACING.md,
   },
   disclaimer: {

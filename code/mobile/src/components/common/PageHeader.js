@@ -7,7 +7,7 @@ import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../../constants';
 const PageHeader = ({ title, onBack }) => {
     return (
         <LinearGradient
-            colors={[COLORS.primary, COLORS.primaryDark]}
+            colors={[COLORS.primary.main, COLORS.primary.dark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 0.5 }}
             style={styles.headerContainer}

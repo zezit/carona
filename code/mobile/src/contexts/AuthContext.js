@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!result.success) {
-        setError(result.error.message);
+        setError(result.error?.message);
         return false;
       }
 
@@ -198,8 +198,8 @@ export const AuthProvider = ({ children }) => {
       const result = await apiClient.post('/usuario/estudante', studentData);
 
       if (!result.success) {
-        setError(result.error.message);
-        return { success: false, error: result.error.message };
+        setError(result.error?.message);
+        return { success: false, error: result.error?.message };
       }
 
       return { success: true, data: result.data };

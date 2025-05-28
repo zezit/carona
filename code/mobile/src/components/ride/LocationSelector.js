@@ -44,7 +44,7 @@ const LocationSelector = ({
           </Text>
         </View>
         <View style={styles.editIcon}>
-          <Ionicons name="pencil" size={16} color={COLORS.primary} />
+          <Ionicons name="pencil" size={16} color={COLORS.primary.main} />
         </View>
       </View>
     </TouchableOpacity>
@@ -53,7 +53,7 @@ const LocationSelector = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.md,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -87,15 +87,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   departureIcon: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
   },
   arrivalIcon: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.secondary.main,
   },
   locationConnector: {
     width: 2,
     height: 10,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.border.main,
     marginVertical: 1,
   },
   locationTexts: {

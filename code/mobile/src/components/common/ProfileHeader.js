@@ -29,9 +29,9 @@ const ProfileHeader = ({
   const getStatusColor = (status) => {
     switch (status) {
       case 'APROVADO':
-        return COLORS.success;
+        return COLORS.success.main;
       case 'PENDENTE':
-        return COLORS.warning;
+        return COLORS.warning.main;
       case 'REJEITADO':
         return COLORS.error;
       case 'CANCELADO':
@@ -102,7 +102,7 @@ const ProfileHeader = ({
           onPress={onEditPress}
           hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
         >
-          <Ionicons name="pencil" size={20} color={COLORS.primary} />
+          <Ionicons name="pencil" size={20} color={COLORS.primary.main} />
         </TouchableOpacity>
       )}
     </View>
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: `${COLORS.primary}15`,
+    backgroundColor: `${COLORS.primary.main}15`,
     justifyContent: 'center',
     alignItems: 'center',
   },

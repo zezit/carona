@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   activeTab: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
   },
   tabText: {
     fontSize: FONT_SIZE.sm,

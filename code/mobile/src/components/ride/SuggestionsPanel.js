@@ -157,13 +157,13 @@ const SuggestionsPanel = ({
           disabled={currentLocationLoading}
         >
           <View style={styles.currentLocationIconWrapper}>
-            <Ionicons name="locate" size={18} color={COLORS.primary} />
+            <Ionicons name="locate" size={18} color={COLORS.primary.main} />
           </View>
           <Text style={styles.currentLocationText}>
             {currentLocationLoading ? 'Obtendo localização...' : 'Usar minha localização atual'}
           </Text>
           {currentLocationLoading && (
-            <ActivityIndicator size="small" color={COLORS.primary} style={styles.locationLoading} />
+            <ActivityIndicator size="small" color={COLORS.primary.main} style={styles.locationLoading} />
           )}
         </TouchableOpacity>
       )}
@@ -181,7 +181,7 @@ const SuggestionsPanel = ({
       {/* Loading indicator */}
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={COLORS.primary} />
+          <ActivityIndicator size="small" color={COLORS.primary.main} />
         </View>
       )}
 
@@ -232,14 +232,14 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     borderWidth: 1,
     borderRadius: RADIUS.md,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderColor: COLORS.border.main,
+    backgroundColor: COLORS.background.main,
   },
   currentLocationIconWrapper: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.primaryLight + '30',
+    backgroundColor: COLORS.primary.light + '30',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.sm,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   suggestionsList: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.md,
     maxHeight: 250,
   },
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
   },
   suggestionIcon: {
     marginRight: SPACING.sm,

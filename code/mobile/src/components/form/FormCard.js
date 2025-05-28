@@ -8,7 +8,7 @@ const FormCard = ({ title, icon, iconColor, children }) => {
     return (
         <View style={[commonStyles.profileCard, styles.card]}>
             <View style={styles.cardHeader}>
-                <Ionicons name={icon} size={40} color={iconColor || COLORS.primary} />
+                <Ionicons name={icon} size={40} color={iconColor || COLORS.primary.main} />
                 <Text style={styles.cardTitle}>{title}</Text>
             </View>
             {children}
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.md,
         paddingBottom: SPACING.sm,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        borderBottomColor: COLORS.border.main,
     },
     cardTitle: {
         fontSize: FONT_SIZE.lg,

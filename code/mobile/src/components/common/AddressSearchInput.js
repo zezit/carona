@@ -18,7 +18,7 @@ const AddressSearchInput = ({
   onChangeText,
   onSelectAddress,
   iconName = 'location',
-  iconColor = COLORS.primary,
+  iconColor = COLORS.primary.main,
   style,
   label,
   autoFocus = false,
@@ -153,7 +153,7 @@ const AddressSearchInput = ({
         
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={COLORS.primary} />
+            <ActivityIndicator size="small" color={COLORS.primary.main} />
           </View>
         )}
         
@@ -211,7 +211,7 @@ const AddressSearchInput = ({
           if (loading) {
             return (
               <View style={styles.rightButton}>
-                <ActivityIndicator size="small" color={COLORS.primary} />
+                <ActivityIndicator size="small" color={COLORS.primary.main} />
               </View>
             );
           } else if (value.length > 0) {
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   inputContainer: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.lg,
     ...Platform.select({
       ios: {
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.xs,
   },
   suggestionsList: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.lg,
     marginTop: SPACING.xs,
     maxHeight: 260,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
   },
   suggestionIcon: {
     marginRight: SPACING.sm,

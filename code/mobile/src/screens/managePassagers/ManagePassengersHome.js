@@ -1,9 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, RADIUS } from '../../constants';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING } from '../../constants';
 
 const ManagePassengersHome = ({ navigation, route }) => {
   const { ride } = route.params || {};
@@ -18,9 +17,9 @@ const ManagePassengersHome = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background.main }}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={styles.headerGradient}
@@ -38,7 +37,7 @@ const ManagePassengersHome = ({ navigation, route }) => {
         <Text style={styles.title}>O que você quer fazer?</Text>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: COLORS.primary }]}
+          style={[styles.button, { backgroundColor: COLORS.primary.main }]}
           onPress={handleEditPassengers}
         >
           <Ionicons name="people" size={20} color={COLORS.text.light} />
@@ -46,7 +45,7 @@ const ManagePassengersHome = ({ navigation, route }) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: COLORS.secondary }]}
+          style={[styles.button, { backgroundColor: COLORS.secondary.main }]}
           onPress={handleApproveRequests}
         >
           <Ionicons name="checkmark-done" size={20} color={COLORS.text.light} />

@@ -152,7 +152,7 @@ const ProfilePage = ({ navigation, route }) => {
   return (
     <SafeAreaView style={commonStyles.container}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={{ height: 150, paddingTop: 20 }}
@@ -181,7 +181,7 @@ const ProfilePage = ({ navigation, route }) => {
             title="Informações Pessoais"
             description="Atualize seu nome, matrícula e curso"
             icon="person"
-            iconColor={COLORS.primary}
+            iconColor={COLORS.primary.main}
             onPress={handleUpdateProfile}
           />
 
@@ -192,7 +192,7 @@ const ProfilePage = ({ navigation, route }) => {
               : "Cadastre-se como motorista para oferecer caronas"
             }
             icon="car"
-            iconColor={COLORS.secondary}
+            iconColor={COLORS.secondary.main}
             onPress={handleDriverProfile}
           />
         </View>

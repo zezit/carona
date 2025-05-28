@@ -11,14 +11,54 @@ export const RECENT_ADDRESSES_KEY = 'recent_addresses';
 export const formatAddressFromComponents = (addressObj) => {
   if (!addressObj) return '';
   
-  const addressParts = [
-    addressObj.name,
-    addressObj.street,
-    addressObj.streetNumber,
-    addressObj.district,
-    addressObj.city,
-    addressObj.region
-  ].filter(Boolean);
+  // Build address in a more logical order: Street + Number, Neighborhood, City, State
+  const addressParts = [];
+  
+  // Street name and number - improved handling
+  if (addressObj.street) {
+    let streetPart = addressObj.street;
+    if (addressObj.streetNumber) {
+      streetPart += `, ${addressObj.streetNumber}`;
+    }
+    addressParts.push(streetPart);
+  } else if (addressObj.name && !addressObj.name.includes(',')) {
+    // Use name if it's not a complex address
+    let namePart = addressObj.name;
+    // Add street number to name if available and not already included
+    if (addressObj.streetNumber && !namePart.includes(addressObj.streetNumber)) {
+      namePart += `, ${addressObj.streetNumber}`;
+    }
+    addressParts.push(namePart);
+  }
+  
+  // Neighborhood/District
+  if (addressObj.district) {
+    addressParts.push(addressObj.district);
+  }
+  
+  // City
+  if (addressObj.city) {
+    addressParts.push(addressObj.city);
+  }
+  
+  // State/Region (only if different from city)
+  if (addressObj.region && addressObj.region !== addressObj.city) {
+    addressParts.push(addressObj.region);
+  }
+  
+  // If we don't have a good structure, fall back to the original method
+  if (addressParts.length === 0) {
+    const fallbackParts = [
+      addressObj.name,
+      addressObj.street,
+      addressObj.streetNumber,
+      addressObj.district,
+      addressObj.city,
+      addressObj.region
+    ].filter(Boolean);
+    
+    return fallbackParts.join(', ');
+  }
   
   return addressParts.join(', ');
 };

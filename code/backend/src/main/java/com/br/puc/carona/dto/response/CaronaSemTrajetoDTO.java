@@ -1,18 +1,12 @@
 package com.br.puc.carona.dto.response;
+
 import java.time.LocalDateTime;
 import java.util.Set;
-import com.br.puc.carona.dto.AbstractDto;
+
 import com.br.puc.carona.enums.StatusCarona;
-import lombok.AllArgsConstructor;
+
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
-
-
-
 
 @Data
 @Builder

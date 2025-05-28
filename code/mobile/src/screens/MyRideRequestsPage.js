@@ -134,15 +134,15 @@ console.log(rideRequests[0])
   const getStatusInfo = (status) => {
     switch (status?.toLowerCase()) {
       case 'pendente':
-        return { color: COLORS.warning, text: 'Pendente' };
+        return { color: COLORS.warning.main, text: 'Pendente' };
       case 'aceito':
-        return { color: COLORS.success, text: 'Aceito' };
+        return { color: COLORS.success.main, text: 'Aceito' };
       case 'recusado':
         return { color: COLORS.danger, text: 'Recusado' };
       case 'cancelado':
         return { color: COLORS.danger, text: 'Cancelado' };
       default:
-        return { color: COLORS.secondary, text: status || 'Desconhecido' };
+        return { color: COLORS.secondary.main, text: status || 'Desconhecido' };
     }
   };
 
@@ -182,7 +182,7 @@ console.log(rideRequests[0])
   return (
     <SafeAreaView style={commonStyles.container}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={{ height: 150, paddingTop: SPACING.lg }}
@@ -209,8 +209,8 @@ console.log(rideRequests[0])
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[COLORS.primary]}
-            tintColor={COLORS.primary}
+            colors={[COLORS.primary.main]}
+            tintColor={COLORS.primary.main}
           />
         }
       >
@@ -260,14 +260,14 @@ console.log(rideRequests[0])
                   
                   <View style={styles.routeContainer}>
                     <View style={styles.locationRow}>
-                      <Ionicons name="location" size={20} color={COLORS.primary} />
+                      <Ionicons name="location" size={20} color={COLORS.primary.main} />
                       <Text style={styles.locationText}>
                         {request.origem || 'Origem não especificada'}
                       </Text>
                     </View>
                     <View style={styles.verticalLine} />
                     <View style={styles.locationRow}>
-                      <Ionicons name="location" size={20} color={COLORS.secondary} />
+                      <Ionicons name="location" size={20} color={COLORS.secondary.main} />
                       <Text style={styles.locationText}>
                         {request.destino || 'Destino não especificado'}
                       </Text>
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   requestCard: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main.white,
     borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.md,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   verticalLine: {
     width: 1,
     height: 20,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.border.main,
     marginLeft: 10,
     marginVertical: 2,
   },
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
     paddingTop: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: COLORS.border.main,
   },
   driverName: {
     marginLeft: SPACING.sm,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: SPACING.xl,
-    backgroundColor: COLORS.background.light,
+    backgroundColor: COLORS.background.main.light,
     borderRadius: 12,
   },
   emptyText: {
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     borderRadius: 8,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,

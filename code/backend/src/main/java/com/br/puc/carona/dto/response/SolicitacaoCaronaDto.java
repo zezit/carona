@@ -2,6 +2,7 @@ package com.br.puc.carona.dto.response;
 
 import com.br.puc.carona.dto.AbstractDto;
 import com.br.puc.carona.enums.Status;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -43,6 +44,7 @@ public class SolicitacaoCaronaDto extends AbstractDto {
     private Double longitudeDestino;
 
     @Schema(description = "Hora desejada para chegada", example = "2025-04-20T19:00:00")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime horarioChegada;
 
     @Schema(description = "Status atual da solicitação", example = "PENDENTE")

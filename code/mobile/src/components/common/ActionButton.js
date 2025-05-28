@@ -67,10 +67,10 @@ const styles = StyleSheet.create({
         marginVertical: SPACING.sm,
     },
     primaryButton: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.primary.main,
     },
     secondaryButton: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.secondary.main,
     },
     dangerButton: {
         backgroundColor: COLORS.danger,

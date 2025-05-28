@@ -4,19 +4,19 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '../../constants
 export const commonStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
   },
   headerView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
   },
   contentView: {
     flex: 3,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.xl,
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     marginTop: -30,
@@ -29,7 +29,7 @@ export const commonStyles = StyleSheet.create({
   footerView: {
     flex: 1,
     padding: SPACING.lg,
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
   },
   title: {
     fontSize: FONT_SIZE.xxxl,
@@ -50,7 +50,7 @@ export const commonStyles = StyleSheet.create({
     height: 50,
     width: '100%',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     marginBottom: SPACING.md,
@@ -64,7 +64,7 @@ export const commonStyles = StyleSheet.create({
   button: {
     width: '80%',
     height: 50,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     borderRadius: RADIUS.xl,
     alignItems: 'center',
     justifyContent: 'center',
@@ -75,7 +75,7 @@ export const commonStyles = StyleSheet.create({
     shadowRadius: 3,
   },
   buttonDisabled: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: COLORS.primary.light,
     elevation: 0,
   },
   buttonText: {
@@ -84,7 +84,7 @@ export const commonStyles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.bold,
   },
   linkText: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontWeight: FONT_WEIGHT.bold,
     textDecorationLine: 'underline',
   },
@@ -98,7 +98,7 @@ export const commonStyles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalWrapper: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
     padding: SPACING.lg,
@@ -108,7 +108,7 @@ export const commonStyles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   closeButtonText: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontSize: FONT_SIZE.md,
     fontWeight: FONT_WEIGHT.bold,
     padding: 5,
@@ -145,7 +145,7 @@ export const commonStyles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   forgotPasswordText: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontSize: FONT_SIZE.sm,
   },
   progressIndicator: {
@@ -158,15 +158,15 @@ export const commonStyles = StyleSheet.create({
     width: 15,
     height: 15,
     borderRadius: RADIUS.round,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.border.main,
   },
   activeDot: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
   },
   progressLine: {
     height: 3,
     width: 60,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.border.main,
     marginHorizontal: SPACING.xs,
   },
   modalHeader: {
@@ -175,7 +175,7 @@ export const commonStyles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
     marginBottom: SPACING.sm,
   },
   modalTitle: {
@@ -202,7 +202,7 @@ export const commonStyles = StyleSheet.create({
   datePickerScroll: {
     height: 160,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
     borderRadius: RADIUS.md,
   },
   datePickerItem: {
@@ -220,12 +220,12 @@ export const commonStyles = StyleSheet.create({
     color: COLORS.text.secondary,
   },
   datePickerTextSelected: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontWeight: FONT_WEIGHT.semiBold,
   },
   // New common profile styles
   profileCard: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     shadowColor: '#000',
@@ -235,14 +235,14 @@ export const commonStyles = StyleSheet.create({
     elevation: 3,
     marginBottom: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
   },
   profileHeaderSection: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     padding: SPACING.lg,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
   },
   profileImage: {
     width: 100,
@@ -254,7 +254,7 @@ export const commonStyles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: RADIUS.round,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -272,16 +272,16 @@ export const commonStyles = StyleSheet.create({
   profileButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.primary.main,
     borderRadius: RADIUS.xl,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     marginVertical: SPACING.sm,
   },
   profileButtonText: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontWeight: FONT_WEIGHT.semiBold,
     marginLeft: SPACING.xs,
     fontSize: FONT_SIZE.md,
@@ -317,7 +317,7 @@ export const commonStyles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.border.main,
     marginVertical: SPACING.xs,
   },
   actionButtonsRow: {
@@ -326,7 +326,7 @@ export const commonStyles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   primaryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.md,
@@ -338,7 +338,7 @@ export const commonStyles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.semiBold,
   },
   secondaryButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.secondary.main,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.md,
@@ -367,14 +367,14 @@ export const commonStyles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   formInput: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     fontSize: FONT_SIZE.md,
     color: COLORS.text.primary,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
     height: 48,
   },
   formInputError: {

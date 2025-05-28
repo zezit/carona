@@ -144,7 +144,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
   return (
     <SafeAreaView style={commonStyles.container}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={{ height: 150, paddingTop: SPACING.lg }}
@@ -176,7 +176,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
                 title="Oferecer Carona"
                 description="Cadastre uma nova carona como motorista"
                 icon="car"
-                color={COLORS.primary}
+                color={COLORS.primary.main}
                 onPress={handleStartDrive}
               />
 
@@ -191,7 +191,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
                     ? "Gerencie suas próximas caronas agendadas" 
                     : "Você não tem caronas agendadas"}
                   icon="calendar"
-                  color={COLORS.secondary}
+                  color={COLORS.secondary.main}
                   onPress={handleManageScheduledRides}
                   badge={upcomingRides.length > 0 ? upcomingRides.length.toString() : null}
                 />
@@ -201,7 +201,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
                 title="Minhas Caronas"
                 description="Visualize seu histórico de caronas"
                 icon="list"
-                color={COLORS.secondary}
+                color={COLORS.secondary.main}
                 onPress={() => handleHistoryRide('my-rides')}
               />
             </View>
@@ -211,14 +211,14 @@ const RideModeSelectionPage = ({ navigation, route }) => {
             title="Buscar Carona"
             description="Encontre caronas disponíveis para seu destino"
             icon="search"
-            color={COLORS.success}
+            color={COLORS.success.main}
             onPress={handleSearchRide}
           />
            <OptionButton
             title="Minhas Solicitações"
             description="Vizualize suas solicitações de carona"
             icon="hand-right-outline"
-            color={COLORS.success}
+            color={COLORS.success.main}
             onPress={handleMyRequests}
           />
         </View>

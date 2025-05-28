@@ -181,7 +181,7 @@ const RideDateTimePicker = ({ departureDate, arrivalDate, onDateChange, activeMo
         <Ionicons 
           name="calendar-outline" 
           size={24} 
-          color={activeMode === 'departure' ? COLORS.primary : COLORS.success} 
+          color={activeMode === 'departure' ? COLORS.primary.main : COLORS.success.main} 
         />
         <View style={styles.dateTextContainer}>
           <Text style={styles.dateLabel}>
@@ -256,11 +256,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
     padding: SPACING.md,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
   },
   dateTextContainer: {
     flex: 1,
@@ -278,11 +278,11 @@ const styles = StyleSheet.create({
   },
   estimatedTimeContainer: {
     marginTop: SPACING.sm,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
     padding: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
     borderStyle: 'dashed',
   },
   estimatedTimeLabel: {
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     paddingBottom: 20,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
   },
   modalTitle: {
     fontSize: FONT_SIZE.lg,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
   },
   doneButtonText: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontSize: FONT_SIZE.md,
     fontWeight: FONT_WEIGHT.semiBold,
   },

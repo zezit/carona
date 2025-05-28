@@ -8,6 +8,7 @@ import java.util.Set;
 import com.br.puc.carona.dto.AbstractDto;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.enums.StatusCarona;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +30,9 @@ public class CaronaDto extends AbstractDto {
     private String pontoDestino;
     private Double latitudeDestino;
     private Double longitudeDestino;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dataHoraPartida;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dataHoraChegada;
     private Integer vagas;
     private StatusCarona status;

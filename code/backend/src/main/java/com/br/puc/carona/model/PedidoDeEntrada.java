@@ -1,8 +1,10 @@
 package com.br.puc.carona.model;
 
 import com.br.puc.carona.enums.Status;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -29,5 +31,7 @@ public class PedidoDeEntrada extends AbstractEntity {
     private SolicitacaoCarona solicitacao;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    @Builder.Default
+    @Column(nullable = false)
+    private Status status = Status.PENDENTE;
 }

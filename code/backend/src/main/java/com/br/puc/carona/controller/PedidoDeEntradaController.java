@@ -1,20 +1,18 @@
 package com.br.puc.carona.controller;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.br.puc.carona.dto.response.PedidoDeEntradaCompletoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
-import com.br.puc.carona.enums.StatusAprovarPedidoCarona;
-import com.br.puc.carona.model.PedidoDeEntrada;
+import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.service.PedidoDeEntradaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PedidoDeEntradaController {
 
     private final PedidoDeEntradaService pedidoDeEntradaService;
-
 
     @GetMapping("/{id}")
     @Operation(summary = "Buscar pedido de entrada por ID", description = "Recupera os detalhes de um pedido de entrada pelo ID")
@@ -58,31 +55,50 @@ public class PedidoDeEntradaController {
         return ResponseEntity.ok(pedidos);
     }
 
-    @PostMapping("/aprovarCarona/{idPedido}/{status}")
-    @Operation(summary = "Aprovar pedido de entrada", description = "Aprova um pedido de entrada específico")
+    @PutMapping("/{idPedido}/status/{status}")
+    @Operation(summary = "Atualizar status do pedido de entrada", description = "Aprova ou recusa um pedido de entrada")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Pedido de entrada aprovado com sucesso"),
+            @ApiResponse(responseCode = "200", description = "Status do pedido de entrada atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros de requisição inválidos"),
             @ApiResponse(responseCode = "404", description = "Pedido de entrada não encontrado")
     })
-    public ResponseEntity<Void> aprovarPedidoDeEntrada(@PathVariable Long idPedido, @PathVariable final StatusAprovarPedidoCarona status) {
-        log.info("Aprovando pedido de entrada com ID de solicitação: {} e status: {}", idPedido, status);
-        pedidoDeEntradaService.aprovarPedidoDeEntrada(idPedido, status);
-        return ResponseEntity.ok().build();
-
+    public ResponseEntity<PedidoDeEntradaDto> atualizarStatusPedidoDeEntrada(
+            @PathVariable Long idPedido,
+            @PathVariable Status status) {
+        log.info("Atualizando status do pedido de entrada com ID: {} para: {}", idPedido, status);
+        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido, status);
+        return ResponseEntity.ok(pedidoAtualizado);
+    }
+    
+    @PostMapping("/aprovarCarona/{idPedido}/{status}")
+    @Operation(summary = "Aprovar pedido de entrada (Legado)", description = "Método legado para aprovar/recusar um pedido de entrada")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido de entrada atualizado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Pedido de entrada não encontrado")
+    })
+    @Deprecated
+    public ResponseEntity<PedidoDeEntradaDto> aprovarPedidoDeEntrada(
+            @PathVariable Long idPedido,
+            @PathVariable final Status status) {
+        log.info("Usando endpoint legado para atualizar pedido com ID: {} para status: {}", idPedido, status);
+        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido, status);
+        return ResponseEntity.ok(pedidoAtualizado);
     }
 
-    
-    @GetMapping("/motorista/{motoristaId}")
-    @Operation(summary = "Buscar pedidos de entrada por motorista", description = "Recupera todos os pedidos de entrada pendentes de um motorista específico")
+    @GetMapping("/motorista/{motoristaId}/carona/{caronaId}")
+    @Operation(summary = "Buscar pedidos de entrada por motorista e carona", description = "Recupera todos os pedidos de entrada pendentes de um motorista específico para uma carona específica")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de pedidos de entrada encontrados"),
             @ApiResponse(responseCode = "404", description = "Nenhum pedido de entrada encontrado")
     })
-    public ResponseEntity<List<PedidoDeEntradaCompletoDto>> buscarPedidosPorMotorista(@PathVariable Long motoristaId ) {
-        log.info("Buscando pedidos de entrada pendentes do motorista com ID: {}", motoristaId);
-        List<PedidoDeEntradaCompletoDto> pedidos = pedidoDeEntradaService.getPedidoDeEntradasPorMotoristaId(motoristaId);
+    public ResponseEntity<Page<PedidoDeEntradaCompletoDto>> buscarPedidosPorMotoristaECarona(
+            @PathVariable Long motoristaId,
+            @PathVariable Long caronaId,
+            Pageable pageable) {
+        log.info("Buscando pedidos de entrada pendentes do motorista com ID: {} para a carona com ID: {}, página: {}",
+                motoristaId, caronaId, pageable.getPageNumber());
+        Page<PedidoDeEntradaCompletoDto> pedidos = pedidoDeEntradaService
+                .getPedidoDeEntradasPorMotoristaECaronaId(motoristaId, caronaId, pageable);
         return ResponseEntity.ok(pedidos);
     }
-
-
 }

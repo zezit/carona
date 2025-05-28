@@ -67,7 +67,7 @@ const ManagePassengers = ({ navigation, route }) => {
               width: 48,
               height: 48,
               borderRadius: 24,
-              backgroundColor: COLORS.gray,
+              backgroundColor: COLORS.gray[200],
               justifyContent: 'center',
               alignItems: 'center',
               marginRight: 8,
@@ -79,7 +79,7 @@ const ManagePassengers = ({ navigation, route }) => {
         <View>
           <Text style={styles.name}>{item.nome}</Text>
           {item.avaliacaoMedia !== undefined && (
-            <Text style={{ color: COLORS.gray, fontSize: FONT_SIZE.sm }}>
+            <Text style={{ color: COLORS.gray[300], fontSize: FONT_SIZE.sm }}>
               Avaliação: {(item.avaliacaoMedia === null || item.avaliacaoMedia === 0.0)
                 ? 'N/A ⭐'
                 : `${item.avaliacaoMedia.toFixed(1)} ⭐`}
@@ -107,7 +107,7 @@ const ManagePassengers = ({ navigation, route }) => {
   return (
     <SafeAreaView style={commonStyles.container}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={styles.headerGradient}
@@ -131,7 +131,7 @@ const ManagePassengers = ({ navigation, route }) => {
           />
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons name="people-outline" size={64} color={COLORS.gray} />
+            <Ionicons name="people-outline" size={64} color={COLORS.gray[300]} />
             <Text style={styles.emptyText}>Nenhum passageiro</Text>
           </View>
         )}
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     marginTop: -20,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: SPACING.md,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.md,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   removeButton: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.danger.main,
     padding: 8,
     borderRadius: RADIUS.sm,
     flexDirection: 'row',
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: FONT_SIZE.md,
-    color: COLORS.gray,
+    color: COLORS.gray[300],
   },
 });
 

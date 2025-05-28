@@ -6,25 +6,67 @@ export const TIME_FORMAT = 'HH:mm';
 
 // UI Constants
 export const COLORS = {
-  primary: '#4285F4',
-  primaryDark: '#3367D6',
-  primaryLight: '#81b0ff',
-  secondary: '#FF9800',
-  secondaryDark: '#F57C00',
-  secondaryLight: '#FFCC80',
-  success: '#34A853',
-  danger: '#EA4335',
-  warning: '#FBBC05',
-  background: '#f8f9fa',
-  card: '#FFFFFF',
+  // Modern nested structure
+  primary: {
+    main: '#4285F4',
+    dark: '#3367D6',
+    light: '#E3F2FD',
+  },
+  secondary: {
+    main: '#FF9800',
+    dark: '#F57C00',
+    light: '#FFF3E0',
+  },
+  success: {
+    main: '#34A853',
+    dark: '#2E7D32',
+    light: '#E8F5E8',
+  },
+  danger: {
+    main: '#EA4335',
+    dark: '#D32F2F',
+    light: '#FFEBEE',
+  },
+  warning: {
+    main: '#FBBC05',
+    dark: '#F57F17',
+    light: '#FFFDE7',
+  },
+  background: {
+    main: '#f8f9fa',
+    card: '#FFFFFF',
+    light: '#FAFBFC',
+    dark: '#F5F6F7',
+  },
   text: {
-    primary: '#333333',
+    primary: '#1A1A1A',
     secondary: '#666666',
     tertiary: '#999999',
     light: '#FFFFFF',
+    inverse: '#FFFFFF',
   },
-  border: '#EEEEEE',
+  border: {
+    light: '#E8EAED',
+    main: '#DADCE0',
+    dark: '#CECECE',
+  },
+  gray: {
+    50: '#f8f9fa',
+    100: '#f1f3f4',
+    200: '#e8eaed',
+    300: '#dadce0',
+    400: '#bdc1c6',
+    500: '#9aa0a6',
+    600: '#80868b',
+    700: '#5f6368',
+    800: '#3c4043',
+    900: '#202124',
+  },
+  shadow: '#000000',
   disabled: '#CCCCCC',
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
 };
 
 export const SPACING = {

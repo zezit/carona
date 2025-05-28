@@ -99,7 +99,7 @@ const LoginPage = ({ navigation }) => {
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={styles.header}
@@ -195,7 +195,7 @@ const LoginPage = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
   },
   header: {
     height: 200,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.lg,
   },
   formContainer: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     shadowColor: '#000',
@@ -265,14 +265,14 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: FONT_SIZE.sm,
-    color: COLORS.primary,
+    color: COLORS.primary.main,
   },
   buttonContainer: {
     marginTop: SPACING.sm,
   },
   loginButton: {
     height: 50,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontSize: FONT_SIZE.md,
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontWeight: 'bold',
   }
 });

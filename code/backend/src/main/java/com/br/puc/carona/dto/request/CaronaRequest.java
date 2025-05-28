@@ -2,6 +2,7 @@ package com.br.puc.carona.dto.request;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
@@ -40,10 +41,12 @@ public class CaronaRequest {
 
     @Future(message = "{comum.atributos.dataHoraPartida.futura}")
     @Schema(description = "Data e hora prevista de partida (formato ISO)", example = "2025-04-15T07:30:00")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dataHoraPartida;
 
     @Future(message = "{comum.atributos.dataHoraChegada.futura}")
     @Schema(description = "Data e hora prevista de chegada (formato ISO)", example = "2025-04-15T08:15:00")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dataHoraChegada;
 
     @NotNull(message = "{comum.atributos.vagas.obrigatorio}")

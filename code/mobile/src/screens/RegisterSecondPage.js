@@ -208,7 +208,7 @@ export default function RegisterSecondPage({ navigation, route }) {
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={styles.header}
@@ -267,7 +267,7 @@ export default function RegisterSecondPage({ navigation, route }) {
                   <Ionicons
                     name="calendar-outline"
                     size={24}
-                    color={COLORS.primary}
+                    color={COLORS.primary.main}
                   />
                 </TouchableOpacity>
                 {errors.date && <Text style={styles.errorText}>{errors.date}</Text>}
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xl,
   },
   formContainer: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     shadowColor: '#000',
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   activeLine: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
   },
   formTitle: {
     fontSize: FONT_SIZE.xl,
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 50,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     backgroundColor: '#f9f9f9',
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   },
   finalizeButton: {
     height: 50,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
   },
   modalWrapper: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     shadowColor: '#000',
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
     paddingBottom: SPACING.md,
   },
   modalTitle: {
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: '#f8f8f8',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
   },
   datePickerItem: {
     padding: SPACING.md,
@@ -627,11 +627,11 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
   },
   datePickerTextSelected: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontWeight: '600',
   },
   confirmButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
     alignItems: 'center',

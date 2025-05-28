@@ -202,7 +202,7 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
             <FormCard
               title="Informações do Motorista"
               icon="person"
-              iconColor={COLORS.primary}
+              iconColor={COLORS.primary.main}
             >
               <FormField
                 label="Número da CNH"
@@ -225,8 +225,8 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
                 <Switch
                   value={showWhatsapp}
                   onValueChange={setShowWhatsapp}
-                  trackColor={{ false: '#E0E0E0', true: `${COLORS.primary}80` }}
-                  thumbColor={showWhatsapp ? COLORS.primary : '#BDBDBD'}
+                  trackColor={{ false: '#E0E0E0', true: `${COLORS.primary.main}80` }}
+                  thumbColor={showWhatsapp ? COLORS.primary.main : '#BDBDBD'}
                 />
               </View>
             </FormCard>
@@ -234,7 +234,7 @@ const UpdateDriverProfilePage = ({ navigation, route }) => {
             <FormCard
               title="Informações do Veículo"
               icon="car"
-              iconColor={COLORS.secondary}
+              iconColor={COLORS.secondary.main}
             >
               <FormField
                 label="Modelo do Carro"

@@ -31,7 +31,7 @@ const AutocompleteInput = ({
           <Ionicons 
             name={icon} 
             size={20} 
-            color={iconColor || COLORS.primary} 
+            color={iconColor || COLORS.primary.main} 
             style={styles.icon}
           />
         )}
@@ -53,7 +53,7 @@ const AutocompleteInput = ({
       {hintText && (
         <Text style={[
           commonStyles.formError,
-          error ? { color: COLORS.danger } : { color: COLORS.text.secondary }
+          error ? { color: COLORS.danger.main } : { color: COLORS.text.secondary }
         ]}>
           {hintText}
         </Text>
@@ -109,18 +109,18 @@ const styles = {
   },
   suggestionsList: {
     maxHeight: 200,
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.md,
     marginTop: SPACING.xs,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
   },
   suggestionIcon: {
     marginRight: SPACING.sm,

@@ -17,9 +17,9 @@ import com.br.puc.carona.model.PedidoDeEntrada;
 import com.br.puc.carona.model.SolicitacaoCarona;
 import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.EstudanteRepository;
+import com.br.puc.carona.repository.PedidoDeEntradaRepository;
 import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
 import com.br.puc.carona.utils.RouteCalculatorUtil;
-import com.br.puc.carona.service.WebsocketService2;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -37,10 +37,11 @@ public class RideMatchingService {
     private final EstudanteRepository estudanteRepository;
     private final SolicitacaoCaronaRepository solicitacaoCaronaRepository;
     private final RouteCalculatorUtil routeCalculator;
+    private final PedidoDeEntradaRepository pedidoDeEntradaRepository;
 
     private final SolicitacaoCaronaMapper solicitacaoCaronaMapper;
 
-    private final WebsocketService2 websocketService;
+    private final WebsocketService websocketService;
 
     /**
      * Matches a ride request with the best available ride and assigns the student.
@@ -89,6 +90,12 @@ public class RideMatchingService {
                 });
 
         log.info("Best match found: Ride ID {}. Assigning student {}.", bestMatch.getId(), student.getNome());
+        
+        // Check if the student has already requested this ride
+        if (pedidoDeEntradaRepository.findByCaronaIdAndSolicitacaoEstudanteId(bestMatch.getId(), student.getId()).isPresent()) {
+            log.warn("Student {} has already requested ride {}. Duplicate request rejected.", student.getId(), bestMatch.getId());
+            throw new IllegalStateException("You have already requested this ride");
+        }
 
         // Create the SolicitacaoCarona entity and save it first
         SolicitacaoCarona solicitacaoCarona = solicitacaoCaronaMapper.toEntity(request, student);
@@ -102,13 +109,11 @@ public class RideMatchingService {
                 .solicitacao(solicitacaoCarona)
                 .build();
         
-        bestMatch.addPedidoDeEntrada(pedidoDeEntrada);
-
-        Carona savedCarona = caronaRepository.save(bestMatch);
+        pedidoDeEntrada = pedidoDeEntradaRepository.save(pedidoDeEntrada);
 
         websocketService.sendRideMatchNotification(pedidoDeEntrada);
         
-        log.info("Ride ID {} updated and saved successfully.", savedCarona.getId());
+        log.info("Ride ID {} updated and saved successfully.", bestMatch.getId());
     }
 
     /**

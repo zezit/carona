@@ -3,9 +3,6 @@ package com.br.puc.carona.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
-import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,6 +13,8 @@ import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.dto.request.CaronaRequest;
 import com.br.puc.carona.dto.response.CaronaDto;
 import com.br.puc.carona.enums.StatusCarona;
+import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
+import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.CaronaMapper;
@@ -46,11 +45,20 @@ public class CaronaService {
     private final CurrentUserService currentUserService;
     private final MapService mapService;
 
-    private final WebSocketService webSocketService;
+    private final WebsocketService webSocketService;
 
     @Transactional
     public CaronaDto criarCarona(final CaronaRequest request) {
         log.info("Criando nova carona");
+
+        // parse date to brazil timezone
+        if (request.getDataHoraPartida() != null) {
+            request.setDataHoraPartida(request.getDataHoraPartida().withNano(0));
+        }
+
+        if (request.getDataHoraChegada() != null) {
+            request.setDataHoraChegada(request.getDataHoraChegada().withNano(0));
+        }
 
         // Buscar o perfil do motorista
         final PerfilMotorista perfilMotorista = currentUserService.getCurrentMotorista();

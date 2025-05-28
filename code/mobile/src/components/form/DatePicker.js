@@ -158,11 +158,11 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
     padding: SPACING.md,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
   },
   dateText: {
     marginLeft: SPACING.sm,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
   },
   modalWrapper: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.background.card,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     shadowColor: '#000',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
     paddingBottom: SPACING.md,
   },
   modalTitle: {
@@ -232,18 +232,18 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: '#f8f8f8',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.main,
   },
   datePickerItem: {
     paddingVertical: SPACING.sm,
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.main,
     transition: 'all 0.2s ease',
   },
   datePickerItemSelected: {
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: COLORS.primary.main + '15',
   },
   datePickerText: {
     fontSize: FONT_SIZE.md,
@@ -251,11 +251,11 @@ const styles = StyleSheet.create({
     transition: 'all 0.2s ease',
   },
   datePickerTextSelected: {
-    color: COLORS.primary,
+    color: COLORS.primary.main,
     fontWeight: FONT_WEIGHT.semiBold,
   },
   confirmButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
     alignItems: 'center',

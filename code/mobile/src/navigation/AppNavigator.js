@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
+import NotificationsPage from '../screens/NotificationsPage';
 
 // Auth screens
 import LoginPage from '../screens/LoginPage';
@@ -51,50 +53,64 @@ const LoadingScreen = () => (
 );
 
 // Tab Navigator
-const TabNavigator = () => (
-  <Tab.Navigator
-    screenOptions={({ route }) => ({
-      headerShown: false, // Hide the header from tab navigator
-      tabBarIcon: ({ focused, color, size }) => {
-        let iconName;
+const TabNavigator = () => {
+  const { unreadCount } = useNotification();
 
-        if (route.name === 'Home') {
-          iconName = focused ? 'home' : 'home-outline';
-        } else if (route.name === 'Rides') {
-          iconName = focused ? 'car' : 'car-outline';
-        } else if (route.name === 'Profile') {
-          iconName = focused ? 'person' : 'person-outline';
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false, // Hide the header from tab navigator
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Rides') {
+            iconName = focused ? 'car' : 'car-outline';
+          } else if (route.name === 'Notifications') {
+            iconName = focused ? 'notifications' : 'notifications-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#4285F4',
+        tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          paddingVertical: Platform.OS === 'ios' ? 10 : 0,
+        },
+        tabBarLabelStyle: {
+          fontWeight: '500',
         }
-
-        return <Ionicons name={iconName} size={size} color={color} />;
-      },
-      tabBarActiveTintColor: '#4285F4',
-      tabBarInactiveTintColor: 'gray',
-      tabBarStyle: {
-        paddingVertical: Platform.OS === 'ios' ? 10 : 0,
-      },
-      tabBarLabelStyle: {
-        fontWeight: '500',
-      }
-    })}
-  >
-    <Tab.Screen
-      name="Home"
-      component={HomePage}
-      options={{ title: 'Início' }}
-    />
-    <Tab.Screen
-      name="Rides"
-      component={RideModeSelectionPage}
-      options={{ title: 'Caronas' }}
-    />
-    <Tab.Screen
-      name="Profile"
-      component={ProfilePage}
-      options={{ title: 'Perfil' }}
-    />
-  </Tab.Navigator>
-);
+      })}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomePage}
+        options={{ title: 'Início' }}
+      />
+      <Tab.Screen
+        name="Rides"
+        component={RideModeSelectionPage}
+        options={{ title: 'Caronas' }}
+      />
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationsPage}
+        options={{ 
+          title: 'Notificações',
+          tabBarBadge: unreadCount > 0 ? unreadCount : null,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfilePage}
+        options={{ title: 'Perfil' }}
+      />
+    </Tab.Navigator>
+  );
+};
 
 // Auth Navigator
 const AuthStack = () => (
@@ -136,13 +152,38 @@ const MainStack = () => (
 // Root Navigator
 const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
+  const { setNavigationRef } = useNotification();
+  const navigationRef = useRef();
+
+  useEffect(() => {
+    // Set the navigation reference in the NotificationContext
+    console.log('AppNavigator: Setting navigation ref:', !!navigationRef.current);
+    if (setNavigationRef) {
+      setNavigationRef(navigationRef);
+      console.log('AppNavigator: Navigation ref set successfully');
+    } else {
+      console.warn('AppNavigator: setNavigationRef not available');
+    }
+  }, [setNavigationRef]);
+
+  const onNavigationReady = () => {
+    console.log('AppNavigator: Navigation container is ready');
+    // Re-set the navigation ref when navigation is ready
+    if (setNavigationRef && navigationRef.current) {
+      setNavigationRef(navigationRef);
+      console.log('AppNavigator: Navigation ref updated on ready');
+    }
+  };
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer 
+      ref={navigationRef}
+      onReady={onNavigationReady}
+    >
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

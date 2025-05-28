@@ -24,7 +24,7 @@ import { COLORS, RADIUS } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiClient } from '../services/api/apiClient';
 import { commonStyles } from '../theme/styles/commonStyles';
-import { parseApiDate, formatDateForApi } from '../utils/dateUtils';
+import { parseApiDate } from '../utils/dateUtils';
 
 // Bottom sheet heights for different positions (approximate)
 const BOTTOM_SHEET_HEIGHTS = {
@@ -33,6 +33,17 @@ const BOTTOM_SHEET_HEIGHTS = {
     EXPANDED: 500
 };
 
+// Helper function to format Date object to "yyyy-MM-dd\'T\'HH:mm:ss" in local time
+function formatLocalDateTime(date) {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
 const EditRide = ({ navigation, route }) => {
     const { ride, driverDetails, onUpdate } = route.params || {};
     const { authToken } = useAuthContext();
@@ -40,24 +51,49 @@ const EditRide = ({ navigation, route }) => {
     const mapRef = useRef(null);
     const bottomSheetRef = useRef(null);
 
+    // Store the initial ride data to persist across navigation
+    const initialRideDataRef = useRef({
+        ride,
+        driverDetails,
+        onUpdate
+    });
+
+    // Update ref when initial params change, but preserve across location selection returns
+    useEffect(() => {
+        const { isReturningFromLocationSelection } = route.params || {};
+        if (!isReturningFromLocationSelection && ride) {
+            initialRideDataRef.current = {
+                ride,
+                driverDetails,
+                onUpdate
+            };
+        }
+    }, [ride, driverDetails, onUpdate]);
+
+    // Use either current params or preserved initial data
+    const currentRide = ride || initialRideDataRef.current.ride;
+    const currentDriverDetails = driverDetails || initialRideDataRef.current.driverDetails;
+    const currentOnUpdate = onUpdate || initialRideDataRef.current.onUpdate;
+
     // Define state variables for location data - updated for better navigation handling
-    const [origin, setOrigin] = useState(ride?.pontoPartida || '');
-    const [destination, setDestination] = useState(ride?.pontoDestino || '');
-    const [originLat, setOriginLat] = useState(ride?.latitudePartida);
-    const [originLng, setOriginLng] = useState(ride?.longitudePartida);
-    const [destLat, setDestLat] = useState(ride?.latitudeDestino);
-    const [destLng, setDestLng] = useState(ride?.longitudeDestino);
-    const [departureDate, setDepartureDate] = useState(parseApiDate(ride?.dataHoraPartida));
-    const [availableSeats, setAvailableSeats] = useState(ride?.vagas?.toString() || '1');
-    const [notes, setNotes] = useState(ride?.observacoes || '');
+    const [origin, setOrigin] = useState(currentRide?.pontoPartida || '');
+    const [destination, setDestination] = useState(currentRide?.pontoDestino || '');
+    const [originLat, setOriginLat] = useState(currentRide?.latitudePartida);
+    const [originLng, setOriginLng] = useState(currentRide?.longitudePartida);
+    const [destLat, setDestLat] = useState(currentRide?.latitudeDestino);
+    const [destLng, setDestLng] = useState(currentRide?.longitudeDestino);
+    const [departureDate, setDepartureDate] = useState(parseApiDate(currentRide?.dataHoraPartida));
+    const [availableSeats, setAvailableSeats] = useState(currentRide?.vagas?.toString() || '1');
+    const [notes, setNotes] = useState(currentRide?.observacoes || '');
     const [routes, setRoutes] = useState([]);
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [duration, setDuration] = useState(0);
     const [mapHeight, setMapHeight] = useState('100%');
     const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
     const [showDatePicker, setShowDatePicker] = useState(false);
-    // Add a ref to store and persist the original departure date
-    const originalDepartureDateRef = useRef(departureDate);
+    
+    // Store the original departure date to preserve it across navigation
+    const originalDepartureDateRef = useRef(parseApiDate(currentRide?.dataHoraPartida));
 
     // Check for location updates from the LocationSelectionPage
     useEffect(() => {
@@ -75,7 +111,7 @@ const EditRide = ({ navigation, route }) => {
                 departure, departureLocation, arrival, arrivalLocation
             });
 
-            // Update ONLY the location data, not the date
+            // Update ONLY the location data, preserve the original date/time
             setOrigin(departure);
             setDestination(arrival);
             setOriginLat(departureLocation.latitude);
@@ -83,8 +119,10 @@ const EditRide = ({ navigation, route }) => {
             setDestLat(arrivalLocation.latitude);
             setDestLng(arrivalLocation.longitude);
 
-            // Use the ref to ensure we keep the original departure date
-            // Don't modify the current departureDate state here
+            // Restore the original departure date to ensure it doesn't get lost
+            if (originalDepartureDateRef.current) {
+                setDepartureDate(originalDepartureDateRef.current);
+            }
 
             // Refetch routes with new coordinates
             // Use setTimeout to ensure state updates have been applied
@@ -95,9 +133,6 @@ const EditRide = ({ navigation, route }) => {
                     arrivalLocation.latitude,
                     arrivalLocation.longitude
                 );
-
-                // Don't try to restore the departure date here
-                // The current state should remain unchanged
             }, 500);
         }
     }, [route.params]);
@@ -324,9 +359,13 @@ const EditRide = ({ navigation, route }) => {
             arrival: destination,
             arrivalLocation,
             comingFromRegisterRide: true,
-            carAvailableSeats: driverDetails?.carro?.capacidadePassageiros,
+            carAvailableSeats: currentDriverDetails?.carro?.capacidadePassageiros,
             isEditingRide: true,
-            rideId: ride?.id
+            rideId: currentRide?.id,
+            // Pass the preserved data to ensure continuity
+            originalRide: currentRide,
+            originalDriverDetails: currentDriverDetails,
+            originalOnUpdate: currentOnUpdate
         });
     };
 
@@ -411,9 +450,21 @@ const EditRide = ({ navigation, route }) => {
             setLoading(true);
 
             // Make sure departureDate is valid before calculating arrivalDate
-            const arrivalDate = departureDate 
-                ? new Date(departureDate.getTime() + (duration * 1000))
-                : new Date(Date.now() + (duration * 1000));
+            let departureDateTime = departureDate instanceof Date ? departureDate : new Date(departureDate);
+            let arrivalDateTime = new Date(departureDateTime.getTime() + (duration * 1000));
+
+            const now = new Date();
+            //previne erro 400 de post de data de saida no passado
+            if (departureDateTime < now) {
+                departureDateTime = now;
+                arrivalDateTime = new Date(departureDateTime.getTime() + (duration * 1000));
+            }
+            // Ensure both dates are valid
+            if (isNaN(departureDateTime.getTime()) || isNaN(arrivalDateTime.getTime())) {
+                Alert.alert('Erro', 'Datas de partida ou chegada inválidas.');
+                setLoading(false);
+                return;
+            }
 
             const rideData = {
                 pontoPartida: origin,
@@ -422,13 +473,15 @@ const EditRide = ({ navigation, route }) => {
                 pontoDestino: destination,
                 latitudeDestino: arrivalLocation.latitude,
                 longitudeDestino: arrivalLocation.longitude,
-                dataHoraPartida: formatDateForApi(departureDate),
-                dataHoraChegada: formatDateForApi(arrivalDate),
+                dataHoraPartida: formatLocalDateTime(departureDateTime),
+                dataHoraChegada: formatLocalDateTime(arrivalDateTime),
                 vagas: parseInt(availableSeats),
                 observacoes: notes
             };
 
-            const response = await apiClient.put(`/carona/${ride?.id}`, rideData, {
+            console.debug("Ride: ", JSON.stringify(rideData, null, 2));
+
+            const response = await apiClient.put(`/carona/${currentRide?.id}`, rideData, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
@@ -439,8 +492,8 @@ const EditRide = ({ navigation, route }) => {
                 Alert.alert('Sucesso', 'Carona atualizada com sucesso');
 
                 // Update the ride in the parent screen
-                if (onUpdate && typeof onUpdate === 'function') {
-                    onUpdate(response.data);
+                if (currentOnUpdate && typeof currentOnUpdate === 'function') {
+                    currentOnUpdate(response.data);
                 }
 
                 navigation.goBack();
@@ -502,7 +555,7 @@ const EditRide = ({ navigation, route }) => {
                             key={index}
                             coordinates={route.pontos}
                             strokeWidth={route === selectedRoute ? 5 : 3}
-                            strokeColor={route === selectedRoute ? COLORS.primary : '#7FB3F5'}
+                            strokeColor={route === selectedRoute ? COLORS.primary.main : '#7FB3F5'}
                             onPress={() => handleSelectRoute(route)}
                         />
                     ))}
@@ -553,7 +606,7 @@ const EditRide = ({ navigation, route }) => {
                                 </Text>
                             </View>
                             <View style={styles.locationEditIcon}>
-                                <Ionicons name="pencil" size={16} color={COLORS.primary} />
+                                <Ionicons name="pencil" size={16} color={COLORS.primary.main} />
                             </View>
                         </View>
                     </TouchableOpacity>
@@ -611,7 +664,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: COLORS.card,
+        backgroundColor: COLORS.background.card,
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
@@ -630,7 +683,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: COLORS.card,
+        backgroundColor: COLORS.background.card,
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
@@ -662,7 +715,7 @@ const styles = StyleSheet.create({
         top: Platform.OS === 'ios' ? 100 : 90,
         left: 16,
         right: 16,
-        backgroundColor: COLORS.card,
+        backgroundColor: COLORS.background.card,
         borderRadius: RADIUS.md,
         paddingVertical: 6,
         paddingHorizontal: 10,
@@ -697,15 +750,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     departureIcon: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.primary.main,
     },
     arrivalIcon: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.secondary.main,
     },
     locationConnector: {
         width: 2,
         height: 10,
-        backgroundColor: COLORS.border,
+        backgroundColor: COLORS.border.main,
         marginVertical: 1,
     },
     locationTexts: {

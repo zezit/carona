@@ -206,7 +206,7 @@ const UpdateProfilePage = ({ navigation, route }) => {
                 <Image source={{ uri: image }} style={styles.profileImage} />
               ) : (
                 <View style={styles.placeholderImage}>
-                  <Ionicons name="person" size={60} color={COLORS.primary} />
+                  <Ionicons name="person" size={60} color={COLORS.primary.main} />
                 </View>
               )}
               <View style={styles.editIconContainer}>
@@ -222,7 +222,7 @@ const UpdateProfilePage = ({ navigation, route }) => {
             <FormCard
               title="Informações Pessoais"
               icon="person"
-              iconColor={COLORS.primary}
+              iconColor={COLORS.primary.main}
             >
               <FormField
                 label="Nome"
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
   },
   placeholderImage: {
     width: 120,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary.main,
     width: 36,
     height: 36,
     borderRadius: 18,

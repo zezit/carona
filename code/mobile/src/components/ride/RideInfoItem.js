@@ -8,7 +8,7 @@ import { COLORS, SPACING, FONT_SIZE } from '../../constants';
  * 
  * @param {Object} props - Component props
  * @param {string} props.icon - The Ionicons name to use
- * @param {string} props.iconColor - The color of the icon (default: COLORS.primary)
+ * @param {string} props.iconColor - The color of the icon (default: COLORS.primary.main)
  * @param {string} props.label - The label text to display
  * @param {string} props.value - The value text to display
  * @param {Object} props.style - Additional style for the container
@@ -16,7 +16,7 @@ import { COLORS, SPACING, FONT_SIZE } from '../../constants';
  */
 const RideInfoItem = ({
   icon,
-  iconColor = COLORS.primary,
+  iconColor = COLORS.primary.main,
   label,
   value,
   style,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: `${COLORS.primary}15`,
+    backgroundColor: `${COLORS.primary.main}15`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.md,

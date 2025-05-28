@@ -255,7 +255,6 @@ public class CaronaController {
         return ResponseEntity.noContent().build();
     }
 
-    @Transactional
     @PatchMapping("remover-passageiro/{idCarona}/{idPassageiro}")
     @Operation(summary = "Remover passageiro da carona", description = "Remove um passageiro de uma carona. Apenas o motorista da carona pode remover passageiros.")
     @ApiResponses(value = {

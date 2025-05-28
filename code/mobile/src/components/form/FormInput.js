@@ -28,7 +28,7 @@ const FormInput = ({
   error,
   secureTextEntry = false,
   icon,
-  iconColor = COLORS.primary,
+  iconColor = COLORS.primary.main,
   style,
   inputStyle,
   multiline = false,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
   },
   inputContainerFocused: {
-    borderColor: COLORS.primary,
+    borderColor: COLORS.primary.main,
     backgroundColor: '#FFFFFF',
   },
   inputContainerError: {

@@ -24,7 +24,7 @@ const HomePage = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.header}
@@ -76,8 +76,8 @@ const HomePage = ({ navigation }) => {
               style={styles.actionButton}
               onPress={() => navigation.navigate('Rides')}
             >
-              <View style={[styles.actionIconContainer, { backgroundColor: `${COLORS.primary}20` }]}>
-                <Ionicons name="car" size={28} color={COLORS.primary} />
+              <View style={[styles.actionIconContainer, { backgroundColor: `${COLORS.primary.main}20` }]}>
+                <Ionicons name="car" size={28} color={COLORS.primary.main} />
               </View>
               <Text style={styles.actionButtonText}>Caronas</Text>
             </TouchableOpacity>
@@ -86,8 +86,8 @@ const HomePage = ({ navigation }) => {
               style={styles.actionButton}
               onPress={() => navigation.navigate('Profile')}
             >
-              <View style={[styles.actionIconContainer, { backgroundColor: `${COLORS.secondary}20` }]}>
-                <Ionicons name="person" size={28} color={COLORS.secondary} />
+              <View style={[styles.actionIconContainer, { backgroundColor: `${COLORS.secondary.main}20` }]}>
+                <Ionicons name="person" size={28} color={COLORS.secondary.main} />
               </View>
               <Text style={styles.actionButtonText}>Perfil</Text>
             </TouchableOpacity>
@@ -95,7 +95,7 @@ const HomePage = ({ navigation }) => {
         </View>
 
         <View style={styles.constructionContainer}>
-          <Ionicons name="construct-outline" size={64} color={COLORS.primary} />
+          <Ionicons name="construct-outline" size={64} color={COLORS.primary.main} />
           <Text style={styles.constructionTitle}>Página em Construção</Text>
           <Text style={styles.constructionText}>Estamos trabalhando para trazer novidades em breve!</Text>
         </View>

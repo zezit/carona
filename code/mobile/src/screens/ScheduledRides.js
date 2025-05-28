@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Alert, FlatList, StyleSheet, View, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import dayjs from 'dayjs';
+import { Ionicons } from '@expo/vector-icons';
 
-import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS } from '../constants';
-import { commonStyles } from '../theme/styles/commonStyles';
+import { COLORS, SPACING } from '../constants';
 import { LoadingIndicator } from '../components/ui';
+import ScheduledRideCard from '../components/ui/ScheduledRide/ScheduledRideCard';
+import EmptyRidesState from '../components/ui/ScheduledRide/EmptyRidesState';
+import EnhancedPageHeader from '../components/ui/common/EnhancedPageHeader';
 import { apiClient } from '../services/api/apiClient';
 import { useAuthContext } from '../contexts/AuthContext';
 
@@ -15,24 +15,61 @@ const ScheduledRides = ({ navigation, route }) => {
   const { rides = [], driverDetails } = route.params;
   const { authToken } = useAuthContext();
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [scheduledRides, setScheduledRides] = useState(rides || []);
 
-  // Format date for display
-  const formatDate = (dateArray) => { 
-    if (!dateArray) return 'Data não definida';
-    if (Array.isArray(dateArray)) {
-      const [year, month, day, hour, minute] = dateArray;
-      const dateString = `${year}-${month}-${day}T${hour}:${minute}:00`;
-      return dayjs(dateString).format('DD/MM/YYYY HH:mm');
+  // Format date for display - expects backend-formatted date strings
+  const formatDisplayDate = (isoDateString) => {
+    if (!isoDateString) return 'Data não disponível';
+    
+    try {
+      // Backend should send ISO format like "2025-05-26T14:30:00"
+      const date = new Date(isoDateString);
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date received from backend:', isoDateString);
+        return 'Data inválida';
+      }
+      
+      // Simple formatting using built-in methods
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }) + ' às ' + date.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Data inválida';
     }
-    return dayjs(dateArray).format('DD/MM/YYYY HH:mm');
+  };
+
+  // Refresh rides list
+  const onRefresh = async () => {
+    if (!driverDetails?.id) return;
+    
+    setRefreshing(true);
+    try {
+      const response = await apiClient.get(`/carona/motorista/${driverDetails.id}/proximas`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      
+      if (response.success && response.data) {
+        setScheduledRides(response.data);
+      }
+    } catch (error) {
+      console.error('Error refreshing rides:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Cancel a scheduled ride
   const handleCancelRide = async (ride) => {
     Alert.alert(
       'Cancelar carona',
-      `Tem certeza que deseja cancelar a carona do dia ${formatDate(ride.dataHoraPartida)}?`,
+      `Tem certeza que deseja cancelar a carona do dia ${formatDisplayDate(ride.dataHoraPartida)}?`,
       [
         { text: 'Não', style: 'cancel' },
         {
@@ -85,118 +122,56 @@ const ScheduledRides = ({ navigation, route }) => {
     });
   };
 
-  // Render a ride item
-  const renderRideItem = ({ item }) => {
-    const passengersCount = item.passageiros ? item.passageiros.length : 0;
-    
-    return (
-      <View style={styles.rideCard}>
-      <View style={styles.rideDateContainer}>
-        <Ionicons name="calendar" size={20} color={COLORS.primary} />
-        <Text style={styles.rideDate}>
-        {formatDate(item.dataHoraPartida)}
-        </Text>
-      </View>
-
-      <View style={styles.rideInfoRow}>
-        <Ionicons name="location" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-        <View style={styles.infoTextContainer}>
-        <Text style={styles.infoLabel}>Partida:</Text>
-        <Text style={styles.infoValue} numberOfLines={2}>
-          {item.pontoPartida || 'Não definido'}
-        </Text>
-        </View>
-      </View>
-
-      <View style={styles.rideInfoRow}>
-        <Ionicons name="flag" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-        <View style={styles.infoTextContainer}>
-        <Text style={styles.infoLabel}>Destino:</Text>
-        <Text style={styles.infoValue} numberOfLines={2}>
-          {item.pontoDestino || 'Não definido'}
-        </Text>
-        </View>
-      </View>
-
-      <View style={styles.rideInfoRow}>
-        <Ionicons name="people" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-        <View style={styles.infoTextContainer}>
-        <Text style={styles.infoLabel}>Passageiros:</Text>
-        <Text style={styles.infoValue}>
-          {`${passengersCount} / ${item.vagas}`}
-        </Text>
-        </View>
-      </View>
-
-      {item.observacoes && (
-        <View style={styles.rideInfoRow}>
-        <Ionicons name="information-circle" size={18} color={COLORS.secondary} style={styles.infoIcon} />
-        <View style={styles.infoTextContainer}>
-          <Text style={styles.infoLabel}>Observações:</Text>
-          <Text style={styles.infoValue} numberOfLines={2}>
-          {item.observacoes}
-          </Text>
-        </View>
-        </View>
-      )}
-
-      <View style={[styles.actionsContainer, { flexDirection: 'column', gap: 8 }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.editButton]} 
-          onPress={() => handleEditRide(item)}
-        >
-          <Ionicons name="create-outline" size={20} color={COLORS.text.light} />
-          <Text style={styles.actionButtonText}>Editar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.cancelButton]} 
-          onPress={() => handleCancelRide(item)}
-        >
-          <Ionicons name="close-outline" size={20} color={COLORS.text.light} />
-          <Text style={styles.actionButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-        </View>
-        <TouchableOpacity
-        style={[
-          styles.actionButton,
-          { backgroundColor: COLORS.primary, marginTop: 8, alignSelf: 'stretch' }
-        ]}
-        onPress={() => navigation.navigate('ManagePassengersHome', { ride: item })}
-        >
-        <Ionicons name="people-outline" size={20} color={COLORS.text.light} />
-        <Text style={styles.actionButtonText}>Gerenciar Passageiros</Text>
-        </TouchableOpacity>
-      </View>
-      </View>
-    );
+  // Navigate to ride management
+  const handleManageRide = (ride) => {
+    navigation.navigate('ManagePassengersHome', { 
+      rideId: ride.id, 
+      ride: ride 
+    });
   };
+
+  // Navigate to offer ride screen
+  const handleOfferRide = () => {
+    navigation.navigate('RegisterRide', {
+      carAvailableSeats: driverDetails?.carro?.capacidadePassageiros,
+    });
+  };
+
+  // Render a ride item using the new ScheduledRideCard component
+  // Render a ride item using the new ScheduledRideCard component
+  const renderRideItem = ({ item }) => (
+    <ScheduledRideCard 
+      item={item}
+      onManage={handleManageRide}
+      onEdit={handleEditRide}
+      onCancel={handleCancelRide}
+      formatDisplayDate={formatDisplayDate}
+    />
+  );
 
   if (loading) {
     return (
-      <View style={[commonStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingIndicator text="Processando..." />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={commonStyles.container}>
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.5 }}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.text.light} />
+    <SafeAreaView style={styles.container}>
+      <EnhancedPageHeader 
+        title="Minhas Caronas"
+        subtitle={`${scheduledRides.length} ${scheduledRides.length === 1 ? 'carona agendada' : 'caronas agendadas'}`}
+        onBack={() => navigation.goBack()}
+        rightComponent={
+          <TouchableOpacity 
+            onPress={handleOfferRide}
+            style={styles.addButton}
+          >
+            <Ionicons name="add" size={24} color={COLORS.text.light} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Caronas Agendadas</Text>
-          <View style={{width: 24}} />
-        </View>
-      </LinearGradient>
+        }
+      />
 
       <View style={styles.contentContainer}>
         {scheduledRides.length > 0 ? (
@@ -206,20 +181,17 @@ const ScheduledRides = ({ navigation, route }) => {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[COLORS.primary.main]}
+                tintColor={COLORS.primary.main}
+              />
+            }
           />
         ) : (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color={COLORS.gray} />
-            <Text style={styles.emptyText}>Nenhuma carona agendada</Text>
-            <TouchableOpacity 
-              style={styles.offerRideButton}
-              onPress={() => navigation.navigate('RegisterRide', {
-                carAvailableSeats: driverDetails?.carro?.capacidadePassageiros,
-              })}
-            >
-              <Text style={styles.offerRideButtonText}>Oferecer Nova Carona</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyRidesState onOfferRide={handleOfferRide} />
         )}
       </View>
     </SafeAreaView>
@@ -227,150 +199,28 @@ const ScheduledRides = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  headerGradient: {
-    height: 150,
-    width: '100%',
-    paddingTop: SPACING.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: FONT_SIZE.xl,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.text.light,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background.main,
   },
   contentContainer: {
     flex: 1,
-    marginTop: -20,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.main,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: SPACING.md,
+    marginTop: -20,
   },
   listContainer: {
-    padding: SPACING.md,
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
-  rideCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  rideDateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingBottom: SPACING.sm,
-  },
-  rideDate: {
-    marginLeft: SPACING.sm,
-    fontSize: FONT_SIZE.md,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.primary,
-  },
-  rideInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: SPACING.xs,
-  },
-  infoIcon: {
-    marginRight: SPACING.sm,
-    width: 24,
-    alignItems: 'center',
-  },
-  infoTextContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  infoLabel: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.text.secondary,
-    marginRight: SPACING.xs,
-  },
-  infoValue: {
-    flex: 1,
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.text.primary,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: SPACING.sm,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.md,
-    padding: SPACING.sm,
-    flex: 0.48,
-  },
-  editButton: {
-    backgroundColor: COLORS.secondary,
-  },
-  cancelButton: {
-    backgroundColor: COLORS.danger,
-  },
-  actionButtonText: {
-    color: COLORS.text.light,
-    fontWeight: FONT_WEIGHT.bold,
-    marginLeft: SPACING.xs,
-  },
-  emptyContainer: {
-    flex: 1,
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.xl,
-  },
-  emptyText: {
-    fontSize: FONT_SIZE.lg,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
-  offerRideButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.md,
-  },
-  offerRideButtonText: {
-    color: COLORS.text.light,
-    fontWeight: FONT_WEIGHT.bold,
   },
 });
 

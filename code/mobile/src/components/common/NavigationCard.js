@@ -19,7 +19,7 @@ const NavigationCard = ({
   title,
   description,
   icon,
-  iconColor = COLORS.primary,
+  iconColor = COLORS.primary.main,
   onPress,
   style,
   badge,
@@ -39,7 +39,7 @@ const NavigationCard = ({
           <Text style={styles.titleText}>{title}</Text>
           
           {badge && (
-            <View style={[styles.badge, { backgroundColor: badge.color || COLORS.primary }]}>
+            <View style={[styles.badge, { backgroundColor: badge.color || COLORS.primary.main }]}>
               <Text style={styles.badgeText}>{badge.text}</Text>
             </View>
           )}

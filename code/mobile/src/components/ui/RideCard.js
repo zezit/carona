@@ -1,7 +1,12 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import StatusBadge from './StatusBadge';
+import RideHeader from './RideCard/RideHeader';
+import RideLocationInfo from './RideCard/RideLocationInfo';
+import RideSeatsInfo from './RideCard/RideSeatsInfo';
+import Divider from './common/Divider';
+import { COLORS, SPACING, RADIUS } from '../../constants';
+// Import dateUtils for backward compatibility, but prefer backend-formatted dates
 import { parseApiDate, formatDate, formatTime } from '../../utils/dateUtils';
 
 /**
@@ -12,13 +17,33 @@ const RideCard = ({
   onPress,
   compact = false
 }) => {
-  // Use our enhanced date utilities
-  const formatCardDate = useCallback((dateString) => {
-    return formatDate(dateString);
+  // Enhanced date utilities that handle both backend-formatted and LocalDateTime formats
+  const formatCardDate = useCallback((dateInput) => {
+    // If the backend provides a formatted date string, use it directly
+    if (typeof dateInput === 'string' && dateInput.includes('T')) {
+      try {
+        return formatDate(dateInput);
+      } catch (error) {
+        console.warn('Error formatting date:', error);
+        return 'Data inválida';
+      }
+    }
+    // Fallback to the original utility function for LocalDateTime arrays or other formats
+    return formatDate(dateInput);
   }, []);
 
-  const formatCardTime = useCallback((dateString) => {
-    return formatTime(dateString);
+  const formatCardTime = useCallback((dateInput) => {
+    // If the backend provides a formatted date string, use it directly
+    if (typeof dateInput === 'string' && dateInput.includes('T')) {
+      try {
+        return formatTime(dateInput);
+      } catch (error) {
+        console.warn('Error formatting time:', error);
+        return 'Hora inválida';
+      }
+    }
+    // Fallback to the original utility function for LocalDateTime arrays or other formats
+    return formatTime(dateInput);
   }, []);
 
   return (
@@ -27,47 +52,27 @@ const RideCard = ({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <View style={styles.header}>
-        <Text style={styles.date}>
-          {formatCardDate(item.dataHoraPartida)}
-        </Text>
-        <Text style={styles.time}>
-          {formatCardTime(item.dataHoraPartida)}
-        </Text>
-      </View>
+      <RideHeader 
+        date={formatCardDate(item.dataHoraPartida)}
+        time={formatCardTime(item.dataHoraPartida)}
+      />
 
-      <View style={styles.divider} />
+      <Divider />
 
-      <View style={styles.infoContainer}>
-        <View style={styles.locationInfo}>
-          <View style={styles.locationIconContainer}>
-            <Ionicons name="location" size={16} color="#4285F4" />
-          </View>
-          <Text style={styles.locationText} numberOfLines={1}>
-            {item.pontoPartida}
-          </Text>
-        </View>
-        <View style={styles.locationInfo}>
-          <View style={styles.locationIconContainer}>
-            <Ionicons name="location" size={16} color="#34A853" />
-          </View>
-          <Text style={styles.locationText} numberOfLines={1}>
-            {item.pontoDestino}
-          </Text>
-        </View>
-      </View>
+      <RideLocationInfo 
+        departure={item.pontoPartida}
+        destination={item.pontoDestino}
+      />
 
       {!compact && (
         <>
-          <View style={styles.divider} />
+          <Divider />
 
           <View style={styles.footer}>
-            <View style={styles.seats}>
-              <Ionicons name="people" size={16} color="#666" />
-              <Text style={styles.seatsText}>
-                {item.vagasDisponiveis} vagas disponíveis
-              </Text>
-            </View>
+            <RideSeatsInfo 
+              availableSeats={item.vagasDisponiveis}
+              totalSeats={item.vagas}
+            />
             <StatusBadge status={item.status} size="small" />
           </View>
         </>
@@ -78,71 +83,28 @@ const RideCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    backgroundColor: COLORS.background.card,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
     borderWidth: 1,
-    borderColor: '#e1e1e1',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  date: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  time: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#555',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#e1e1e1',
-    marginVertical: 10,
-  },
-  infoContainer: {
-    marginVertical: 4,
-  },
-  locationInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  locationIconContainer: {
-    width: 24,
-    alignItems: 'center',
-  },
-  locationText: {
-    fontSize: 14,
-    color: '#333',
-    marginLeft: 8,
-    flex: 1,
+    borderColor: COLORS.border.main,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
-  },
-  seats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seatsText: {
-    fontSize: 14,
-    color: '#555',
-    marginLeft: 8,
-    fontWeight: '500',
   },
 });
 
