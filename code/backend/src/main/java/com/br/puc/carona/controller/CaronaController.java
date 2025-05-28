@@ -270,6 +270,8 @@ public class CaronaController {
         log.info("Removendo passageiro com ID: {} da carona com ID: {}", idPassageiro, idCarona);
         caronaService.removerPassageiroDaCarona(idCarona, idPassageiro);
         log.info("Passageiro removido com sucesso. Carona ID: {}, Passageiro ID: {}", idCarona, idPassageiro);
+        return ResponseEntity.noContent().build();
+    }
 
     @PatchMapping("/{id}/finalizar")
     @Operation(summary = "Finalizar carona", description = "Finaliza uma carona em andamento, alterando seu status para FINALIZADA. Apenas o motorista da carona pode finalizar a viagem e a carona deve estar com status EM_ANDAMENTO.")
