@@ -16,8 +16,26 @@ import {
 } from "recharts";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { AnimatedPage } from "@/components/AnimatedPage";
+import { AnimatedCard } from "@/components/AnimatedCard";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import Navbar from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { Navigate } from "react-router-dom";
+import { 
+  RefreshCw, 
+  BarChart3, 
+  TrendingUp, 
+  Users, 
+  Car,
+  Calendar,
+  AlertTriangle
+} from "lucide-react";
+import { reportServer } from "@/mocks/reportServer";
+import { ApiResponse } from "@/types/report";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
+const COLORS = ["#DC2626", "#16A34A", "#CA8A04", "#2563EB", "#7C3AED"];
 
 interface MetricData {
   period: string;
@@ -27,44 +45,60 @@ interface MetricData {
 }
 
 export default function Report() {
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
   const [metrics, setMetrics] = useState<MetricData[]>([]);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
-    fetchMetrics();
-  }, [timeRange]);
+    if (isAuthenticated) {
+      fetchMetrics();
+    }
+  }, [timeRange, isAuthenticated]);
 
   const fetchMetrics = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.reports.getRideMetrics(timeRange);
-      if (response.success && response.data) {
-        setMetrics(response.data);
-      } else {
-        setError('Não foi possível carregar as métricas');
-        toast.error('Erro ao carregar métricas');
-      }
-    } catch (err) {
-      setError('Ocorreu um erro ao carregar as métricas');
-      toast.error('Erro ao carregar métricas');
-    } finally {
-      setLoading(false);
-    }
-  };
+  setIsLoading(true);
+  setError(null);
+  try {
+    // <-- alterando
+    // Tenta usar a API real primeiro
+    const response = await api.reports.getRideMetrics(timeRange);
 
-  const getXAxisKey = () => {
-    switch (timeRange) {
-      case 'daily':
-        return 'period';
-      case 'weekly':
-        return 'period';
-      case 'monthly':
-        return 'period';
+    
+    if (response.success && response.data && response.data.length > 0) {
+      console.log('API funcionou, usando dados da API:', response.data);
+      setMetrics(response.data);
+    } else {
+      // API não funcionou, usa mock
+      const mockResponse =  reportServer.getRideMetrics(timeRange);
+      
+      if (mockResponse.success && mockResponse.data) {
+        setMetrics(mockResponse.data);
+      } else {
+        setError(mockResponse.message || 'Não foi possível carregar as métricas');
+        toast.error(mockResponse.message || 'Erro ao carregar métricas');
+      }
     }
-  };
+    // fim da alteração -->
+  } catch (err: any) {
+    console.error('Erro completo:', err);
+    setError('Ocorreu um erro ao carregar as métricas');
+    toast.error('Erro ao carregar métricas');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/" />;
+  }
 
   const getTotalMetrics = () => {
     return metrics.reduce((acc, curr) => ({
@@ -76,178 +110,272 @@ export default function Report() {
 
   const totals = getTotalMetrics();
 
+  const getTimeRangeLabel = (range: string) => {
+    switch (range) {
+      case 'daily': return 'Diário';
+      case 'weekly': return 'Semanal';
+      case 'monthly': return 'Mensal';
+      default: return 'Mensal';
+    }
+  };
+
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl shadow-lg border border-red-200 dark:border-red-800">
-            <h2 className="text-2xl font-semibold text-red-700 dark:text-red-300 mb-4">Erro ao carregar dados</h2>
-            <p className="text-red-600 dark:text-red-400">{error}</p>
-            <button
+      <AnimatedPage>
+        <Navbar />
+        <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-red-100 mb-4">
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-red-900 mb-2">
+              Erro ao carregar dados
+            </h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button
               onClick={fetchMetrics}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              variant="outline"
+              className="border-red-300 text-red-700 hover:bg-red-50"
             >
+              <RefreshCw className="w-4 h-4 mr-2" />
               Tentar novamente
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
+        </main>
+      </AnimatedPage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-8">
-      <div className="max-w-7xl mx-auto space-y-12">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-white">Métricas de Viagens</h1>
-          <div className="flex gap-2">
-            <button
+    <AnimatedPage>
+      <Navbar />
+      
+      <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Métricas de Viagens</h1>
+            <p className="text-gray-600 mt-1">
+              Análise visual dos dados da plataforma
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button
               onClick={() => setTimeRange('daily')}
-              className={`px-4 py-2 rounded transition-colors ${
-                timeRange === 'daily'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
+              variant={timeRange === 'daily' ? 'default' : 'outline'}
+              size="sm"
+              className={timeRange === 'daily' ? 'bg-carona-600 hover:bg-carona-700' : ''}
             >
+              <Calendar className="w-4 h-4 mr-1" />
               Diário
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => setTimeRange('weekly')}
-              className={`px-4 py-2 rounded transition-colors ${
-                timeRange === 'weekly'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
+              variant={timeRange === 'weekly' ? 'default' : 'outline'}
+              size="sm"
+              className={timeRange === 'weekly' ? 'bg-carona-600 hover:bg-carona-700' : ''}
             >
+              <Calendar className="w-4 h-4 mr-1" />
               Semanal
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => setTimeRange('monthly')}
-              className={`px-4 py-2 rounded transition-colors ${
-                timeRange === 'monthly'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
+              variant={timeRange === 'monthly' ? 'default' : 'outline'}
+              size="sm"
+              className={timeRange === 'monthly' ? 'bg-carona-600 hover:bg-carona-700' : ''}
             >
+              <Calendar className="w-4 h-4 mr-1" />
               Mensal
-            </button>
+            </Button>
+            <Button
+              onClick={fetchMetrics}
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
           </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando dados...</p>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin-slow h-8 w-8 border-4 border-carona-500 border-t-transparent rounded-full"></div>
           </div>
         ) : metrics.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400">Nenhum dado disponível para o período selecionado</p>
+          <div className="bg-white rounded-lg shadow-subtle p-8 text-center">
+            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-carona-50 mb-4">
+              <BarChart3 className="h-8 w-8 text-carona-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Nenhum dado disponível
+            </h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Não há dados para o período {getTimeRangeLabel(timeRange).toLowerCase()} selecionado.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-6">
             {/* Resumo */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 col-span-1 md:col-span-2">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">
-                Resumo do Período
-              </h2>
+            <AnimatedCard className="bg-white rounded-lg shadow-subtle p-6">
+              <div className="flex items-center mb-6">
+                <TrendingUp className="w-6 h-6 text-carona-600 mr-3" />
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Resumo - Período {getTimeRangeLabel(timeRange)}
+                </h2>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <h3 className="text-lg font-medium text-blue-700 dark:text-blue-300">Total de Viagens</h3>
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                    {totals.rides}
-                  </p>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-700 mb-1">Total de Viagens</h3>
+                      <p className="text-2xl font-bold text-blue-900">{totals.rides.toLocaleString()}</p>
+                    </div>
+                    <Car className="w-8 h-8 text-blue-600" />
+                  </div>
                 </div>
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <h3 className="text-lg font-medium text-green-700 dark:text-green-300">Total de Passageiros</h3>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                    {totals.passengers}
-                  </p>
+                
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-green-700 mb-1">Total de Passageiros</h3>
+                      <p className="text-2xl font-bold text-green-900">{totals.passengers.toLocaleString()}</p>
+                    </div>
+                    <Users className="w-8 h-8 text-green-600" />
+                  </div>
                 </div>
-                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                  <h3 className="text-lg font-medium text-yellow-700 dark:text-yellow-300">Total de Motoristas</h3>
-                  <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                    {totals.drivers}
-                  </p>
+                
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-orange-700 mb-1">Total de Motoristas</h3>
+                      <p className="text-2xl font-bold text-orange-900">{totals.drivers.toLocaleString()}</p>
+                    </div>
+                    <Users className="w-8 h-8 text-orange-600" />
+                  </div>
                 </div>
               </div>
-            </div>
+            </AnimatedCard>
 
-            {/* Gráfico de Barras - Viagens */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">
-                Viagens por Período
-              </h2>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={metrics}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={getXAxisKey()} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="rides" name="Viagens" fill={COLORS[0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Gráfico de Barras - Viagens */}
+              <AnimatedCard className="bg-white rounded-lg shadow-subtle p-6">
+                <div className="flex items-center mb-4">
+                  <BarChart3 className="w-5 h-5 text-carona-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Viagens por Período</h3>
+                </div>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={metrics}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="period" 
+                        tick={{ fontSize: 12 }}
+                        stroke="#666"
+                      />
+                      <YAxis tick={{ fontSize: 12 }} stroke="#666" />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #ccc',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="rides" 
+                        name="Viagens" 
+                        fill="#DC2626"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </AnimatedCard>
 
-            {/* Gráfico de Linha - Passageiros */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">
-                Passageiros por Período
-              </h2>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={metrics}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={getXAxisKey()} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="passengers"
-                      name="Passageiros"
-                      stroke={COLORS[1]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {/* Gráfico de Linha - Passageiros */}
+              <AnimatedCard className="bg-white rounded-lg shadow-subtle p-6">
+                <div className="flex items-center mb-4">
+                  <TrendingUp className="w-5 h-5 text-carona-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Passageiros por Período</h3>
+                </div>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={metrics}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="period" 
+                        tick={{ fontSize: 12 }}
+                        stroke="#666"
+                      />
+                      <YAxis tick={{ fontSize: 12 }} stroke="#666" />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #ccc',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="passengers"
+                        name="Passageiros"
+                        stroke="#16A34A"
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: '#16A34A' }}
+                        activeDot={{ r: 6, fill: '#16A34A' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </AnimatedCard>
             </div>
 
             {/* Gráfico de Pizza - Motoristas */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 col-span-1 md:col-span-2">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">
-                Distribuição de Motoristas por Período
-              </h2>
-              <div className="h-[300px]">
+            <AnimatedCard className="bg-white rounded-lg shadow-subtle p-6">
+              <div className="flex items-center mb-4">
+                <Users className="w-5 h-5 text-carona-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Distribuição de Motoristas por Período</h3>
+              </div>
+              <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={metrics}
                       dataKey="drivers"
-                      nameKey={getXAxisKey()}
+                      nameKey="period"
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
-                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={120}
+                      label={({ name, value, percent }) => 
+                        `${name}: ${value} (${(percent * 100).toFixed(1)}%)`
+                      }
+                      labelLine={false}
                     >
                       {metrics.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #ccc',
+                        borderRadius: '8px'
+                      }}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </AnimatedCard>
           </div>
         )}
-      </div>
-    </div>
+      </main>
+    </AnimatedPage>
   );
-} 
+}

@@ -45,13 +45,13 @@ public class ReportService {
                 throw new IllegalArgumentException("Período inválido: " + period);
         }
         
-        List<Carona> caronas = caronaRepository.findByDataHoraBetween(startDate, endDate);
+        List<Carona> caronas = caronaRepository.findByDataHoraPartidaBetween(startDate, endDate);
         
         List<MetricData> metrics = new ArrayList<>();
         
         if ("daily".equals(period.toLowerCase())) {
             Map<LocalDate, List<Carona>> caronasPorDia = caronas.stream()
-                .collect(Collectors.groupingBy(c -> c.getDataHora().toLocalDate()));
+                .collect(Collectors.groupingBy(c -> c.getDataHoraPartida().toLocalDate()));
                 
             caronasPorDia.forEach((data, caronasDoDia) -> {
                 metrics.add(MetricData.builder()
@@ -70,7 +70,7 @@ public class ReportService {
         } else if ("weekly".equals(period.toLowerCase())) {
             Map<Long, List<Carona>> caronasPorSemana = caronas.stream()
                 .collect(Collectors.groupingBy(c -> 
-                    ChronoUnit.WEEKS.between(startDate, c.getDataHora())));
+                    ChronoUnit.WEEKS.between(startDate, c.getDataHoraPartida())));
                     
             caronasPorSemana.forEach((semana, caronasDaSemana) -> {
                 metrics.add(MetricData.builder()
@@ -89,7 +89,7 @@ public class ReportService {
         } else if ("monthly".equals(period.toLowerCase())) {
             Map<Long, List<Carona>> caronasPorMes = caronas.stream()
                 .collect(Collectors.groupingBy(c -> 
-                    ChronoUnit.MONTHS.between(startDate, c.getDataHora())));
+                    ChronoUnit.MONTHS.between(startDate, c.getDataHoraPartida())));
                     
             caronasPorMes.forEach((mes, caronasDoMes) -> {
                 metrics.add(MetricData.builder()

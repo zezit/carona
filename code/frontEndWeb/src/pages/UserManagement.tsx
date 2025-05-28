@@ -19,6 +19,9 @@ import {
 } from "@/components/ui/pagination";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { AnimatedPage } from "@/components/AnimatedPage";
+import { AnimatedCard } from "@/components/AnimatedCard";
 
 const UserManagement = () => {
   const { isAuthenticated } = useAuth();
@@ -86,25 +89,17 @@ const UserManagement = () => {
   }, [users]);
 
   // Redirect if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
-  }
-
-  // Mostrar tela de carregamento se os dados ainda estão sendo carregados
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="text-carona-600 text-xl font-medium"
-        >
-          Carregando...
-        </motion.div>
-      </div>
-    );
-  }
+ 
+    // Redirect if not authenticated
+    if (!isAuthenticated) {
+      return <Navigate to="/" />;
+    }
+  
+    // Mostra tela de carregamento se os dados ainda estão sendo carregados
+     if (isLoading) {
+      return <LoadingSpinner />;
+    }
+  
 
   const handleViewUser = (user: User) => {
     setSelectedUser(user);
@@ -182,13 +177,7 @@ const UserManagement = () => {
   };
 
   return (
-    <motion.div 
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={pageVariants}
-      className="min-h-screen bg-gray-50"
-    >
+    <AnimatedPage>
       <Navbar />
       
       <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -212,11 +201,7 @@ const UserManagement = () => {
 
         <FilterBar onFilterChange={handleFilter} />
 
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin-slow h-8 w-8 border-4 border-carona-500 border-t-transparent rounded-full"></div>
-          </div>
-        ) : filteredUsers.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div className="bg-white rounded-lg shadow-subtle p-8 text-center">
             <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-carona-50 mb-4">
               <svg
@@ -245,10 +230,7 @@ const UserManagement = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
               {currentUsers.map((user) => (
 
-                <motion.div
-                  key={user.id}
-                  whileHover="hover"
-                  variants={cardVariants}
+                <AnimatedCard
                 >
 
                   <UserCard
@@ -260,7 +242,7 @@ const UserManagement = () => {
                     mode="management"
                   />
 
-                </motion.div>
+                </AnimatedCard>
 
               ))}
             </div>
@@ -334,7 +316,7 @@ const UserManagement = () => {
         }
         variant={confirmAction.type === "delete" ? "destructive" : "default"}
       />
-    </motion.div>
+    </AnimatedPage>
   );
 };
 
