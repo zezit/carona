@@ -195,14 +195,14 @@ A seguir serão apresentados os requisitos funcionais e não funcionais que guia
 | ------ | ------------------------------------------ | -------------- | ---------------- | -------------- | :--------: |
 | RF01   | Passageiro realiza login                   | Alta           | Baixa            | Mobile         |     ✅      |
 | RF02   | Passageiro realiza cadastro                | Alta           | Baixa            | Mobile         |     ✅      |
-| RF03   | Passageiro se registra em carona existente | Alta           | Média            | Mobile         |     ❌      |
-| RF04   | Passageiro vê caronas existentes próximas  | Média          | Alta             | Mobile         |     ⏳      |
+| RF03   | Passageiro se registra em carona existente | Alta           | Média            | Mobile         |     ✅      |
+| RF04   | Passageiro vê caronas existentes próximas  | Média          | Alta             | Mobile         |     ❌      |
 | RF05   | Passageiro cancela registro de carona      | Média          | Baixa            | Mobile         |     ❌      |
 | RF06   | Passageiro ativa notificações              | Baixa          | Média            | Mobile         |     ❌      |
 | RF07   | Passageiro avalia motorista                | Média          | Baixa            | Mobile         |     ❌      |
 | RF08   | Passageiro visualiza histórico de viagens  | Média          | Baixa            | Mobile         |     ❌      |
 | RF09   | Motorista gerencia viagens                 | Alta           | Média            | Mobile         |     ✅      |
-| RF10   | Motorista gerencia passageiros da viagem   | Alta           | Baixa            | Mobile         |     ⏳      |
+| RF10   | Motorista gerencia passageiros da viagem   | Alta           | Baixa            | Mobile         |     ✅      |
 | RF11   | Motorista realiza cadastro                 | Alta           | Baixa            | Mobile         |     ✅      |
 | RF12   | Motorista realiza login                    | Alta           | Baixa            | Mobile         |     ✅      |
 | RF13   | Motorista gerencia perfil                  | Alta           | Média            | Mobile         |     ✅      |
