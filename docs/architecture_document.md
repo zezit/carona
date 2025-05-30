@@ -1,4 +1,3 @@
-
 # Documento Arquitetura do Carona?
 
 **Felipe Freitas Picinin, <picinin.felipe2@gmail.com>**
@@ -325,109 +324,237 @@ Na Figura 3, podemos ver a estrutura do sistema Carona dividida em dois grandes 
 
 # 5. Wireframes
 
+<style>
+.wireframe-img {
+  max-width: 250px;
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.wireframe-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.wireframe-table td {
+  padding: 15px;
+  text-align: center;
+  vertical-align: top;
+  border: 1px solid #eee;
+}
+.wireframe-description {
+  font-size: 14px;
+  color: #666;
+  margin-top: 8px;
+  text-align: left;
+}
+</style>
+
 Os wireframes apresentados nesta seção ilustram a estrutura e o fluxo das principais interfaces do aplicativo mobile Carona?. Estes protótipos foram desenvolvidos para definir a organização dos elementos visuais e a navegação entre as telas, servindo como base para o desenvolvimento da interface do usuário.
 
-## 5.1. Autenticação
+<details>
+<summary><strong>5.1. Autenticação</strong></summary>
 
-### Login
-![Tela de Login](wireframes/autenticacao/login.jpg "Tela de Login")
+<table class="wireframe-table">
+  <tr>
+    <td>
+      <h4>Login</h4>
+      <img src="wireframes/autenticacao/login.jpg" alt="Tela de Login" class="wireframe-img">
+      <div class="wireframe-description">
+        Tela de login permite que usuários já cadastrados acessem o sistema utilizando suas credenciais (email e senha). Inclui opções para recuperação de senha e navegação para a tela de cadastro.
+      </div>
+    </td>
+    <td>
+      <h4>Criar Conta</h4>
+      <img src="wireframes/autenticacao/criar_conta.jpg" alt="Tela de Criar Conta" class="wireframe-img">
+      <div class="wireframe-description">
+        Interface para registro de novos usuários no sistema, solicitando informações básicas como nome, email, senha e confirmação de senha.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <h4>Informações Adicionais</h4>
+      <img src="wireframes/autenticacao/informações_adicionais.jpg" alt="Tela de Informações Adicionais" class="wireframe-img">
+      <div class="wireframe-description">
+        Tela complementar ao cadastro onde o usuário fornece informações adicionais necessárias para completar seu perfil na plataforma.
+      </div>
+    </td>
+  </tr>
+</table>
 
-A tela de login permite que usuários já cadastrados acessem o sistema utilizando suas credenciais (email e senha). Inclui opções para recuperação de senha e navegação para a tela de cadastro.
+</details>
 
-### Criar Conta
-![Tela de Criar Conta](wireframes/autenticacao/criar_conta.jpg "Tela de Criar Conta")
+<details>
+<summary><strong>5.2. Homepage</strong></summary>
 
-Interface para registro de novos usuários no sistema, solicitando informações básicas como nome, email, senha e confirmação de senha.
+<table class="wireframe-table">
+  <tr>
+    <td>
+      <h4>Tela Principal</h4>
+      <img src="wireframes/homepage/home.jpg" alt="Homepage" class="wireframe-img">
+      <div class="wireframe-description">
+        A tela principal do aplicativo apresenta um resumo das funcionalidades disponíveis e serve como ponto de navegação central para as diferentes seções do app.
+      </div>
+    </td>
+  </tr>
+</table>
 
-### Informações Adicionais
-![Tela de Informações Adicionais](wireframes/autenticacao/informações_adicionais.jpg "Tela de Informações Adicionais")
+</details>
 
-Tela complementar ao cadastro onde o usuário fornece informações adicionais necessárias para completar seu perfil na plataforma.
+<details>
+<summary><strong>5.3. Gestão de Caronas</strong></summary>
 
-## 5.2. Homepage
+<table class="wireframe-table">
+  <tr>
+    <td>
+      <h4>Home Caronas (Passageiro)</h4>
+      <img src="wireframes/caronas/caronas.jpg" alt="Home Caronas" class="wireframe-img">
+      <div class="wireframe-description">
+        Tela principal para passageiros, onde podem visualizar caronas disponíveis e acessar suas caronas agendadas.
+      </div>
+    </td>
+    <td>
+      <h4>Home do Motorista</h4>
+      <img src="wireframes/caronas/home-caronas-driver.jpg" alt="Home do Motorista" class="wireframe-img">
+      <div class="wireframe-description">
+        Tela principal específica para motoristas, exibindo suas caronas ativas e opções para gerenciamento de viagens.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h4>Criar Carona - Parte 1</h4>
+      <img src="wireframes/caronas/criar-carona.jpg" alt="Criar Carona - Parte 1" class="wireframe-img">
+      <div class="wireframe-description">
+        Primeira etapa do fluxo para criação de novas caronas, onde motoristas começam a definir as informações básicas da viagem.
+      </div>
+    </td>
+    <td>
+      <h4>Criar Carona - Parte 2</h4>
+      <img src="wireframes/caronas/criar-carona-2.jpg" alt="Criar Carona - Parte 2" class="wireframe-img">
+      <div class="wireframe-description">
+        Segunda etapa onde motoristas finalizam a definição de origem, destino, horário, número de vagas e outras informações relevantes.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h4>Selecionar Locais</h4>
+      <img src="wireframes/caronas/selecionar-locais.jpg" alt="Selecionar Locais" class="wireframe-img">
+      <div class="wireframe-description">
+        Interface para seleção de pontos de origem e destino das caronas, integrada com mapas para facilitar a escolha dos locais.
+      </div>
+    </td>
+    <td>
+      <h4>Minhas Caronas Futuras</h4>
+      <img src="wireframes/caronas/minhas-caronas-futuras-driver.jpg" alt="Minhas Caronas Futuras" class="wireframe-img">
+      <div class="wireframe-description">
+        Visualização das caronas agendadas pelo motorista, permitindo acompanhar e gerenciar viagens futuras.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h4>Gerenciar Carona Individual</h4>
+      <img src="wireframes/caronas/gerenciar-individual.jpg" alt="Gerenciar Carona Individual" class="wireframe-img">
+      <div class="wireframe-description">
+        Tela detalhada para gerenciamento de uma carona específica, incluindo informações dos passageiros e opções de edição.
+      </div>
+    </td>
+    <td>
+      <h4>Editar Carona</h4>
+      <img src="wireframes/caronas/editar-carona.jpg" alt="Editar Carona" class="wireframe-img">
+      <div class="wireframe-description">
+        Interface para modificação de informações de caronas já criadas, como horário, local de encontro ou número de vagas.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <h4>Avaliar Solicitações</h4>
+      <img src="wireframes/caronas/avaliar-solicitacoes-driver.jpg" alt="Avaliar Solicitações" class="wireframe-img">
+      <div class="wireframe-description">
+        Tela onde motoristas podem aceitar ou recusar solicitações de participação em suas caronas.
+      </div>
+    </td>
+  </tr>
+</table>
 
-### Tela Principal
-![Homepage](wireframes/homepage/home.jpg "Homepage")
+</details>
 
-A tela principal do aplicativo apresenta um resumo das funcionalidades disponíveis e serve como ponto de navegação central para as diferentes seções do app.
+<details>
+<summary><strong>5.4. Notificações</strong></summary>
 
-## 5.3. Gestão de Caronas
+<table class="wireframe-table">
+  <tr>
+    <td>
+      <h4>Central de Notificações</h4>
+      <img src="wireframes/notificacoes/home-notification.jpg" alt="Central de Notificações" class="wireframe-img">
+      <div class="wireframe-description">
+        Interface centralizada para visualização de todas as notificações do usuário, incluindo confirmações de carona, mensagens e atualizações do sistema.
+      </div>
+    </td>
+    <td>
+      <h4>Notificação em Tempo Real</h4>
+      <img src="wireframes/notificacoes/real-time-notification.jpg" alt="Notificação em Tempo Real" class="wireframe-img">
+      <div class="wireframe-description">
+        Exemplo de como as notificações aparecem em tempo real na interface do usuário.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <h4>Filtros de Notificação</h4>
+      <img src="wireframes/notificacoes/filters.jpg" alt="Filtros de Notificação" class="wireframe-img">
+      <div class="wireframe-description">
+        Opções para filtrar e organizar notificações por tipo, data ou relevância.
+      </div>
+    </td>
+  </tr>
+</table>
 
-### Home Caronas (Passageiro)
-![Home Caronas](wireframes/caronas/caronas.jpg "Home Caronas")
+</details>
 
-Tela principal para passageiros, onde podem visualizar caronas disponíveis e acessar suas caronas agendadas.
+<details>
+<summary><strong>5.5. Perfil do Usuário</strong></summary>
 
-### Home do Motorista
-![Home do Motorista](wireframes/caronas/home-caronas-driver.jpg "Home do Motorista")
+<table class="wireframe-table">
+  <tr>
+    <td>
+      <h4>Visualizar Perfil</h4>
+      <img src="wireframes/perfil/perfil.jpg" alt="Perfil do Usuário" class="wireframe-img">
+      <div class="wireframe-description">
+        Tela principal do perfil onde usuários podem visualizar suas informações pessoais, avaliações e histórico.
+      </div>
+    </td>
+    <td>
+      <h4>Informações Pessoais</h4>
+      <img src="wireframes/perfil/informações_pessoais.jpg" alt="Informações Pessoais" class="wireframe-img">
+      <div class="wireframe-description">
+        Interface para edição e atualização das informações pessoais do usuário.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h4>Tornar-se Motorista - Parte 1</h4>
+      <img src="wireframes/perfil/tornar-se_motorista.jpg" alt="Tornar-se Motorista - Parte 1" class="wireframe-img">
+      <div class="wireframe-description">
+        Primeira etapa do fluxo para que passageiros possam se cadastrar como motoristas, iniciando o fornecimento de informações básicas.
+      </div>
+    </td>
+    <td>
+      <h4>Tornar-se Motorista - Parte 2</h4>
+      <img src="wireframes/perfil/tornar-se_motorista2.jpg" alt="Tornar-se Motorista - Parte 2" class="wireframe-img">
+      <div class="wireframe-description">
+        Segunda etapa onde são fornecidas informações sobre o veículo, documentação e outras informações necessárias para aprovação.
+      </div>
+    </td>
+  </tr>
+</table>
 
-Tela principal específica para motoristas, exibindo suas caronas ativas e opções para gerenciamento de viagens.
-
-### Criar Carona
-![Criar Carona - Parte 1](wireframes/caronas/criar-carona.jpg "Criar Carona - Parte 1")
-![Criar Carona - Parte 2](wireframes/caronas/criar-carona-2.jpg "Criar Carona - Parte 2")
-
-Fluxo para criação de novas caronas, onde motoristas definem origem, destino, horário, número de vagas e outras informações relevantes.
-
-### Selecionar Locais
-![Selecionar Locais](wireframes/caronas/selecionar-locais.jpg "Selecionar Locais")
-
-Interface para seleção de pontos de origem e destino das caronas, integrada com mapas para facilitar a escolha dos locais.
-
-### Minhas Caronas Futuras
-![Minhas Caronas Futuras](wireframes/caronas/minhas-caronas-futuras-driver.jpg "Minhas Caronas Futuras")
-
-Visualização das caronas agendadas pelo motorista, permitindo acompanhar e gerenciar viagens futuras.
-
-### Gerenciar Carona Individual
-![Gerenciar Carona Individual](wireframes/caronas/gerenciar-individual.jpg "Gerenciar Carona Individual")
-
-Tela detalhada para gerenciamento de uma carona específica, incluindo informações dos passageiros e opções de edição.
-
-### Editar Carona
-![Editar Carona](wireframes/caronas/editar-carona.jpg "Editar Carona")
-
-Interface para modificação de informações de caronas já criadas, como horário, local de encontro ou número de vagas.
-
-### Avaliar Solicitações
-![Avaliar Solicitações](wireframes/caronas/avaliar-solicitacoes-driver.jpg "Avaliar Solicitações")
-
-Tela onde motoristas podem aceitar ou recusar solicitações de participação em suas caronas.
-
-## 5.4. Notificações
-
-### Central de Notificações
-![Central de Notificações](wireframes/notificacoes/home-notification.jpg "Central de Notificações")
-
-Interface centralizada para visualização de todas as notificações do usuário, incluindo confirmações de carona, mensagens e atualizações do sistema.
-
-### Notificação em Tempo Real
-![Notificação em Tempo Real](wireframes/notificacoes/real-time-notification.jpg "Notificação em Tempo Real")
-
-Exemplo de como as notificações aparecem em tempo real na interface do usuário.
-
-### Filtros de Notificação
-![Filtros de Notificação](wireframes/notificacoes/filters.jpg "Filtros de Notificação")
-
-Opções para filtrar e organizar notificações por tipo, data ou relevância.
-
-## 5.5. Perfil do Usuário
-
-### Visualizar Perfil
-![Perfil do Usuário](wireframes/perfil/perfil.jpg "Perfil do Usuário")
-
-Tela principal do perfil onde usuários podem visualizar suas informações pessoais, avaliações e histórico.
-
-### Informações Pessoais
-![Informações Pessoais](wireframes/perfil/informações_pessoais.jpg "Informações Pessoais")
-
-Interface para edição e atualização das informações pessoais do usuário.
-
-### Tornar-se Motorista
-![Tornar-se Motorista - Parte 1](wireframes/perfil/tornar-se_motorista.jpg "Tornar-se Motorista - Parte 1")
-![Tornar-se Motorista - Parte 2](wireframes/perfil/tornar-se_motorista2.jpg "Tornar-se Motorista - Parte 2")
-
-Fluxo para que passageiros possam se cadastrar como motoristas, fornecendo informações sobre o veículo, documentação e outras informações necessárias.
+</details>
 
 <a name="solucao"></a>
 
