@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               localStorage.setItem("admin", JSON.stringify(userData));
               
               // If we're on the login page with a valid token, redirect to approval page
-              if (location.pathname === '/') {
+              if (location.pathname === '/' || location.pathname === '/login') {
                 navigate('/approval');
               }
             }
@@ -85,38 +85,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      
-      // APENAS PARA TESTES, REMOVER DEPOIS
-    const mockEmail = "admin@carona.com";
-    const mockPasswordHash = md5Hash("admin123");
-
-    if (email === mockEmail && password === mockPasswordHash) {
-      const jwtToken = "mocked-jwt-token"; // Mocked token for successful login
-
-      // Store token
-      localStorage.setItem("adminToken", jwtToken);
-      setToken(jwtToken);
-
-      // Mock admin data
-      const userData = {
-        id: "1",
-        email: mockEmail,
-        name: "Admin",
-        role: "ADMIN"
-      };
-
-      setAdmin(userData);
-      localStorage.setItem("admin", JSON.stringify(userData));
-
-      toast.success("Login realizado com sucesso!");
-      navigate("/approval");
-      return;
-    }
-    // FIM DO MOCK
       // Use the API client from api.ts
       const response = await api.auth.login(email, password);
       
-
       if (response.success && response.data && response.data.token) {
         const jwtToken = response.data.token;
         

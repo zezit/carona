@@ -40,6 +40,7 @@ export const api = {
     },
     validateToken: async () => {
       try {
+        
         const response = await apiClient.get('/auth/validate');
         return { success: true, data: response.data };
       } catch (error) {
@@ -47,6 +48,30 @@ export const api = {
         return { success: false, error };
       }
     },
+    //  validateToken: () => {
+    //   const token = localStorage.getItem('adminToken');
+    //   const user = localStorage.getItem('adminUser');
+      
+    //   if (token && user) {
+    //     try {
+    //       const userData = JSON.parse(user);
+    //       return { 
+    //         success: true, 
+    //         data: { 
+    //           valid: true, 
+    //           user: userData 
+    //         } 
+    //       };
+    //     } catch (error) {
+    //       console.error('Error parsing user data:', error);
+    //       localStorage.removeItem('adminToken');
+    //       localStorage.removeItem('adminUser');
+    //       return { success: false, error: 'Invalid user data' };
+    //     }
+    //   }
+      
+    //   return { success: false, error: 'No token found' };
+    // },
   },
   admin: {
     // Get pending users that need approval

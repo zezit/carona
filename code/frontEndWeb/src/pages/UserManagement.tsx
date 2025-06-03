@@ -91,9 +91,9 @@ const UserManagement = () => {
   // Redirect if not authenticated
  
     // Redirect if not authenticated
-    if (!isAuthenticated) {
-      return <Navigate to="/" />;
-    }
+    // if (!isAuthenticated) {
+    //   return <Navigate to="/" />;
+    // }
   
     // Mostra tela de carregamento se os dados ainda estão sendo carregados
      if (isLoading) {
