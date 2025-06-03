@@ -1,0 +1,338 @@
+# .github/workflows/frontEndWeb-e2e.yml
+# 🧪 Testes E2E FrontEndWeb com Cypress
+
+name: Testes E2E 🧪 - FrontEndWeb
+
+on:
+  push:
+    paths:
+      - 'code/frontEndWeb/**'
+      - 'code/backend/**'  # Backend também afeta E2E
+      - 'code/frontEndWeb/cypress/**'
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+    paths:
+      - 'code/frontEndWeb/**'
+      - 'code/backend/**'
+      - 'code/frontEndWeb/cypress/**'
+
+env:
+  # Configurações do ambiente de teste
+  FRONTENDWEB_URL: http://localhost:5173
+  BACKEND_URL: http://localhost:8080
+  DB_HOST: localhost
+  DB_PORT: 3306
+  DB_NAME: carpool_test_e2e
+  DB_USERNAME: test_user
+  DB_PASSWORD: test_password
+  DB_ROOT_PASSWORD: root_password
+  
+  # Configurações específicas do Cypress
+  CYPRESS_baseUrl: http://localhost:5173
+  CYPRESS_apiUrl: http://localhost:8080/api
+  CYPRESS_adminEmail: admin@carona.com
+  CYPRESS_adminPassword: admin123
+
+jobs:
+  # 🎯 Testes rápidos de smoke
+  smoke-tests:
+    if: (github.event_name != 'pull_request' && ! github.event.pull_request.head.repo.fork) || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.fork || startsWith(github.head_ref, 'dependabot/')))
+    runs-on: ubuntu-latest
+    name: 🎯 Smoke Tests
+    
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: 📥 Checando código fonte
+        uses: actions/checkout@v4
+
+      - name: 🟢 Configurando Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'code/frontEndWeb/package-lock.json'
+
+      - name: 📦 Instalando dependências do FrontEndWeb
+        working-directory: ./code/frontEndWeb
+        run: npm ci
+
+      - name: 🧪 Executando Smoke Tests
+        working-directory: ./code/frontEndWeb
+        run: |
+          # Apenas testes críticos sem necessidade de backend
+          npx cypress run \
+            --spec "cypress/e2e/auth/login.cy.js" \
+            --browser chrome \
+            --headless \
+            --config video=false,screenshotOnRunFailure=false
+        env:
+          CYPRESS_baseUrl: https://exemplo-staging.com # URL de staging se disponível
+
+      - name: 📊 Upload de artefatos em caso de falha
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-test-artifacts
+          path: |
+            code/frontEndWeb/cypress/screenshots
+            code/frontEndWeb/cypress/videos
+          retention-days: 3
+
+  # 🧪 Testes E2E completos
+  e2e-tests:
+    if: (github.event_name != 'pull_request' && ! github.event.pull_request.head.repo.fork) || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.fork || startsWith(github.head_ref, 'dependabot/')))
+    runs-on: ubuntu-latest
+    name: 🧪 E2E Tests
+    
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      statuses: write
+
+    # 🐳 Serviços necessários
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ env.DB_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ env.DB_NAME }}
+          MYSQL_USER: ${{ env.DB_USERNAME }}
+          MYSQL_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    # 📋 Estratégia de matriz para diferentes browsers
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+
+    steps:
+      - name: 📥 Checando código fonte
+        uses: actions/checkout@v4
+
+      - name: 🟢 Configurando Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'code/frontEndWeb/package-lock.json'
+
+      - name: ☕ Configurando JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: 🔧 Configurando cache do Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven
+
+      - name: 📦 Instalando dependências do FrontEndWeb
+        working-directory: ./code/frontEndWeb
+        run: |
+          npm ci
+          npm run build
+
+      - name: 🗄️ Aguardando MySQL estar pronto
+        run: |
+          timeout 60 bash -c 'until mysqladmin ping -h localhost -P 3306 --silent; do sleep 1; done'
+          echo "MySQL está pronto!"
+
+      - name: 🗄️ Configurando banco de dados de teste
+        run: |
+          mysql -h localhost -P 3306 -u root -p${{ env.DB_ROOT_PASSWORD }} -e "
+            CREATE DATABASE IF NOT EXISTS ${{ env.DB_NAME }};
+            GRANT ALL PRIVILEGES ON ${{ env.DB_NAME }}.* TO '${{ env.DB_USERNAME }}'@'%';
+            FLUSH PRIVILEGES;
+            USE ${{ env.DB_NAME }};
+            -- Inserir dados básicos para testes se necessário
+            -- INSERT INTO usuarios (email, password, role) VALUES ('admin@carona.com', 'hashed_password', 'ADMIN');
+          "
+
+      - name: 🚀 Iniciando Backend
+        working-directory: ./code/backend
+        run: |
+          # Configurar variáveis de ambiente para testes
+          export SPRING_PROFILES_ACTIVE=test
+          export SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/${{ env.DB_NAME }}
+          export SPRING_DATASOURCE_USERNAME=${{ env.DB_USERNAME }}
+          export SPRING_DATASOURCE_PASSWORD=${{ env.DB_PASSWORD }}
+          export SERVER_PORT=8080
+          
+          # Compilar aplicação primeiro
+          mvn clean compile -DskipTests
+          
+          # Iniciar aplicação em background
+          nohup mvn spring-boot:run -Dspring-boot.run.profiles=test > ../backend.log 2>&1 &
+          
+          # Aguardar backend estar pronto
+          timeout 120 bash -c 'until curl -f http://localhost:8080/actuator/health 2>/dev/null; do sleep 2; done'
+          echo "Backend está pronto!"
+        timeout-minutes: 5
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/${{ env.DB_NAME }}
+          SPRING_DATASOURCE_USERNAME: ${{ env.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ env.DB_PASSWORD }}
+
+      - name: 🌐 Iniciando FrontEndWeb
+        working-directory: ./code/frontEndWeb
+        run: |
+          # Iniciar frontEndWeb em background  
+          nohup npm run dev > ../frontEndWeb.log 2>&1 &
+          
+          # Aguardar frontEndWeb estar pronto
+          timeout 60 bash -c 'until curl -f http://localhost:5173 2>/dev/null; do sleep 2; done'
+          echo "FrontEndWeb está pronto!"
+        timeout-minutes: 3
+
+      - name: 🧪 Executando testes Cypress
+        working-directory: ./code/frontEndWeb
+        uses: cypress-io/github-action@v6
+        with:
+          # Não instalar dependências (já fizemos)
+          install: false
+          
+          # Working directory
+          working-directory: ./code/frontEndWeb
+          
+          # Browser para executar
+          browser: ${{ matrix.browser }}
+          
+          # Aguardar serviços estarem prontos
+          wait-on: |
+            http://localhost:5173
+            http://localhost:8080/actuator/health
+          wait-on-timeout: 120
+          
+          # Configurações do Cypress
+          config: |
+            baseUrl=http://localhost:5173,
+            defaultCommandTimeout=10000,
+            requestTimeout=15000,
+            responseTimeout=15000,
+            video=true,
+            screenshotOnRunFailure=true
+        env:
+          CYPRESS_baseUrl: ${{ env.CYPRESS_baseUrl }}
+          CYPRESS_apiUrl: ${{ env.CYPRESS_apiUrl }}
+          CYPRESS_adminEmail: ${{ env.CYPRESS_adminEmail }}
+          CYPRESS_adminPassword: ${{ env.CYPRESS_adminPassword }}
+
+      - name: 📊 Upload de artefatos Cypress
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-artifacts-${{ matrix.browser }}
+          path: |
+            code/frontEndWeb/cypress/videos
+            code/frontEndWeb/cypress/screenshots
+          retention-days: 7
+
+      - name: 📝 Upload de logs dos servidores
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: server-logs-${{ matrix.browser }}
+          path: |
+            backend.log
+            frontEndWeb.log
+          retention-days: 3
+
+      - name: 📋 Comentando resultados no PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request' && (success() || failure())
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🧪 Resultados dos Testes E2E')
+            );
+            
+            const status = '${{ job.status }}' === 'success' ? '✅ PASSOU' : '❌ FALHOU';
+            const emoji = '${{ job.status }}' === 'success' ? '🎉' : '💥';
+            
+            const body = `## 🧪 Resultados dos Testes E2E - ${{ matrix.browser }}
+            
+            **Status**: ${status}
+            **Browser**: ${{ matrix.browser }}
+            **Commit**: ${context.sha.substring(0, 7)}
+            **Workflow**: [Ver detalhes](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ${
+              '${{ job.status }}' !== 'success' 
+                ? '📊 Verifique os artefatos para vídeos e screenshots das falhas.' 
+                : '🎉 Todos os testes passaram com sucesso!'
+            }
+            
+            ### 📋 Suítes Testadas
+            - 🔐 Autenticação e Login
+            - 🏠 Dashboard Principal  
+            - 👥 Aprovação de Usuários
+            - 👤 Gerenciamento de Usuários
+            - 📊 Métricas e Relatórios
+            
+            ${emoji}
+            `;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: 📈 Gerando resumo dos testes
+        if: always()
+        run: |
+          echo "## 🧪 Resumo dos Testes E2E" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Informação | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "| ---------- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Browser | ${{ matrix.browser }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ job.status == 'success' && '✅ Passou' || '❌ Falhou' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| FrontEndWeb | http://localhost:5173 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | http://localhost:8080 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Database | MySQL 8.0 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "### 🔍 Debug" >> $GITHUB_STEP_SUMMARY
+            echo "- Verifique os logs dos servidores nos artefatos" >> $GITHUB_STEP_SUMMARY
+            echo "- Screenshots e vídeos estão disponíveis para análise" >> $GITHUB_STEP_SUMMARY
+            echo "- Execute localmente: \`npm run cypress:web\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🎉 Sucesso!" >> $GITHUB_STEP_SUMMARY
+            echo "Todos os testes E2E passaram com sucesso!" >> $GITHUB_STEP_SUMMARY
+          fi
