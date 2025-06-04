@@ -14,13 +14,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import com.br.puc.carona.constants.MensagensResposta;
+import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
+import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.exception.custom.ErroUploadImage;
 import com.br.puc.carona.exception.custom.ImagemInvalidaException;
 import com.br.puc.carona.exception.custom.UnauthenticatedUserException;
-import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
-import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
@@ -127,19 +128,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-        log.error("Erro interno do servidor", ex);
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                LocalDateTime.now(),
-                request.getDescription(false),
-                MensagensResposta.ERRO_INTERNO,
-                ex.getLocalizedMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(ErroUploadImage.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponse> handleErroUploadImagem(ErroUploadImage ex, WebRequest request) {
@@ -176,7 +164,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CaronaForaDoHorarioPermitido.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponse> handleCaronaForaDoHorarioPermitido(CaronaForaDoHorarioPermitido ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleCaronaForaDoHorarioPermitido(CaronaForaDoHorarioPermitido ex,
+            WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 LocalDateTime.now(),
@@ -185,5 +174,27 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ErroDePermissao.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleErroDePermissao(ErroDePermissao ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                LocalDateTime.now(),
+                ex.getLocalizedMessage(),
+                MensagensResposta.SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE);
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
 
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+        log.error("Erro interno do servidor", ex);
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                LocalDateTime.now(),
+                request.getDescription(false),
+                MensagensResposta.ERRO_INTERNO,
+                ex.getLocalizedMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

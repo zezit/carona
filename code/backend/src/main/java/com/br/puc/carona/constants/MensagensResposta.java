@@ -51,6 +51,8 @@ public final class MensagensResposta {
     public static final String CARONA_NAO_PERMITE_ADICIONAR_PASSAGEIRO = "carona.nao_permite_adicionar_passageiro";
     public static final String CARONA_STATUS_INVALIDO = "carona.status.invalido";
     public static final String CARONA_HORARIO_FORA_DA_JANELA = "carona.horario.fora_janela";
+    public static final String SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE = "carona.solicitacao.nao_pertence_estudante";
+    public static final String SOLICITACAO_CARONA_JA_VIROU_PEDIDO_ENTRADA = "carona.solicitacao.ja_virou_pedido_entrada";
 
     public static final String QUANTIDADE_VAGAS_INVALIDAS = "carona.quantidade_vagas.invalida";
     public static final String PASSAGEIRO_JA_EM_CARONA = "carona.estudante.ja_em_carona";
