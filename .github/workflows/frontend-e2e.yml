@@ -203,7 +203,6 @@ jobs:
         timeout-minutes: 3
 
       - name: 🧪 Executando testes Cypress
-        working-directory: ./code/frontEndWeb
         uses: cypress-io/github-action@v6
         with:
           # Não instalar dependências (já fizemos)
