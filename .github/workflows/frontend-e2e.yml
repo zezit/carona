@@ -233,14 +233,37 @@ jobs:
           # Iniciar serviços com portas dinâmicas
           docker compose -f docker-compose-e2e.yml up -d
           
-          # Aguardar serviços estarem saudáveis
-          echo "Aguardando serviços ficarem saudáveis..."
-          timeout 120 bash -c '
-            while ! docker compose -f docker-compose-e2e.yml ps | grep -q "healthy.*healthy"; do 
-              echo "Aguardando serviços ficarem saudáveis..."
-              sleep 2
+          # Função para verificar saúde de serviços específicos
+          check_service() {
+            local service=$1
+            local max_attempts=30
+            local attempt=1
+            
+            echo "Verificando serviço: $service"
+            while [ $attempt -le $max_attempts ]; do
+              if docker compose -f docker-compose-e2e.yml ps $service | grep -q "healthy"; then
+                echo "✅ $service está saudável"
+                return 0
+              fi
+              echo "⏳ Tentativa $attempt/$max_attempts - Aguardando $service..."
+              sleep 4
+              attempt=$((attempt + 1))
             done
-          '
+            
+            echo "❌ $service não ficou saudável após $max_attempts tentativas"
+            docker compose -f docker-compose-e2e.yml logs $service
+            return 1
+          }
+          
+          # Verificar cada serviço individualmente
+          for service in mysql rabbitmq; do
+            if ! check_service $service; then
+              echo "❌ Falha ao inicializar $service"
+              docker compose -f docker-compose-e2e.yml logs
+              docker compose -f docker-compose-e2e.yml down -v
+              exit 1
+            fi
+          done
           
           echo "✅ Todos os serviços estão saudáveis!"
           docker compose -f docker-compose-e2e.yml ps
@@ -256,20 +279,47 @@ jobs:
       - name: 🌱 Preparando dados de teste
         run: |
           echo "Verificando conectividade com MySQL..."
-          mysql -h localhost -P $MYSQL_PORT -u root -p${{ env.DB_ROOT_PASSWORD }} -e "SELECT 1" || {
+          
+          # Função para tentar conexão MySQL com retry
+          try_mysql_connection() {
+            local max_attempts=30
+            local attempt=1
+            local wait_time=5
+            
+            while [ $attempt -le $max_attempts ]; do
+              echo "Tentativa $attempt de $max_attempts para conectar ao MySQL..."
+              
+              if mysql --protocol=TCP -h localhost -P $MYSQL_PORT -u root -p${{ env.DB_ROOT_PASSWORD }} \
+                 -e "SELECT 1" > /dev/null 2>&1; then
+                echo "✅ Conexão MySQL estabelecida!"
+                return 0
+              fi
+              
+              echo "⏳ Aguardando $wait_time segundos antes da próxima tentativa..."
+              sleep $wait_time
+              attempt=$((attempt + 1))
+            done
+            
+            echo "❌ Não foi possível estabelecer conexão com MySQL após $max_attempts tentativas"
+            return 1
+          }
+          
+          # Tentar estabelecer conexão
+          if ! try_mysql_connection; then
             echo "❌ Erro conectando ao MySQL. Verificando status dos containers..."
             docker compose -f docker-compose-e2e.yml logs mysql
             exit 1
-          }
+          fi
           
-          mysql -h localhost -P $MYSQL_PORT -u root -p${{ env.DB_ROOT_PASSWORD }} -e "
+          # Preparar banco de dados
+          mysql --protocol=TCP -h localhost -P $MYSQL_PORT -u root -p${{ env.DB_ROOT_PASSWORD }} -e "
             CREATE DATABASE IF NOT EXISTS ${{ env.DB_NAME }};
+            CREATE USER IF NOT EXISTS '${{ env.DB_USERNAME }}'@'%' IDENTIFIED BY '${{ env.DB_PASSWORD }}';
             GRANT ALL PRIVILEGES ON ${{ env.DB_NAME }}.* TO '${{ env.DB_USERNAME }}'@'%';
             FLUSH PRIVILEGES;
             USE ${{ env.DB_NAME }};
-            -- Inserir dados básicos para testes se necessário
-            -- INSERT INTO usuarios (email, password, role) VALUES ('admin@carona.com', '${{ env.CYPRESS_adminHashedPassword }}', 'ADMIN');
           "
+          
           echo "✅ Dados de teste preparados!"
 
       - name: 🚀 Iniciando Backend
