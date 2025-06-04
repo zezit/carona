@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ✅ Cobertura de testes E2E
+coverage/
+.nyc_output/
