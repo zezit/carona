@@ -26,3 +26,5 @@ dist-ssr
 # ✅ Cobertura de testes E2E
 coverage/
 .nyc_output/
+cypress/screenshots/
+cypress/videos/
