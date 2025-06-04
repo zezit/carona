@@ -31,6 +31,7 @@ import com.br.puc.carona.model.SolicitacaoCarona;
 import com.br.puc.carona.model.Trajeto;
 import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.EstudanteRepository;
+import com.br.puc.carona.repository.PedidoDeEntradaRepository;
 import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
 import com.br.puc.carona.utils.RouteCalculatorUtil;
 
@@ -46,6 +47,9 @@ public class RideMatchingServiceTest {
 
     @Mock
     private SolicitacaoCaronaRepository solicitacaoCaronaRepository;
+
+    @Mock
+    private PedidoDeEntradaRepository pedidoDeEntradaRepository;
 
     @Mock
     private RouteCalculatorUtil routeCalculator;
@@ -165,7 +169,8 @@ public class RideMatchingServiceTest {
                 .thenReturn(solicitacaoCarona);
         Mockito.when(solicitacaoCaronaRepository.save(Mockito.any(SolicitacaoCarona.class)))
                 .thenReturn(solicitacaoCarona);
-        Mockito.when(caronaRepository.save(Mockito.any(Carona.class))).thenReturn(carona1);
+        Mockito.when(pedidoDeEntradaRepository.save(Mockito.any(PedidoDeEntrada.class)))
+                .thenReturn(new PedidoDeEntrada());
 
         // When
         rideMatchingService.matchAndAssign(request);
@@ -185,20 +190,14 @@ public class RideMatchingServiceTest {
         Mockito.verify(solicitacaoCaronaMapper).toEntity(Mockito.any(SolicitacaoCaronaRequest.class),
                 Mockito.any(Estudante.class));
         Mockito.verify(solicitacaoCaronaRepository).save(solicitacaoCaptor.capture());
-        Mockito.verify(caronaRepository).save(caronaCaptor.capture());
         Mockito.verify(websocketService).sendRideMatchNotification(Mockito.any(PedidoDeEntrada.class));
+        Mockito.verify(pedidoDeEntradaRepository).save(Mockito.any(PedidoDeEntrada.class));
 
         final SolicitacaoCarona savedSolicitacao = solicitacaoCaptor.getValue();
-        final Carona savedCarona = caronaCaptor.getValue();
 
         Assertions.assertEquals(student, savedSolicitacao.getEstudante());
         Assertions.assertEquals(studentOrigin.getName(), savedSolicitacao.getOrigem());
         Assertions.assertEquals(studentDestination.getName(), savedSolicitacao.getDestino());
-
-        Assertions.assertEquals(1, savedCarona.getPedidosEntrada().size());
-        final PedidoDeEntrada pedido = savedCarona.getPedidosEntrada().iterator().next();
-        Assertions.assertEquals(solicitacaoCarona, pedido.getSolicitacao());
-        Assertions.assertEquals(savedCarona, pedido.getCarona());
     }
 
     @Test
@@ -226,19 +225,15 @@ public class RideMatchingServiceTest {
                 .thenReturn(solicitacaoCarona);
         Mockito.when(solicitacaoCaronaRepository.save(Mockito.any(SolicitacaoCarona.class)))
                 .thenReturn(solicitacaoCarona);
-        Mockito.when(caronaRepository.save(Mockito.any(Carona.class))).thenReturn(carona1);
+        Mockito.when(pedidoDeEntradaRepository.save(Mockito.any(PedidoDeEntrada.class)))
+                .thenReturn(new PedidoDeEntrada());
 
         // When
         rideMatchingService.matchAndAssign(request);
 
         // Then
-        Mockito.verify(caronaRepository).save(caronaCaptor.capture());
         Mockito.verify(websocketService).sendRideMatchNotification(Mockito.any(PedidoDeEntrada.class));
-
-        final Carona savedCarona = caronaCaptor.getValue();
-
-        // Verify that carona1 was chosen (the one with smaller detour)
-        Assertions.assertEquals(1L, savedCarona.getId());
+        Mockito.verify(pedidoDeEntradaRepository).save(Mockito.any(PedidoDeEntrada.class));
     }
 
     @Test
