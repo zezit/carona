@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = "estudante")
 @Entity
 @Table(name = "perfil_motorista")
 @SequenceGenerator(name = "seq_generator", sequenceName = "perfil_motorista_seq", allocationSize = 1)
