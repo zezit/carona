@@ -7,11 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.response.PedidoDeEntradaCompletoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.mapper.PedidoDeEntradaMapper;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.PedidoDeEntrada;
@@ -31,7 +33,9 @@ public class PedidoDeEntradaService {
     private final CaronaRepository caronaRepository;
     private final SolicitacaoCaronaRepository solicitacaoRepository;
     private final PedidoDeEntradaRepository pedidoEntradaRepository;
+    
     private final CaronaService caronaService;
+    private final CurrentUserService currentUserService;
 
     private final PedidoDeEntradaMapper pedidoDeEntradaMapper;
 
@@ -167,8 +171,12 @@ public class PedidoDeEntradaService {
         return pedidosPage.map(pedidoDeEntradaMapper::toCompletoDto);
     }
 
-    public void cancelarPedidoDeEntrada(Long idPedido) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'cancelarPedidoDeEntrada'");
+    public void cancelarPedidoDeEntrada(final Long idPedido) {
+        final PedidoDeEntrada pedido = pedidoEntradaRepository.findById(idPedido)
+                .orElseThrow(() -> new EntidadeNaoEncontrada("Pedido de entrada não encontrado"));
+
+        if (!pedido.getSolicitacao().getEstudante().equals(currentUserService.getCurrentEstudante())) {
+            throw new ErroDePermissao(MensagensResposta.SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE);
+        }
     }
 }

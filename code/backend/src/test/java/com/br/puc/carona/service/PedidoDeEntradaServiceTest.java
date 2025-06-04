@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,11 +33,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.response.PedidoDeEntradaCompletoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.mapper.PedidoDeEntradaMapper;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
@@ -65,6 +69,9 @@ class PedidoDeEntradaServiceTest {
 
     @Mock
     private PedidoDeEntradaMapper pedidoDeEntradaMapper;
+
+    @Mock
+    private CurrentUserService currentUserService;
 
     @InjectMocks
     private PedidoDeEntradaService pedidoDeEntradaService;
@@ -131,6 +138,18 @@ class PedidoDeEntradaServiceTest {
                 .id(1L)
                 .status(Status.PENDENTE)
                 .build();
+    }
+
+    @AfterEach
+    void tearDown(){
+        verifyNoMoreInteractions(
+            caronaRepository,
+            solicitacaoRepository,
+            pedidoEntradaRepository,
+            caronaService,
+            pedidoDeEntradaMapper,
+            currentUserService
+        );
     }
 
     @Test
@@ -609,5 +628,24 @@ class PedidoDeEntradaServiceTest {
         verify(pedidoEntradaRepository, times(1)).save(any(PedidoDeEntrada.class)); // Apenas o pedido aprovado
         assertEquals(Status.APROVADO, pedidoJaAprovado.getStatus()); // Não deve ser alterado
         assertEquals(Status.REJEITADO, pedidoJaRejeitado.getStatus()); // Não deve ser alterado
+    }
+
+    @Test
+    @DisplayName("Não deve cancelar pedidos que não são do usuário logado")
+    void naoDeveCancelarPedidosQueNaoSaoDoUsuarioLogado() {
+        // Given
+        when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(currentUserService.getCurrentEstudante()).thenReturn(Estudante.builder().id(2L).build());
+
+        // When & Then
+        final ErroDePermissao exception = assertThrows(ErroDePermissao.class, () -> {
+            pedidoDeEntradaService.cancelarPedidoDeEntrada(1L);
+        });
+
+        assertEquals(MensagensResposta.SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE, exception.getMessage());
+
+        verify(pedidoEntradaRepository, never()).save(any(PedidoDeEntrada.class));
+        verify(pedidoEntradaRepository, times(1)).findById(1L);
+        verify(currentUserService, times(1)).getCurrentEstudante();
     }
 }
