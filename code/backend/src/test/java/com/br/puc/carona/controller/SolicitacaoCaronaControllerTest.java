@@ -33,7 +33,7 @@ import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.LocationDTO;
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
-import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.enums.StatusSolicitacaoCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.exception.custom.ErroDePermissao;
@@ -100,7 +100,7 @@ class SolicitacaoCaronaControllerTest {
                 .latitudeDestino(-19.9105219)
                 .longitudeDestino(-43.9477153)
                 .horarioChegada(LocalDateTime.now().plusHours(2))
-                .status(Status.PENDENTE)
+                .status(StatusSolicitacaoCarona.PENDENTE)
                 .build();
     }
 

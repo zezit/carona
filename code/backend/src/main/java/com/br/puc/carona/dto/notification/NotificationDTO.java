@@ -1,7 +1,5 @@
 package com.br.puc.carona.dto.notification;
 
-import java.time.Instant;
-
 import com.br.puc.carona.dto.estudante.EstudanteBasicDTO;
 import com.br.puc.carona.enums.NotificationStatus;
 import com.br.puc.carona.enums.NotificationType;

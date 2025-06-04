@@ -35,7 +35,10 @@ import com.br.puc.carona.dto.LocationDTO;
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
 import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.enums.StatusSolicitacaoCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.mapper.SolicitacaoCaronaMapper;
 import com.br.puc.carona.messaging.MensagemProducer;
 import com.br.puc.carona.model.Estudante;
@@ -59,6 +62,9 @@ class SolicitacaoCaronaServiceTest {
 
     @Mock
     private MensagemProducer mensagemProducer;
+
+    @Mock
+    private CurrentUserService currentUserService;
 
     @InjectMocks
     private SolicitacaoCaronaService solicitacaoCaronaService;
@@ -88,13 +94,13 @@ class SolicitacaoCaronaServiceTest {
                 .email("estudante@test.com")
                 .statusCadastro(Status.APROVADO)
                 .build();
-                
+
         origem = LocationDTO.builder()
                 .name("PUC Minas")
                 .latitude(-19.922732)
                 .longitude(-43.994555)
                 .build();
-                
+
         destino = LocationDTO.builder()
                 .name("Shopping")
                 .latitude(-19.954532)
@@ -114,7 +120,7 @@ class SolicitacaoCaronaServiceTest {
                 .origem(origem.getName())
                 .destino(destino.getName())
                 .horarioChegada(horarioChegada)
-                .status(Status.PENDENTE)
+                .status(StatusSolicitacaoCarona.PENDENTE)
                 .build();
 
         solicitacaoDto = SolicitacaoCaronaDto.builder()
@@ -122,16 +128,17 @@ class SolicitacaoCaronaServiceTest {
                 .origem(origem.getName())
                 .destino(destino.getName())
                 .horarioChegada(horarioChegada)
-                .status(Status.PENDENTE)
+                .status(StatusSolicitacaoCarona.PENDENTE)
                 .build();
     }
 
     @AfterEach
     void tearDown() {
         Mockito.verifyNoMoreInteractions(
-                solicitacaoRepository, 
-                estudanteRepository, 
-                mapper, 
+                solicitacaoRepository,
+                estudanteRepository,
+                currentUserService,
+                mapper,
                 mensagemProducer);
     }
 
@@ -163,7 +170,7 @@ class SolicitacaoCaronaServiceTest {
 
         SolicitacaoCarona solicitacaoSalva = solicitacaoCaptor.getValue();
         assertEquals(estudante, solicitacaoSalva.getEstudante());
-        assertEquals(Status.PENDENTE, solicitacaoSalva.getStatus());
+        assertEquals(StatusSolicitacaoCarona.PENDENTE, solicitacaoSalva.getStatus());
     }
 
     @Test
@@ -215,7 +222,8 @@ class SolicitacaoCaronaServiceTest {
             solicitacaoCaronaService.buscarPorId(solicitacaoId);
         });
 
-        assertEquals(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA + "{" + solicitacaoId + "}", exception.getMessage());
+        assertEquals(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA + "{" + solicitacaoId + "}",
+                exception.getMessage());
         verify(solicitacaoRepository).findById(solicitacaoId);
         verify(mapper, never()).toDto(any());
     }
@@ -259,24 +267,6 @@ class SolicitacaoCaronaServiceTest {
     }
 
     @Test
-    @DisplayName("Deve cancelar solicitação com sucesso")
-    void deveCancelarSolicitacaoComSucesso() {
-        // Given
-        when(solicitacaoRepository.findById(solicitacaoId)).thenReturn(Optional.of(solicitacao));
-        when(solicitacaoRepository.save(any(SolicitacaoCarona.class))).thenReturn(solicitacao);
-
-        // When
-        solicitacaoCaronaService.cancelarSolicitacao(solicitacaoId);
-
-        // Then
-        verify(solicitacaoRepository).findById(solicitacaoId);
-        verify(solicitacaoRepository).save(solicitacaoCaptor.capture());
-
-        SolicitacaoCarona solicitacaoSalva = solicitacaoCaptor.getValue();
-        assertEquals(Status.CANCELADO, solicitacaoSalva.getStatus());
-    }
-
-    @Test
     @DisplayName("Deve lançar exceção ao cancelar solicitação inexistente")
     void deveLancarExcecaoAoCancelarSolicitacaoInexistente() {
         // Given
@@ -287,7 +277,8 @@ class SolicitacaoCaronaServiceTest {
             solicitacaoCaronaService.cancelarSolicitacao(solicitacaoId);
         });
 
-        assertEquals(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA + "{" + solicitacaoId + "}", exception.getMessage());
+        assertEquals(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA + "{" + solicitacaoId + "}",
+                exception.getMessage());
         verify(solicitacaoRepository).findById(solicitacaoId);
         verify(solicitacaoRepository, never()).save(any());
     }
@@ -308,7 +299,7 @@ class SolicitacaoCaronaServiceTest {
         verify(solicitacaoRepository).save(solicitacaoCaptor.capture());
 
         SolicitacaoCarona solicitacaoSalva = solicitacaoCaptor.getValue();
-        assertEquals(Status.CANCELADO, solicitacaoSalva.getStatus());
+        assertEquals(StatusSolicitacaoCarona.CANCELADO, solicitacaoSalva.getStatus());
     }
 
     @Test
@@ -323,6 +314,70 @@ class SolicitacaoCaronaServiceTest {
         // Then
         verify(solicitacaoRepository).findByEstudante(estudante);
         verify(solicitacaoRepository, never()).findById(anyLong());
+        verify(solicitacaoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve cancelar solicitação com sucesso")
+    void deveCancelarSolicitacaoComSucesso() {
+        // Given
+        when(solicitacaoRepository.findById(solicitacaoId)).thenReturn(Optional.of(solicitacao));
+        when(solicitacaoRepository.save(any(SolicitacaoCarona.class))).thenReturn(solicitacao);
+        when(currentUserService.getCurrentEstudante()).thenReturn(estudante);
+
+        // When
+        solicitacaoCaronaService.cancelarSolicitacao(solicitacaoId);
+
+        // Then
+        verify(solicitacaoRepository).findById(solicitacaoId);
+        verify(currentUserService).getCurrentEstudante();
+        verify(solicitacaoRepository).save(solicitacaoCaptor.capture());
+
+        final SolicitacaoCarona solicitacaoSalva = solicitacaoCaptor.getValue();
+        assertEquals(StatusSolicitacaoCarona.CANCELADO, solicitacaoSalva.getStatus());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao cancelar solicitação de outro estudante")
+    void deveLancarExcecaoAoCancelarSolicitacaoDeOutroEstudante() {
+        // Given
+        final Estudante outroEstudante = Estudante.builder()
+                .id(2L)
+                .nome("Outro Estudante")
+                .build();
+
+        solicitacao.setEstudante(outroEstudante);
+
+        when(solicitacaoRepository.findById(solicitacaoId)).thenReturn(Optional.of(solicitacao));
+        when(currentUserService.getCurrentEstudante()).thenReturn(estudante);
+
+        // When & Then
+        final ErroDePermissao exception = assertThrows(ErroDePermissao.class, () -> {
+            solicitacaoCaronaService.cancelarSolicitacao(solicitacaoId);
+        });
+
+        assertEquals(MensagensResposta.SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE, exception.getMessage());
+        verify(solicitacaoRepository).findById(solicitacaoId);
+        verify(currentUserService).getCurrentEstudante();
+        verify(solicitacaoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar cancelar solicitação que já passou para pedido de entrada")
+    void deveLancarExcecaoAoCancelarSolicitacaoJaPassadaParaPedidoDeEntrada() {
+        // Given
+        solicitacao.setStatus(StatusSolicitacaoCarona.PEDIDO_DE_ENTRADA);
+        when(solicitacaoRepository.findById(solicitacao.getId())).thenReturn(Optional.of(solicitacao));
+        when(currentUserService.getCurrentEstudante()).thenReturn(estudante);
+
+        // When & Then
+        final ErroDeCliente exception = assertThrows(ErroDeCliente.class, () -> {
+            solicitacaoCaronaService.cancelarSolicitacao(solicitacao.getId());
+        });
+
+        assertEquals(MensagensResposta.SOLICITACAO_CARONA_JA_VIROU_PEDIDO_ENTRADA, exception.getMessage());
+        verify(solicitacaoRepository).findById(solicitacao.getId());
+        verify(currentUserService).getCurrentEstudante();
         verify(solicitacaoRepository, never()).save(any());
     }
 }
