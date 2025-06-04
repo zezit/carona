@@ -29,6 +29,7 @@ import MyDrives from '../screens/MyDrives';
 import ManagePassengersHome from '../screens/managePassagers/ManagePassengersHome';
 import ManageRequests from '../screens/managePassagers/ManageRequests';
 import ManagePassengers from '../screens/managePassagers/ManagePassagersPage';
+import CaronaDetailsScreen from '../screens/Ride/CaronaDetailsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -145,6 +146,7 @@ const MainStack = () => (
     <Stack.Screen name="ManagePassagers" component={ManagePassengers} />
 
     <Stack.Screen name="MyRequests" component={MyRideRequestsPage}/>
+    <Stack.Screen name="CaronaDetailsScreen" component={CaronaDetailsScreen} />
 
   </Stack.Navigator>
 );

@@ -139,17 +139,25 @@ const HomePage = ({ navigation }) => {
   };
 
   // Handle start ride
-  const handleStartRide = async (caronaId) => {
-    try {
-      const response = await apiClient.patch(`/carona/${caronaId}/iniciar`);
-      if (response.status === 200) {
-        navigation.navigate('CaronaDetailsScreen', {
-          carona: response.data, // garanta que a API retorna os campos `origem`, `destino`, `status`, `dataInicio`
-        });
-      }
-    } catch (err) {
-      Alert.alert('Erro', 'Não foi possível iniciar a carona.');
-    }
+  // Inicia a carona fazendo uma requisição PATCH para o backend e navega para a tela de detalhes da carona
+  // const handleStartRide = async (caronaId) => {
+  //   try {
+  //     const response = await apiClient.patch(`/carona/${caronaId}/iniciar`);
+  //     if (response.status === 200) {
+  //       navigation.navigate('CaronaDetailsScreen', {
+  //         carona: response.data, // garanta que a API retorna os campos `origem`, `destino`, `status`, `dataInicio`
+  //       });
+  //     }
+  //   } catch (err) {
+  //     Alert.alert('Erro', 'Não foi possível iniciar a carona.');
+  //   }
+  // };
+
+  // Inicia a carona localmente, sem fazer requisição ao backend, usando os dados já disponíveis da carona
+  const handleStartRide = (carona) => {
+    navigation.navigate('CaronaDetailsScreen', {
+      carona, // envia os dados já disponíveis da carona para a próxima tela
+    });
   };
 
   // Format ride time
@@ -323,7 +331,8 @@ const HomePage = ({ navigation }) => {
 
             <TouchableOpacity
                 style={styles.startRideButton}
-                onPress={() => handleStartRide(nextRide.id)}
+                // onPress={() => handleStartRide(nextRide.id)}
+                onPress={() => handleStartRide(nextRide)}
               >
               <Ionicons name="play" size={18} color="#fff" style={{ marginRight: 8 }} />
               <Text style={styles.startRideButtonText}>Iniciar Carona</Text>
