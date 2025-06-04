@@ -167,4 +167,9 @@ public class PedidoDeEntradaService {
 
         return pedidosPage.map(pedidoDeEntradaMapper::toCompletoDto);
     }
+
+    public void cancelarPedidoDeEntrada(Long idPedido) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'cancelarPedidoDeEntrada'");
+    }
 }

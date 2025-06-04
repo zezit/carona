@@ -66,10 +66,11 @@ public class PedidoDeEntradaController {
             @PathVariable Long idPedido,
             @PathVariable Status status) {
         log.info("Atualizando status do pedido de entrada com ID: {} para: {}", idPedido, status);
-        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido, status);
+        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido,
+                status);
         return ResponseEntity.ok(pedidoAtualizado);
     }
-    
+
     @PostMapping("/aprovarCarona/{idPedido}/{status}")
     @Operation(summary = "Aprovar pedido de entrada (Legado)", description = "Método legado para aprovar/recusar um pedido de entrada")
     @ApiResponses(value = {
@@ -81,7 +82,8 @@ public class PedidoDeEntradaController {
             @PathVariable Long idPedido,
             @PathVariable final Status status) {
         log.info("Usando endpoint legado para atualizar pedido com ID: {} para status: {}", idPedido, status);
-        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido, status);
+        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido,
+                status);
         return ResponseEntity.ok(pedidoAtualizado);
     }
 
@@ -100,5 +102,18 @@ public class PedidoDeEntradaController {
         Page<PedidoDeEntradaCompletoDto> pedidos = pedidoDeEntradaService
                 .getPedidoDeEntradasPorMotoristaECaronaId(motoristaId, caronaId, pageable);
         return ResponseEntity.ok(pedidos);
+    }
+
+    @PutMapping("/{idPedido}/cancelar")
+    @Operation(summary = "Cancelar pedido de entrada", description = "Cancela um pedido de entrada existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido de entrada cancelado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Pedido de entrada não encontrado")
+    })
+    public ResponseEntity<Void> cancelarPedidoDeEntrada(@PathVariable final Long idPedido) {
+        log.info("Iniciando requisição de cancelamento do pedido de entrada com ID: {}", idPedido);
+        pedidoDeEntradaService.cancelarPedidoDeEntrada(idPedido);
+        log.info("Finalizando requisição de cancelamento do pedido de entrada com ID: {}", idPedido);
+        return ResponseEntity.ok().build();
     }
 }

@@ -53,7 +53,9 @@ public final class MensagensResposta {
     public static final String CARONA_HORARIO_FORA_DA_JANELA = "carona.horario.fora_janela";
     public static final String SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE = "carona.solicitacao.nao_pertence_estudante";
     public static final String SOLICITACAO_CARONA_JA_VIROU_PEDIDO_ENTRADA = "carona.solicitacao.ja_virou_pedido_entrada";
-
+    public static final String PEDIDO_ENTRADA_NAO_ENCONTRADO = "carona.pedido_entrada.nao_encontrado";
+    public static final String ALTERACAO_DE_STATUS_DO_PEDIDO_ENTRADA_NAO_AUTORIZADO = "carona.pedido_entrada.alteracao_status_nao_autorizada";
+    
     public static final String QUANTIDADE_VAGAS_INVALIDAS = "carona.quantidade_vagas.invalida";
     public static final String PASSAGEIRO_JA_EM_CARONA = "carona.estudante.ja_em_carona";
 
