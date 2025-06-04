@@ -113,59 +113,104 @@ jobs:
         run: |
           echo "Getting main branch coverage for comparison..."
           
-          # Store current branch
-          CURRENT_BRANCH=$(git branch --show-current)
+          # Install dependencies
+          if ! command -v xmllint &> /dev/null; then
+            echo "Installing xmllint..."
+            sudo apt-get update -q
+            sudo apt-get install -y libxml2-utils
+          fi
           
-          # Try to checkout main and run coverage
-          if git checkout main 2>/dev/null; then
-            echo "Successfully checked out main branch"
+          # Try to get main branch coverage from recent workflow runs
+          echo "Attempting to get main branch coverage from GitHub API..."
+          
+          # First, try to fetch the main branch coverage from badges if they exist
+          if curl -f -s "https://raw.githubusercontent.com/${{ github.repository }}/main/.github/badges/lines.svg" > /dev/null 2>&1; then
+            echo "Found coverage badges on main branch"
             
-            # Run tests on main branch to get coverage
-            cd ./code/backend
-            if mvn clean test jacoco:report -q; then
-              MAIN_REPORT="./target/site/jacoco/jacoco.xml"
-              if [ -f "$MAIN_REPORT" ]; then
-                # Extract main branch coverage
-                MAIN_COVERED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@covered)" $MAIN_REPORT)
-                MAIN_MISSED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@missed)" $MAIN_REPORT)
-                MAIN_BRANCH_COVERED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@covered)" $MAIN_REPORT)
-                MAIN_BRANCH_MISSED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@missed)" $MAIN_REPORT)
-                
-                # Calculate main branch percentages
-                MAIN_TOTAL_LINES=$((MAIN_COVERED_LINES + MAIN_MISSED_LINES))
-                MAIN_TOTAL_BRANCHES=$((MAIN_BRANCH_COVERED + MAIN_BRANCH_MISSED))
-                
-                if [ $MAIN_TOTAL_LINES -gt 0 ]; then
-                  MAIN_LINE_COVERAGE=$(echo "scale=2; 100*$MAIN_COVERED_LINES/$MAIN_TOTAL_LINES" | bc)
-                else
-                  MAIN_LINE_COVERAGE="0"
-                fi
-                
-                if [ $MAIN_TOTAL_BRANCHES -gt 0 ]; then
-                  MAIN_BRANCH_COVERAGE=$(echo "scale=2; 100*$MAIN_BRANCH_COVERED/$MAIN_TOTAL_BRANCHES" | bc)
-                else
-                  MAIN_BRANCH_COVERAGE="0"
-                fi
-                
-                echo "main_line_coverage=$MAIN_LINE_COVERAGE" >> $GITHUB_OUTPUT
-                echo "main_branch_coverage=$MAIN_BRANCH_COVERAGE" >> $GITHUB_OUTPUT
-                echo "comparison_available=true" >> $GITHUB_OUTPUT
-                echo "Main branch coverage - Lines: $MAIN_LINE_COVERAGE%, Branches: $MAIN_BRANCH_COVERAGE%"
-              else
-                echo "Main branch jacoco report not found"
-                echo "comparison_available=false" >> $GITHUB_OUTPUT
-              fi
+            # Download the badge and try to extract coverage percentage
+            LINES_BADGE=$(curl -s "https://raw.githubusercontent.com/${{ github.repository }}/main/.github/badges/lines.svg")
+            BRANCHES_BADGE=$(curl -s "https://raw.githubusercontent.com/${{ github.repository }}/main/.github/badges/branches.svg")
+            
+            # Extract coverage percentages from SVG badges (rough parsing)
+            MAIN_LINE_COVERAGE=$(echo "$LINES_BADGE" | grep -oP 'coverage-\K[0-9]+\.?[0-9]*(?=%25)' | head -1)
+            MAIN_BRANCH_COVERAGE=$(echo "$BRANCHES_BADGE" | grep -oP 'coverage-\K[0-9]+\.?[0-9]*(?=%25)' | head -1)
+            
+            if [ ! -z "$MAIN_LINE_COVERAGE" ] && [ ! -z "$MAIN_BRANCH_COVERAGE" ]; then
+              echo "main_line_coverage=$MAIN_LINE_COVERAGE" >> $GITHUB_OUTPUT
+              echo "main_branch_coverage=$MAIN_BRANCH_COVERAGE" >> $GITHUB_OUTPUT
+              echo "comparison_available=true" >> $GITHUB_OUTPUT
+              echo "Main branch coverage from badges - Lines: $MAIN_LINE_COVERAGE%, Branches: $MAIN_BRANCH_COVERAGE%"
             else
-              echo "Failed to run tests on main branch"
+              echo "Could not extract coverage from badges"
               echo "comparison_available=false" >> $GITHUB_OUTPUT
             fi
-            
-            # Return to original branch
-            cd ../..
-            git checkout $CURRENT_BRANCH
           else
-            echo "Could not checkout main branch"
+            # Fallback: Try to checkout main branch approach
+            echo "Badges not found, trying checkout approach..."
+            
+            # Store current branch info
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            CURRENT_COMMIT=$(git rev-parse HEAD)
+            
+            # Try to fetch and checkout main
+            if git fetch origin main:refs/remotes/origin/main 2>/dev/null && git checkout origin/main 2>/dev/null; then
+              echo "Successfully checked out main branch"
+              
+              # Run tests on main branch to get coverage
+              cd ./code/backend
+              if timeout 300 mvn clean test jacoco:report -q -Dmaven.test.failure.ignore=true; then
+                MAIN_REPORT="./target/site/jacoco/jacoco.xml"
+                if [ -f "$MAIN_REPORT" ]; then
+                  # Extract main branch coverage
+                  MAIN_COVERED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@covered)" $MAIN_REPORT)
+                  MAIN_MISSED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@missed)" $MAIN_REPORT)
+                  MAIN_BRANCH_COVERED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@covered)" $MAIN_REPORT)
+                  MAIN_BRANCH_MISSED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@missed)" $MAIN_REPORT)
+                  
+                  # Calculate main branch percentages
+                  MAIN_TOTAL_LINES=$((MAIN_COVERED_LINES + MAIN_MISSED_LINES))
+                  MAIN_TOTAL_BRANCHES=$((MAIN_BRANCH_COVERED + MAIN_BRANCH_MISSED))
+                  
+                  if [ $MAIN_TOTAL_LINES -gt 0 ]; then
+                    MAIN_LINE_COVERAGE=$(echo "scale=2; 100*$MAIN_COVERED_LINES/$MAIN_TOTAL_LINES" | bc)
+                  else
+                    MAIN_LINE_COVERAGE="0"
+                  fi
+                  
+                  if [ $MAIN_TOTAL_BRANCHES -gt 0 ]; then
+                    MAIN_BRANCH_COVERAGE=$(echo "scale=2; 100*$MAIN_BRANCH_COVERED/$MAIN_TOTAL_BRANCHES" | bc)
+                  else
+                    MAIN_BRANCH_COVERAGE="0"
+                  fi
+                  
+                  echo "main_line_coverage=$MAIN_LINE_COVERAGE" >> $GITHUB_OUTPUT
+                  echo "main_branch_coverage=$MAIN_BRANCH_COVERAGE" >> $GITHUB_OUTPUT
+                  echo "comparison_available=true" >> $GITHUB_OUTPUT
+                  echo "Main branch coverage from tests - Lines: $MAIN_LINE_COVERAGE%, Branches: $MAIN_BRANCH_COVERAGE%"
+                else
+                  echo "Main branch jacoco report not found"
+                  echo "comparison_available=false" >> $GITHUB_OUTPUT
+                fi
+              else
+                echo "Failed to run tests on main branch"
+                echo "comparison_available=false" >> $GITHUB_OUTPUT
+              fi
+              
+              # Return to original branch
+              cd ../..
+              git checkout $CURRENT_COMMIT 2>/dev/null || git checkout $CURRENT_BRANCH 2>/dev/null
+            else
+              echo "Could not fetch or checkout main branch"
+              echo "comparison_available=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+          # Set default values if comparison is not available
+          if [ "${{ steps.main_coverage.outputs.comparison_available }}" != "true" ]; then
+            echo "main_line_coverage=0" >> $GITHUB_OUTPUT
+            echo "main_branch_coverage=0" >> $GITHUB_OUTPUT
             echo "comparison_available=false" >> $GITHUB_OUTPUT
+            echo "Main branch coverage comparison not available"
           fi
 
       - name: Extraindo e verificando cobertura
@@ -173,6 +218,7 @@ jobs:
         if: always()
         run: |
           REPORT_FILE="./code/backend/target/site/jacoco/jacoco.xml"
+          
           if [ -f "$REPORT_FILE" ]; then
             echo "report_exists=true" >> $GITHUB_OUTPUT
             

@@ -97,7 +97,6 @@ public class PedidoDeEntradaService {
 
     // Método legado para manter compatibilidade
     @Transactional
-    @Deprecated
     public void aprovarPedidoDeEntrada(Long idPedido, Status status) {
         atualizarStatusPedidoDeEntrada(idPedido, status);
     }
