@@ -211,7 +211,7 @@ A seguir serão apresentados os requisitos funcionais e não funcionais que guia
 | RF16   | Motorista avalia passageiro                | Média          | Baixa            | Mobile         |     ❌      |
 | RF17   | Usuário denuncia outro usuário             | Média          | Baixa            | Mobile         |     ❌      |
 | RF18   | Administrador aprova novos usuários        | Média          | Baixa            | Web            |     ✅      |
-| RF19   | Administrador visualiza todas as viagens   | Alta           | Média            | Web            |     ❌      |
+| RF19   | Administrador visualiza todas as viagens   | Alta           | Média            | Web            |     ✅      |
 | RF20   | Administrador gerencia usuários            | Alta           | Baixa            | Web            |     ✅      |
 | RF21   | Administrador gerencia denúncias           | Média          | Baixa            | Web            |     ❌      |
 

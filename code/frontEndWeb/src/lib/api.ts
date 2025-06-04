@@ -109,6 +109,23 @@ export const api = {
         return { success: false, error };
       }
     },
+    // Get all rides/caronas with pagination, optional status filtering, and search
+    getAllRides: async (page: number = 0, size: number = 10, status?: string, search?: string) => {
+      try {
+        let url = `/admin/caronas?page=${page}&size=${size}&sort=dataHoraPartida,desc`;
+        if (status && status !== 'all') {
+          url += `&status=${status}`;
+        }
+        if (search && search.trim()) {
+          url += `&search=${encodeURIComponent(search.trim())}`;
+        }
+        const response = await apiClient.get(url);
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Error fetching all rides:', error);
+        return { success: false, error };
+      }
+    },
   },
   reports: {
     getAllReports: async (): Promise<ApiResponse<Report[]>> => {
@@ -263,7 +280,17 @@ export const api = {
           message: error.response?.data?.message || 'Erro ao buscar resumo do dashboard'
         };
       }
-    }
+    },
+    // Get ride statistics for dashboard
+    getRideStats: async () => {
+      try {
+        const response = await apiClient.get('/admin/caronas/stats');
+        return { success: true, data: response.data };
+      } catch (error) {
+        console.error('Error fetching ride stats:', error);
+        return { success: false, error };
+      }
+    },
   },
 };
 
