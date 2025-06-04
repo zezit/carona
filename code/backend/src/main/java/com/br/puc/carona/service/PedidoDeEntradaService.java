@@ -13,6 +13,7 @@ import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.mapper.PedidoDeEntradaMapper;
 import com.br.puc.carona.model.Carona;
@@ -182,6 +183,7 @@ public class PedidoDeEntradaService {
         final Usuario currentUser = currentUserService.getCurrentUser();
 
         validarPermissaoParaCancelarPedido(pedido, currentUser);
+        validarStatusParaCancelarPedido(pedido);
 
         pedido.setStatus(Status.CANCELADO);
         pedidoEntradaRepository.save(pedido);
@@ -197,6 +199,15 @@ public class PedidoDeEntradaService {
             log.warn("Usuário ID {} não tem permissão para cancelar o pedido de entrada ID {}",
                     usuario.getId(), pedido.getId());
             throw new ErroDePermissao(MensagensResposta.SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE);
+        }
+    }
+
+    private void validarStatusParaCancelarPedido(final PedidoDeEntrada pedido) {
+        if (!Status.PENDENTE.equals(pedido.getStatus()) &&
+                !Status.APROVADO.equals(pedido.getStatus())) {
+            log.warn("Pedido de entrada ID {} não pode ser cancelado, status atual: {}", pedido.getId(),
+                    pedido.getStatus());
+            throw new ErroDeCliente(MensagensResposta.CARONA_STATUS_INVALIDO);
         }
     }
 }

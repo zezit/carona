@@ -22,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -39,6 +41,7 @@ import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.mapper.PedidoDeEntradaMapper;
 import com.br.puc.carona.model.Carona;
@@ -497,17 +500,6 @@ class PedidoDeEntradaServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção ao tentar cancelar pedido de entrada (método não implementado)")
-    void deveLancarExcecaoAoTentarCancelarPedidoDeEntrada() {
-        // When & Then
-        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
-            pedidoDeEntradaService.cancelarPedidoDeEntrada(1L);
-        });
-
-        assertEquals("Unimplemented method 'cancelarPedidoDeEntrada'", exception.getMessage());
-    }
-
-    @Test
     @DisplayName("Deve executar método legado aprovarPedidoDeEntrada")
     void deveExecutarMetodoLegadoAprovarPedidoDeEntrada() {
         // Given
@@ -671,6 +663,44 @@ class PedidoDeEntradaServiceTest {
         // Then
         verify(pedidoEntradaRepository, times(1)).findById(1L);
         verify(currentUserService, times(1)).getCurrentUser();
+        verify(pedidoEntradaRepository, times(1)).save(any(PedidoDeEntrada.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Status.class, names = {"PENDENTE", "APROVADO"}, mode = EnumSource.Mode.EXCLUDE)
+    @DisplayName("Só é possível cancelar pedidos com status PENDENTE ou APROVADO")
+    void soEhPossivelCancelarPedidosComStatusPendenteOuAprovado(final Status status) {
+        // Given
+        pedido.setStatus(status);
+        
+        when(currentUserService.getCurrentUser()).thenReturn(estudante);
+        when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        // When & Then
+        final ErroDeCliente exception = assertThrows(ErroDeCliente.class, () -> {
+            pedidoDeEntradaService.cancelarPedidoDeEntrada(1L);
+        });
+
+        assertEquals(MensagensResposta.CARONA_STATUS_INVALIDO, exception.getMessage());
+
+        verify(pedidoEntradaRepository, times(1)).findById(1L);
+        verify(pedidoEntradaRepository, never()).save(any(PedidoDeEntrada.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Status.class, names = {"PENDENTE", "APROVADO"}, mode = EnumSource.Mode.INCLUDE)
+    @DisplayName("Não deve cancelar pedidos com status diferente de PENDENTE ou APROVADO")
+    void naoDeveCancelarPedidosComStatusDiferenteDePendenteOuAprovado(final Status status) {
+        // Given
+        pedido.setStatus(status);
+        
+        when(currentUserService.getCurrentUser()).thenReturn(estudante);
+        when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        // When & Then
+        pedidoDeEntradaService.cancelarPedidoDeEntrada(1L);
+
+        verify(pedidoEntradaRepository, times(1)).findById(1L);
         verify(pedidoEntradaRepository, times(1)).save(any(PedidoDeEntrada.class));
     }
 }
