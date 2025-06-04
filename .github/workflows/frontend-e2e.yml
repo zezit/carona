@@ -324,10 +324,6 @@ jobs:
 
       - name: 🚀 Iniciando Backend
         working-directory: ./code/backend
-        env:
-          SUPABASE_API_KEY: dummy-key-for-testing
-          SUPABASE_PROJECT_CODE: dummy-project
-          SUPABASE_USERPHOTOS_BUCKET_NAME: userphotos
         run: |
           # Compilar aplicação primeiro
           mvn clean compile -DskipTests -q
@@ -335,29 +331,10 @@ jobs:
           # Criar arquivo temporário de credenciais FCM para testes
           echo '{"type": "service_account","project_id": "dummy"}' > dummy-credentials.json
           
-          # Iniciar aplicação em background com perfil customizado para E2E
+          # Iniciar aplicação em background com perfil E2E
           nohup mvn spring-boot:run \
-            -Dspring-boot.run.jvmArguments="\
-              -Dspring.profiles.active=e2e \
-              -Dspring.datasource.url=jdbc:mysql://localhost:$MYSQL_PORT/${{ env.DB_NAME }} \
-              -Dspring.datasource.username=${{ env.DB_USERNAME }} \
-              -Dspring.datasource.password=${{ env.DB_PASSWORD }} \
-              -Dspring.rabbitmq.host=localhost \
-              -Dspring.rabbitmq.port=$RABBITMQ_PORT \
-              -Dspring.rabbitmq.username=guest \
-              -Dspring.rabbitmq.password=guest \
-              -Dspring.rabbitmq.virtual-host=/ \
-              -Dsupabase.api-key=${SUPABASE_API_KEY} \
-              -Dsupabase.code=${SUPABASE_PROJECT_CODE} \
-              -Dsupabase.userphotos-bucket-name=${SUPABASE_USERPHOTOS_BUCKET_NAME} \
-              -Dfcm.credentials-file=dummy-credentials.json \
-              -Dfcm.project-name=carona-test \
-              -Dfcm.base-url=https://fcm.googleapis.com/v1/ \
-              -Dapp.cors.allowed-origins=http://localhost:5173 \
-              -Dspring.jpa.hibernate.ddl-auto=create-drop \
-              -Dspring.jpa.show-sql=false \
-              -Dlogging.level.com.br.puc.carona=INFO \
-              -Dserver.port=$BACKEND_PORT" \
+            -Dspring.profiles.active=e2e \
+            -Dspring-boot.run.jvmArguments="-Dserver.port=$BACKEND_PORT" \
             > ../backend.log 2>&1 &
           
           # Aguardar backend estar pronto
