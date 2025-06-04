@@ -635,7 +635,7 @@ class PedidoDeEntradaServiceTest {
     void naoDeveCancelarPedidosQueNaoSaoDoUsuarioLogado() {
         // Given
         when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(pedido));
-        when(currentUserService.getCurrentEstudante()).thenReturn(Estudante.builder().id(2L).build());
+        when(currentUserService.getCurrentUser()).thenReturn(Estudante.builder().id(2L).build());
 
         // When & Then
         final ErroDePermissao exception = assertThrows(ErroDePermissao.class, () -> {
@@ -646,6 +646,31 @@ class PedidoDeEntradaServiceTest {
 
         verify(pedidoEntradaRepository, never()).save(any(PedidoDeEntrada.class));
         verify(pedidoEntradaRepository, times(1)).findById(1L);
-        verify(currentUserService, times(1)).getCurrentEstudante();
+        verify(currentUserService, times(1)).getCurrentUser();
+    }
+
+    @Test
+    @DisplayName("Motorista pode cancelar pedido de entrada de seus passageiros")
+    void motoristaPodeCancelarPedidoDeEntradaDeSeusPassageiros() {
+        // Given
+        final PedidoDeEntrada otherStudentPedido = PedidoDeEntrada.builder()
+                .id(1L)
+                .carona(carona)
+                .solicitacao(SolicitacaoCarona.builder()
+                        .estudante(Estudante.builder().id(3L).build())
+                        .build())
+                .status(Status.PENDENTE)
+                .build();
+
+        when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(otherStudentPedido));
+        when(currentUserService.getCurrentUser()).thenReturn(estudante);
+
+        // When
+        pedidoDeEntradaService.cancelarPedidoDeEntrada(1L);
+
+        // Then
+        verify(pedidoEntradaRepository, times(1)).findById(1L);
+        verify(currentUserService, times(1)).getCurrentUser();
+        verify(pedidoEntradaRepository, times(1)).save(any(PedidoDeEntrada.class));
     }
 }

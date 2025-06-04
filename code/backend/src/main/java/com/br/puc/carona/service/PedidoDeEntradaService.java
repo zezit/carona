@@ -18,6 +18,7 @@ import com.br.puc.carona.mapper.PedidoDeEntradaMapper;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.PedidoDeEntrada;
 import com.br.puc.carona.model.SolicitacaoCarona;
+import com.br.puc.carona.model.Usuario;
 import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.PedidoDeEntradaRepository;
 import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
@@ -33,7 +34,7 @@ public class PedidoDeEntradaService {
     private final CaronaRepository caronaRepository;
     private final SolicitacaoCaronaRepository solicitacaoRepository;
     private final PedidoDeEntradaRepository pedidoEntradaRepository;
-    
+
     private final CaronaService caronaService;
     private final CurrentUserService currentUserService;
 
@@ -109,7 +110,7 @@ public class PedidoDeEntradaService {
      * Atualiza o status de um pedido de entrada (aprovar ou recusar)
      * 
      * @param idPedido ID do pedido a ser atualizado
-     * @param status Status para atualização (APROVAR ou REPROVAR)
+     * @param status   Status para atualização (APROVAR ou REPROVAR)
      * @return DTO com as informações atualizadas do pedido
      * @throws EntidadeNaoEncontrada se o pedido não for encontrado
      */
@@ -122,16 +123,17 @@ public class PedidoDeEntradaService {
         log.info("Atualizando pedido ID {} para status {}", idPedido, status);
         PedidoDeEntrada pedido = pedidoEntradaRepository.findById(idPedido)
                 .orElseThrow(() -> new EntidadeNaoEncontrada("Pedido de entrada não encontrado"));
-        
+
         switch (status) {
             case APROVADO:
                 caronaService.adicionarPassageiro(pedido.getCarona().getId(),
                         pedido.getSolicitacao().getEstudante());
                 pedido.setStatus(Status.APROVADO);
 
-                // Cancelar outros pedidos pendentes do mesmo estudante para outras caronas agendadas
-                log.info("Cancelando outros pedidos pendentes do estudante ID {}", 
-                         pedido.getSolicitacao().getEstudante().getId());
+                // Cancelar outros pedidos pendentes do mesmo estudante para outras caronas
+                // agendadas
+                log.info("Cancelando outros pedidos pendentes do estudante ID {}",
+                        pedido.getSolicitacao().getEstudante().getId());
                 pedidoEntradaRepository.findAll()
                         .stream()
                         .filter(p -> p.getSolicitacao().getEstudante().getId()
@@ -145,11 +147,11 @@ public class PedidoDeEntradaService {
                             log.debug("Pedido ID {} cancelado automaticamente", p.getId());
                         });
                 break;
-                
+
             case REJEITADO:
                 pedido.setStatus(Status.REJEITADO);
                 break;
-                
+
             default:
                 log.warn("Status inválido fornecido: {}", status);
                 throw new IllegalArgumentException("Status inválido: " + status);
@@ -158,7 +160,7 @@ public class PedidoDeEntradaService {
         // Salva as alterações no banco de dados
         PedidoDeEntrada pedidoAtualizado = pedidoEntradaRepository.save(pedido);
         log.info("Pedido de entrada com ID {} atualizado para o status {}", idPedido, status);
-        
+
         // Retorna o DTO atualizado
         return pedidoDeEntradaMapper.toDto(pedidoAtualizado);
     }
@@ -172,10 +174,28 @@ public class PedidoDeEntradaService {
     }
 
     public void cancelarPedidoDeEntrada(final Long idPedido) {
+        log.info("Iniciando cancelamento do pedido de entrada com ID {}", idPedido);
+
         final PedidoDeEntrada pedido = pedidoEntradaRepository.findById(idPedido)
                 .orElseThrow(() -> new EntidadeNaoEncontrada("Pedido de entrada não encontrado"));
 
-        if (!pedido.getSolicitacao().getEstudante().equals(currentUserService.getCurrentEstudante())) {
+        final Usuario currentUser = currentUserService.getCurrentUser();
+
+        validarPermissaoParaCancelarPedido(pedido, currentUser);
+
+        pedido.setStatus(Status.CANCELADO);
+        pedidoEntradaRepository.save(pedido);
+
+        log.info("Pedido de entrada com ID {} cancelado com sucesso", idPedido);
+    }
+
+    private void validarPermissaoParaCancelarPedido(final PedidoDeEntrada pedido, final Usuario usuario) {
+        final boolean isNotEstudante = !pedido.getSolicitacao().getEstudante().equals(usuario);
+        final boolean isNotMotorista = !pedido.getCarona().getMotorista().getEstudante().equals(usuario);
+
+        if (isNotEstudante && isNotMotorista) {
+            log.warn("Usuário ID {} não tem permissão para cancelar o pedido de entrada ID {}",
+                    usuario.getId(), pedido.getId());
             throw new ErroDePermissao(MensagensResposta.SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE);
         }
     }
