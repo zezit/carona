@@ -8,6 +8,7 @@ import { UserProvider } from "@/context/UserContext";
 import Login from "./pages/Login";
 import UserApproval from "./pages/UserApproval";
 import UserManagement from "./pages/UserManagement";
+import RideManagement from "./pages/RideManagement";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 import Report from "./pages/Report";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/home" element={<Index />} />
               <Route path="/approval" element={<UserApproval />} />
               <Route path="/users" element={<UserManagement />} />
+              <Route path="/rides" element={<RideManagement />} />
               <Route path="/report" element={<Report />} />
               <Route path="/report-test" element={<ReportTest />} />
               <Route path="*" element={<NotFound />} />

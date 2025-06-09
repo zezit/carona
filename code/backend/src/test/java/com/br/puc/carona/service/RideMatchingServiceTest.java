@@ -50,6 +50,7 @@ public class RideMatchingServiceTest {
 
     @Mock
     private PedidoDeEntradaRepository pedidoDeEntradaRepository;
+
     @Mock
     private RouteCalculatorUtil routeCalculator;
 
@@ -174,8 +175,8 @@ public class RideMatchingServiceTest {
                 .thenReturn(solicitacaoCarona);
         Mockito.when(solicitacaoCaronaRepository.save(Mockito.any(SolicitacaoCarona.class)))
                 .thenReturn(solicitacaoCarona);
+
         
-        // ✅ Mock para PedidoDeEntradaRepository.save()
         PedidoDeEntrada mockPedido = PedidoDeEntrada.builder()
                 .id(1L)
                 .carona(carona1)
@@ -201,13 +202,12 @@ public class RideMatchingServiceTest {
         Mockito.verify(solicitacaoCaronaMapper).toEntity(Mockito.any(SolicitacaoCaronaRequest.class),
                 Mockito.any(Estudante.class));
         Mockito.verify(solicitacaoCaronaRepository).save(solicitacaoCaptor.capture());
-        
-        // ✅ Verificar que PedidoDeEntrada foi salvo (não Carona!)
-        Mockito.verify(pedidoDeEntradaRepository).save(Mockito.any(PedidoDeEntrada.class));
-        
+
         Mockito.verify(websocketService).sendRideMatchNotification(Mockito.any(PedidoDeEntrada.class));
+        Mockito.verify(pedidoDeEntradaRepository).save(Mockito.any(PedidoDeEntrada.class));
 
         final SolicitacaoCarona savedSolicitacao = solicitacaoCaptor.getValue();
+
         Assertions.assertEquals(student, savedSolicitacao.getEstudante());
         Assertions.assertEquals(studentOrigin.getName(), savedSolicitacao.getOrigem());
         Assertions.assertEquals(studentDestination.getName(), savedSolicitacao.getDestino());
@@ -243,6 +243,7 @@ public class RideMatchingServiceTest {
                 .thenReturn(solicitacaoCarona);
         Mockito.when(solicitacaoCaronaRepository.save(Mockito.any(SolicitacaoCarona.class)))
                 .thenReturn(solicitacaoCarona);
+
         
         // ✅ Mock para PedidoDeEntradaRepository.save()
         PedidoDeEntrada mockPedido = PedidoDeEntrada.builder()
@@ -253,6 +254,7 @@ public class RideMatchingServiceTest {
         Mockito.when(pedidoDeEntradaRepository.save(Mockito.any(PedidoDeEntrada.class)))
                 .thenReturn(mockPedido);
 
+
         // When
         rideMatchingService.matchAndAssign(request);
 
@@ -262,9 +264,10 @@ public class RideMatchingServiceTest {
 
         final PedidoDeEntrada savedPedido = pedidoCaptor.getValue();
         
-        // ✅ Verify that carona1 was chosen (the one with smaller detour)
+        
         Assertions.assertEquals(1L, savedPedido.getCarona().getId());
         Assertions.assertEquals(solicitacaoCarona, savedPedido.getSolicitacao());
+
     }
     @Test
     @DisplayName("Deve lançar exceção quando não encontra carona compatível")

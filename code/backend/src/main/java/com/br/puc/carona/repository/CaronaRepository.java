@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.br.puc.carona.dto.LocationDTO;
@@ -55,4 +56,25 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
             LocationDTO studentDestination);
 
     List<Carona> findByDataHoraPartidaBetween(LocalDateTime start, LocalDateTime end);
+
+    // Method for filtering caronas by status with pagination
+    Page<Carona> findByStatus(StatusCarona status, Pageable pageable);
+
+    // Search methods for admin functionality
+    @Query("SELECT c FROM Carona c WHERE c.status = :status AND " +
+           "(LOWER(c.motorista.estudante.nome) LIKE :searchTerm OR " +
+           "LOWER(c.pontoPartida) LIKE :searchTerm OR " +
+           "LOWER(c.pontoDestino) LIKE :searchTerm)")
+    Page<Carona> findByStatusAndSearch(@Param("status") StatusCarona status, 
+                                       @Param("searchTerm") String searchTerm, 
+                                       Pageable pageable);
+
+    @Query("SELECT c FROM Carona c WHERE " +
+           "(LOWER(c.motorista.estudante.nome) LIKE :searchTerm OR " +
+           "LOWER(c.pontoPartida) LIKE :searchTerm OR " +
+           "LOWER(c.pontoDestino) LIKE :searchTerm)")
+    Page<Carona> findBySearch(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    // Statistics count methods
+    Long countByStatus(StatusCarona status);
 }

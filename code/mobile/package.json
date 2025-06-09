@@ -27,8 +27,10 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "expo": "~52.0.42",
+    "expo-av": "~15.0.2",
     "expo-blur": "~14.0.3",
     "expo-constants": "^17.0.8",
+    "expo-haptics": "~14.0.1",
     "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "~14.0.2",
     "expo-location": "~18.0.10",
@@ -47,9 +49,7 @@
     "react-native-svg": "15.8.0",
     "react-native-toast-message": "^2.3.0",
     "socket.io-client": "^4.8.1",
-    "sockjs-client": "^1.6.1",
-    "expo-haptics": "~14.0.1",
-    "expo-av": "~15.0.2"
+    "sockjs-client": "^1.6.1"
   },
    "nyc": {
     "reporter": ["html", "text"],

@@ -2,15 +2,21 @@ package com.br.puc.carona.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.br.puc.carona.dto.response.CaronaDto;
 import com.br.puc.carona.dto.response.EstudanteDto;
+import com.br.puc.carona.dto.response.RideStatsDto;
 import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.service.AdministradorService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,5 +79,44 @@ public class AdminController {
         List<EstudanteDto> allUsers = adminService.getAllUsers();
         log.info("Fim da requisição para listar todos os usuários. Total encontrado: {}", allUsers.size());
         return ResponseEntity.ok(allUsers);
+    }
+
+    @GetMapping("/caronas")
+    @Operation(summary = "Listar todas as caronas", description = "Retorna uma lista paginada de todas as caronas do sistema para administradores com filtro opcional por status e pesquisa")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de caronas retornada com sucesso",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Page.class))),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+        @ApiResponse(responseCode = "403", description = "Usuário não tem permissão de administrador"),
+        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<Page<CaronaDto>> listarTodasCaronas(
+            Pageable pageable,
+            @RequestParam(value = "status", required = false) StatusCarona status,
+            @RequestParam(value = "search", required = false) String search) {
+        log.info("Solicitação de listagem de todas as caronas - página: {}, tamanho: {}, status: {}, pesquisa: {}", 
+                 pageable.getPageNumber(), pageable.getPageSize(), status, search);
+        final Page<CaronaDto> caronas = adminService.listarTodasCaronas(pageable, status, search);
+        log.info("Retornadas {} caronas de um total de {}", caronas.getNumberOfElements(), caronas.getTotalElements());
+        return ResponseEntity.ok(caronas);
+    }
+
+    @GetMapping("/caronas/stats")
+    @Operation(summary = "Obter estatísticas das caronas", description = "Retorna estatísticas agregadas de todas as caronas do sistema")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Estatísticas obtidas com sucesso",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = RideStatsDto.class))),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+        @ApiResponse(responseCode = "403", description = "Usuário não tem permissão de administrador"),
+        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<RideStatsDto> obterEstatisticasCaronas() {
+        log.info("Solicitação de estatísticas das caronas");
+        final RideStatsDto stats = adminService.obterEstatisticasCaronas();
+        log.info("Estatísticas obtidas: total={}, agendada={}, em_andamento={}, finalizada={}, cancelada={}", 
+                 stats.getTotal(), stats.getAgendada(), stats.getEmAndamento(), stats.getFinalizada(), stats.getCancelada());
+        return ResponseEntity.ok(stats);
     }
 }
