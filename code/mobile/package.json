@@ -6,7 +6,11 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test:e2e:coverage": "cypress run --env coverage=true",
+    "coverage:report": "nyc report --reporter=html --reporter=text",
+    "coverage:open": "open coverage/index.html || start coverage/index.html || xdg-open coverage/index.html"
+
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
@@ -46,6 +50,11 @@
     "react-native-toast-message": "^2.3.0",
     "socket.io-client": "^4.8.1",
     "sockjs-client": "^1.6.1"
+  },
+   "nyc": {
+    "reporter": ["html", "text"],
+    "include": ["src/**/*.{js,jsx,ts,tsx}"],
+    "exclude": ["**/*.test.*", "**/*.spec.*", "cypress/**"]
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

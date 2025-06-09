@@ -138,7 +138,7 @@ const {
                 placeholder="••••••••"
                 className="transition-all duration-200 focus:ring-carona-500 focus:border-carona-500 pr-10"
               />
-              <button
+              <button  data-cy="password-toggle"
               type="button"
               onClick={toggleShowPassword}
               className={`absolute right-3 top-1/2 -translate-y-1/2

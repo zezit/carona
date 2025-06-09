@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { CheckSquare, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 const Index = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -19,11 +20,14 @@ const Index = () => {
     }, 300);
   }, []);
 
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
+  if (authLoading) {
+    <LoadingSpinner/>
   }
 
+
+  if (!authLoading && !isAuthenticated) {
+    return <Navigate to="/" />;
+  }
   // Animações para a página e componentes
   const pageVariants = {
     initial: { opacity: 0, y: 20 },
@@ -45,16 +49,7 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="text-carona-600 text-xl font-medium"
-        >
-          Carregando...
-        </motion.div>
-      </div>
+     <LoadingSpinner/>
     );
   }
 

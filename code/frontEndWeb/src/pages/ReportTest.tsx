@@ -49,9 +49,9 @@ export function ReportTest() {
   }
 
   // Redirect if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
-  }
+  // if (!isAuthenticated) {
+  //   return <Navigate to="/" />;
+  // }
 
   // Função para buscar relatórios
   const fetchReports = async () => {

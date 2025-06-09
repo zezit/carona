@@ -96,9 +96,9 @@ export default function Report() {
   }
 
   // Redirect if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
-  }
+  // if (!isAuthenticated) {
+  //   return <Navigate to="/" />;
+  // }
 
   const getTotalMetrics = () => {
     return metrics.reduce((acc, curr) => ({

@@ -22,16 +22,16 @@ public class SignupUsuarioRequest {
 
     @NotBlank(message = "comum.atributos.nome.obrigatorio")
     @Size(min = 3, max = 100, message = "comum.atributos.nome.tamanho")
-    @Schema(description = "Nome completo do usuário", example = "Maria Silva Pereira")
+    @Schema(description = "Nome completo do usuário", example = "Administrator")
     private String nome;
 
     @NotBlank(message = "comum.atributos.email.obrigatorio")
     @Email(message = "comum.atributos.email.invalido")
-    @Schema(description = "E-mail do usuário, utilizado como login", example = "maria.silva@pucminas.br")
+    @Schema(description = "E-mail do usuário, utilizado como login", example = "admin@carona.com")
     private String email;
 
     @NotNull(message = "comum.atributos.tipo_usuario.obrigatorio")
-    @Schema(description = "Tipo de usuário no sistema", example = "ADMIN")
+    @Schema(description = "Tipo de usuário no sistema", example = "ADMINISTRADOR")
     private TipoUsuario tipoUsuario;
 
     /**
@@ -41,6 +41,6 @@ public class SignupUsuarioRequest {
     @NotBlank(message = "comum.atributos.senha.obrigatorio")
     @Size(min = 32, max = 32, message = "comum.atributos.senha.tamanho_invalido")
     @Pattern(regexp = "^[a-fA-F0-9]{32}$", message = "senha.formato.invalido")
-    @Schema(description = "Senha criptografada em MD5 (32 caracteres hexadecimais)", example = "5f4dcc3b5aa765d61d8327deb882cf99")
+    @Schema(description = "Senha criptografada em MD5 (32 caracteres hexadecimais)", example = "0192023a7bbd73250516f069df18b500")
     private String password;
 }
