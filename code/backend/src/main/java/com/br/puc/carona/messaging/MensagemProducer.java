@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.messaging.contract.AvaliacaoMessageDTO;
 import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
+import com.br.puc.carona.messaging.contract.RideFinishedMessageDTO;
 import com.br.puc.carona.messaging.contract.RideStartedMessageDTO;
 
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,11 @@ public class MensagemProducer {
 
     public void enviarMensagemCaronaIniciada(final RideStartedMessageDTO msg) {
         log.info("Enviando mensagem de carona iniciada: {}", notificationsQueue);
+        rabbitTemplate.convertAndSend(notificationsQueue, msg);
+    }
+
+    public void enviarMensagemCaronaFinalizada(final RideFinishedMessageDTO msg) {
+        log.info("Enviando mensagem de carona finalizada: {}", notificationsQueue);
         rabbitTemplate.convertAndSend(notificationsQueue, msg);
     }
 }

@@ -21,7 +21,7 @@ import { COLORS, RADIUS } from '../../constants';
 import { commonStyles } from '../../theme/styles/commonStyles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { apiClient } from '../../services/api/apiClient';
+import { apiClient, finalizarCarona as finalizarCaronaAPI } from '../../services/api/apiClient';
 import UserAvatar from '../../components/common/UserAvatar';
 import StarRating from '../../components/common/StarRating';
 import LocationSharingService from '../../services/websocket/LocationSharingService';
@@ -737,10 +737,10 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  const finalizarCarona = () => {
+  const finalizarCarona = async () => {
     Alert.alert(
       'Finalizar Carona',
-      'Deseja realmente finalizar esta carona?',
+      'Deseja realmente finalizar esta carona? Os passageiros serão notificados.',
       [
         {
           text: 'Cancelar',
@@ -748,10 +748,30 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
         },
         {
           text: 'Finalizar',
-          onPress: () => {
-            // Aqui você implementaria a chamada para a API
-            navigation.goBack();
-            Alert.alert('Sucesso', 'Carona finalizada com sucesso!');
+          onPress: async () => {
+            try {
+              console.log('Finalizing ride with ID:', carona.id);
+              
+              const response = await finalizarCaronaAPI(carona.id, authToken);
+
+              if (response.success) {
+                Alert.alert('Sucesso', 'Carona finalizada com sucesso! Os passageiros foram notificados.');
+                
+                // Stop location sharing when ride is finished
+                await stopLocationSharing();
+                
+                // Update carona status locally or refresh the screen
+                if (route.params.onUpdate) {
+                  route.params.onUpdate();
+                }
+                navigation.goBack();
+              } else {
+                Alert.alert('Erro', response.error || 'Não foi possível finalizar a carona.');
+              }
+            } catch (error) {
+              console.error('Error finalizing ride:', error);
+              Alert.alert('Erro', 'Ocorreu um erro ao finalizar a carona. Tente novamente.');
+            }
           },
         },
       ]

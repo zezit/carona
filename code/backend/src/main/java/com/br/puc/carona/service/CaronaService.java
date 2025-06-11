@@ -31,6 +31,7 @@ import com.br.puc.carona.mapper.TrajetoMapper;
 import com.br.puc.carona.messaging.MensagemProducer;
 import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
 import com.br.puc.carona.messaging.contract.RideStartedMessageDTO;
+import com.br.puc.carona.messaging.contract.RideFinishedMessageDTO;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.PedidoDeEntrada;
@@ -446,7 +447,7 @@ public class CaronaService {
 
     @Transactional
     public CaronaDto finalizarCarona(Long idCarona) {
-        log.info("Iniciando carona com ID: {}", idCarona);
+        log.info("Finalizando carona com ID: {}", idCarona);
         Carona carona = caronaRepository.findById(idCarona)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
 
@@ -457,10 +458,13 @@ public class CaronaService {
             throw new CaronaStatusInvalido();
         }
 
-
         CaronaDto caronaAtualizada = alterarStatusCarona(idCarona, StatusCarona.FINALIZADA);
 
+        // Send ride finished notifications to passengers via queue
+        notificarPassageirosRideFinalizada(carona, currentUserService.getCurrentEstudante().getId());
+
         webSocketService.emitirEventoCaronaAtualizada(caronaAtualizada);
+        webSocketService.emitirEventoCaronaFinalizada(carona);
 
         return caronaAtualizada;
 
@@ -760,5 +764,48 @@ public class CaronaService {
         }
         
         log.info("Processamento de notificações de carona iniciada concluído para carona ID: {}", carona.getId());
+    }
+
+    /**
+     * Notifica todos os passageiros confirmados sobre a finalização da carona
+     * 
+     * @param carona A carona que foi finalizada
+     * @param driverId ID do motorista que finalizou a carona
+     */
+    private void notificarPassageirosRideFinalizada(final Carona carona, final Long driverId) {
+        log.info("Enviando notificações de carona finalizada para a carona ID: {}", carona.getId());
+        
+        // Get all confirmed passengers for this ride
+        final Set<Estudante> passageiros = carona.getPassageiros();
+        
+        if (passageiros == null || passageiros.isEmpty()) {
+            log.info("Nenhum passageiro confirmado encontrado para a carona ID: {}", carona.getId());
+            return;
+        }
+        
+        for (final Estudante passageiro : passageiros) {
+            final Long passageiroId = passageiro.getId();
+            
+            log.info("Enviando notificação de carona finalizada para passageiro ID: {}", passageiroId);
+            
+            final RideFinishedMessageDTO finishedMessage = RideFinishedMessageDTO.builder()
+                    .caronaId(carona.getId())
+                    .driverId(driverId)
+                    .finishedByUserId(driverId)
+                    .affectedUserId(passageiroId) // Set the passenger as affected user
+                    .notificationType(NotificationType.RIDE_FINISHED)
+                    .message("A carona foi finalizada pelo motorista")
+                    .build();
+            
+            try {
+                mensagemProducer.enviarMensagemCaronaFinalizada(finishedMessage);
+                log.info("Notificação de carona finalizada enviada com sucesso para passageiro ID: {}", passageiroId);
+            } catch (Exception e) {
+                log.error("Erro ao enviar notificação de carona finalizada para passageiro ID: {}: {}", 
+                         passageiroId, e.getMessage(), e);
+            }
+        }
+        
+        log.info("Processamento de notificações de carona finalizada concluído para carona ID: {}", carona.getId());
     }
 }
