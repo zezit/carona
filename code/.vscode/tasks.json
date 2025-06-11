@@ -1,20 +1,23 @@
 {
 	"version": "2.0.0",
 	"tasks": [
-		{
-			"label": "Start MySQL Database",
-			"type": "shell",
-			"command": "${workspaceFolder}/backend/start-db.sh",
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": false,
-				"panel": "shared",
-				"showReuseMessage": true,
-				"clear": false
-			},
-			"problemMatcher": []
-		},
+        {
+            "label": "Start MySQL Database",
+            "type": "shell",
+            "command": "./start-db.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/backend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": []
+        },
 		{
 			"label": "Run Ngrok and Update API",
 			"type": "shell",

@@ -82,7 +82,10 @@ const UserCard: React.FC<UserCardProps> = ({
   const imageUrl = getImageUrl(user.imgUrl);
 
   return (
-    <Card className="w-full h-full flex flex-col glass-card overflow-hidden hover:shadow-md transition-all border border-gray-200">
+    <Card 
+      data-cy="user-card" 
+      className="w-full h-full flex flex-col glass-card overflow-hidden hover:shadow-md transition-all border border-gray-200"
+    >
       <CardHeader className="p-4 flex flex-row items-center space-x-4 pb-2 min-h-[80px]">
         {/* User Image or Icon with fixed dimensions */}
         <div className="relative flex-shrink-0 w-12 h-12">
@@ -93,6 +96,7 @@ const UserCard: React.FC<UserCardProps> = ({
                 alt={user.nome} 
                 className="h-full w-full object-cover"
                 loading="lazy"
+                data-cy="user-image"
                 onError={(e) => {
                   // If image fails to load, show placeholder icon instead
                   e.currentTarget.style.display = 'none';
@@ -110,17 +114,22 @@ const UserCard: React.FC<UserCardProps> = ({
             </div>
           )}
           {isMotorista && (
-            <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-carona-600 flex items-center justify-center text-white border border-white">
+            <div 
+              data-cy="motorista-badge"
+              className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-carona-600 flex items-center justify-center text-white border border-white"
+            >
               <Car className="h-3 w-3" />
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0 overflow-hidden">
-          <div className="font-medium text-lg truncate">{user.nome}</div>
-          <div className="text-sm text-gray-500 truncate">{user.email}</div>
+          <div data-cy="user-name" className="font-medium text-lg truncate">{user.nome}</div>
+          <div data-cy="user-email" className="text-sm text-gray-500 truncate">{user.email}</div>
         </div>
         <div className="flex-shrink-0">
-          {getStatusBadge(user.status)}
+          <div data-cy="user-status">
+            {getStatusBadge(user.status)}
+          </div>
         </div>
       </CardHeader>
       
@@ -128,21 +137,21 @@ const UserCard: React.FC<UserCardProps> = ({
         <div className="text-sm text-gray-600 space-y-1">
           <div className="flex justify-between">
             <span className="text-gray-500 whitespace-nowrap mr-2">Data de Nascimento:</span>
-            <span className="font-medium text-right">{formatBirthDate(user.dataDeNascimento)}</span>
+            <span data-cy="user-birthdate" className="font-medium text-right">{formatBirthDate(user.dataDeNascimento)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 whitespace-nowrap mr-2">Matrícula:</span>
-            <span className="font-medium text-right">{user.matricula || '—'}</span>
+            <span data-cy="user-matricula" className="font-medium text-right">{user.matricula || '—'}</span>
           </div>
           {user.curso && (
             <div className="flex justify-between">
               <span className="text-gray-500 whitespace-nowrap mr-2">Curso:</span>
-              <span className="font-medium truncate ml-2 text-right max-w-[60%]" title={user.curso}>{user.curso}</span>
+              <span data-cy="user-curso" className="font-medium truncate ml-2 text-right max-w-[60%]" title={user.curso}>{user.curso}</span>
             </div>
           )}
           <div className="flex justify-between">
             <span className="text-gray-500 whitespace-nowrap mr-2">Avaliação:</span>
-            <span className="font-medium flex items-center justify-end">
+            <span data-cy="user-rating" className="font-medium flex items-center justify-end">
               {user.avaliacaoMedia !== undefined ? (
                 <>
                   {user.avaliacaoMedia.toFixed(1)}
@@ -158,6 +167,7 @@ const UserCard: React.FC<UserCardProps> = ({
 
       <CardFooter className="p-4 pt-0 grid grid-cols-2 gap-2 mt-auto border-t border-gray-100">
         <Button 
+          data-cy="view-details-btn"
           variant="outline" 
           size="sm" 
           className="w-full"
@@ -169,6 +179,7 @@ const UserCard: React.FC<UserCardProps> = ({
         {mode === "approval" && user.status === "PENDENTE" ? (
           <>
             <Button 
+              data-cy="approve-btn"
               variant="default" 
               size="sm" 
               className="w-full bg-green-600 hover:bg-green-700 text-white"
@@ -178,6 +189,7 @@ const UserCard: React.FC<UserCardProps> = ({
               Aprovar
             </Button>
             <Button 
+              data-cy="reject-btn"
               variant="destructive" 
               size="sm" 
               className="w-full col-span-2 mt-1"
@@ -190,6 +202,7 @@ const UserCard: React.FC<UserCardProps> = ({
         ) : mode === "management" ? (
           user.status === "CANCELADO" ? (
             <Button 
+              data-cy="unblock-btn"
               variant="outline" 
               size="sm" 
               className="w-full text-green-600 border-green-200 hover:bg-green-50"
@@ -200,6 +213,7 @@ const UserCard: React.FC<UserCardProps> = ({
             </Button>
           ) : (
             <Button 
+              data-cy="block-btn"
               variant="outline" 
               size="sm" 
               className="w-full text-red-600 border-red-200 hover:bg-red-50"
@@ -213,6 +227,7 @@ const UserCard: React.FC<UserCardProps> = ({
         
         {mode === "management" && (
           <Button 
+            data-cy="delete-btn"
             variant="ghost" 
             size="sm" 
             className="w-full text-gray-600 hover:text-red-700 hover:bg-red-50 col-span-2 mt-1"

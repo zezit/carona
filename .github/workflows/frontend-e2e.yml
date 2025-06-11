@@ -1,0 +1,571 @@
+# .github/workflows/frontEndWeb-e2e.yml
+# 🧪 Testes E2E FrontEndWeb com Cypress
+
+name: Testes E2E 🧪 - FrontEndWeb
+
+on:
+  push:
+    paths:
+      - 'code/frontEndWeb/**'
+      - 'code/backend/**'  # Backend também afeta E2E
+      - 'code/frontEndWeb/cypress/**'
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+    paths:
+      - 'code/frontEndWeb/**'
+      - 'code/backend/**'
+      - 'code/frontEndWeb/cypress/**'
+
+env:
+  # Configurações do ambiente de teste
+  FRONTENDWEB_URL: http://localhost:5173
+  BACKEND_URL: http://localhost:8080
+  DB_HOST: localhost
+  DB_PORT: 3306
+  DB_NAME: carpool_test_e2e
+  DB_USERNAME: test_user
+  DB_PASSWORD: test_password
+  DB_ROOT_PASSWORD: root_password
+  
+  # Configurações específicas do Cypress
+  CYPRESS_baseUrl: http://localhost:5173
+  CYPRESS_apiUrl: http://localhost:8080/api
+  CYPRESS_adminEmail: admin@carona.com
+  CYPRESS_adminPassword: admin123
+  CYPRESS_adminHashedPassword: '$2a$10$8RdQFz7J9GqVQ4ZxFzQJZuNnQqQJrQrL5rQxKxqF1xLnNnLjYKqJ2'
+  
+  # Configurações do CI
+  CI: true
+  NODE_ENV: test
+
+jobs:
+  # 🎯 Testes rápidos de smoke
+  smoke-tests:
+    if: (github.event_name != 'pull_request' && ! github.event.pull_request.head.repo.fork) || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.fork || startsWith(github.head_ref, 'dependabot/')))
+    runs-on: ubuntu-latest
+    name: 🎯 Smoke Tests
+    
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: 📥 Checando código fonte
+        uses: actions/checkout@v4
+
+      - name: 🟢 Configurando Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📦 Instalando dependências do FrontEndWeb
+        working-directory: ./code/frontEndWeb
+        run: |
+          # Verificar se package-lock.json existe
+          if [ ! -f "package-lock.json" ]; then
+            echo "❌ package-lock.json não encontrado. Executando npm install..."
+            npm install
+          else
+            echo "✅ package-lock.json encontrado. Executando npm ci..."
+            npm ci
+          fi
+
+      - name: 🧪 Executando Smoke Tests
+        working-directory: ./code/frontEndWeb
+        run: |
+          # Build da aplicação primeiro
+          echo "🏗️ Building aplicação..."
+          npm run build
+          
+          # Iniciar preview da aplicação para smoke tests
+          echo "🌐 Iniciando preview..."
+          nohup npm run preview > ../smoke-preview.log 2>&1 &
+          
+          # Aguardar preview estar pronto
+          echo "⏳ Aguardando preview estar pronto..."
+          timeout 30 bash -c 'until curl -f http://localhost:4173 2>/dev/null; do sleep 1; done' || {
+            echo "❌ Preview não ficou pronto. Logs:"
+            tail -10 ../smoke-preview.log
+            exit 1
+          }
+          echo "✅ Preview está pronto!"
+          
+          # Executar apenas testes básicos sem backend
+          echo "🧪 Executando smoke tests..."
+          npx cypress run \
+            --spec "cypress/e2e/auth/login.cy.js" \
+            --browser chrome \
+            --headless \
+            --config "baseUrl=http://localhost:4173,video=false,screenshotOnRunFailure=true,defaultCommandTimeout=5000" \
+            --env "skipApiTests=true,CI=true" || {
+            echo "❌ Smoke tests falharam"
+            echo "📋 Logs do preview:"
+            tail -20 ../smoke-preview.log
+            exit 1
+          }
+          echo "✅ Smoke tests concluídos!"
+
+      - name: 📊 Upload de artefatos em caso de falha
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-test-artifacts
+          path: |
+            code/frontEndWeb/cypress/screenshots
+            code/frontEndWeb/cypress/videos
+          retention-days: 3
+
+  # 🧪 Testes E2E completos
+  e2e-tests:
+    if: (github.event_name != 'pull_request' && ! github.event.pull_request.head.repo.fork) || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.fork || startsWith(github.head_ref, 'dependabot/')))
+    runs-on: ubuntu-latest
+    name: 🧪 E2E Tests
+    
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      statuses: write
+
+    # 📋 Estratégia de matriz para diferentes browsers
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+        include:
+          - browser: chrome
+            port_offset: 0
+          - browser: firefox
+            port_offset: 10
+
+    steps:
+      - name: 📥 Checando código fonte
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configurando portas dinâmicas
+        run: |
+          # Calcular portas baseadas no offset da matrix
+          PORT_OFFSET=${{ matrix.port_offset }}
+          
+          # Calcular portas dinâmicas
+          MYSQL_PORT=$((3306 + PORT_OFFSET))
+          RABBITMQ_PORT=$((5672 + PORT_OFFSET))
+          RABBITMQ_MGMT_PORT=$((15672 + PORT_OFFSET))
+          BACKEND_PORT=$((8080 + PORT_OFFSET))
+          
+          # Salvar como variáveis de ambiente para próximos steps
+          echo "MYSQL_PORT=$MYSQL_PORT" >> $GITHUB_ENV
+          echo "RABBITMQ_PORT=$RABBITMQ_PORT" >> $GITHUB_ENV
+          echo "RABBITMQ_MGMT_PORT=$RABBITMQ_MGMT_PORT" >> $GITHUB_ENV
+          echo "BACKEND_PORT=$BACKEND_PORT" >> $GITHUB_ENV
+          
+          echo "🔧 Portas configuradas:"
+          echo "  MySQL: $MYSQL_PORT"
+          echo "  RabbitMQ: $RABBITMQ_PORT"
+          echo "  RabbitMQ Management: $RABBITMQ_MGMT_PORT"
+          echo "  Backend: $BACKEND_PORT"
+
+      - name: 🟢 Configurando Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 🐳 Instalando Docker Compose
+        run: |
+          # Verificar se docker compose está disponível
+          if ! docker compose version >/dev/null 2>&1; then
+            echo "Docker Compose V2 não encontrado, instalando docker-compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            echo "docker-compose instalado:"
+            docker-compose --version
+          else
+            echo "Docker Compose V2 disponível:"
+            docker compose version
+          fi
+
+      - name: ☕ Configurando JDK 21
+        uses: actions/setup-java@v4
+        with: 
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: 🔧 Configurando cache do Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven
+
+      - name: 📦 Instalando dependências do FrontEndWeb
+        working-directory: ./code/frontEndWeb
+        run: |
+          echo "🔍 Debug: Verificando estrutura de arquivos..."
+          pwd
+          ls -la
+          echo "📦 Verificando package.json e package-lock.json..."
+          ls -la package* || echo "Arquivos package não encontrados"
+          
+          # Verificar se package-lock.json existe
+          if [ ! -f "package-lock.json" ]; then
+            echo "❌ package-lock.json não encontrado. Executando npm install..."
+            npm install
+          else
+            echo "✅ package-lock.json encontrado. Executando npm ci..."
+            npm ci
+          fi
+          npm run build
+
+      - name: 🐳 Iniciando serviços Docker
+        run: |
+          # Verificar se arquivo docker-compose existe
+          if [ ! -f "docker-compose-e2e.yml" ]; then
+            echo "❌ Arquivo docker-compose-e2e.yml não encontrado"
+            echo "📂 Conteúdo do diretório atual:"
+            pwd
+            ls -la
+            exit 1
+          fi
+          
+          # Iniciar serviços com portas dinâmicas
+          docker compose -f docker-compose-e2e.yml up -d
+          
+          # Função para verificar saúde de serviços específicos
+          check_service() {
+            local service=$1
+            local max_attempts=30
+            local attempt=1
+            
+            echo "Verificando serviço: $service"
+            while [ $attempt -le $max_attempts ]; do
+              if docker compose -f docker-compose-e2e.yml ps $service | grep -q "healthy"; then
+                echo "✅ $service está saudável"
+                return 0
+              fi
+              echo "⏳ Tentativa $attempt/$max_attempts - Aguardando $service..."
+              sleep 4
+              attempt=$((attempt + 1))
+            done
+            
+            echo "❌ $service não ficou saudável após $max_attempts tentativas"
+            docker compose -f docker-compose-e2e.yml logs $service
+            return 1
+          }
+          
+          # Verificar cada serviço individualmente
+          for service in mysql rabbitmq; do
+            if ! check_service $service; then
+              echo "❌ Falha ao inicializar $service"
+              docker compose -f docker-compose-e2e.yml logs
+              docker compose -f docker-compose-e2e.yml down -v
+              exit 1
+            fi
+          done
+          
+          echo "✅ Todos os serviços estão saudáveis!"
+          docker compose -f docker-compose-e2e.yml ps
+        env:
+          DB_ROOT_PASSWORD: ${{ env.DB_ROOT_PASSWORD || 'root_password' }}
+          DB_NAME: ${{ env.DB_NAME || 'carpool_test_e2e' }}
+          DB_USERNAME: ${{ env.DB_USERNAME || 'test_user' }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD || 'test_password' }}
+          DB_PORT: ${{ env.MYSQL_PORT || '3306' }}
+          RABBITMQ_PORT: ${{ env.RABBITMQ_PORT || '5672' }}
+          RABBITMQ_MGMT_PORT: ${{ env.RABBITMQ_MGMT_PORT || '15672' }}
+
+      - name: 🌱 Preparando dados de teste
+        run: |
+          echo "Verificando conectividade com MySQL..."
+          
+          # Função para tentar conexão MySQL com retry
+          try_mysql_connection() {
+            local max_attempts=30
+            local attempt=1
+            local wait_time=5
+            
+            while [ $attempt -le $max_attempts ]; do
+              echo "Tentativa $attempt de $max_attempts para conectar ao MySQL..."
+              
+              if mysql --protocol=TCP -h localhost -P $MYSQL_PORT -u root -p${{ env.DB_ROOT_PASSWORD }} \
+                 -e "SELECT 1" > /dev/null 2>&1; then
+                echo "✅ Conexão MySQL estabelecida!"
+                return 0
+              fi
+              
+              echo "⏳ Aguardando $wait_time segundos antes da próxima tentativa..."
+              sleep $wait_time
+              attempt=$((attempt + 1))
+            done
+            
+            echo "❌ Não foi possível estabelecer conexão com MySQL após $max_attempts tentativas"
+            return 1
+          }
+          
+          # Tentar estabelecer conexão
+          if ! try_mysql_connection; then
+            echo "❌ Erro conectando ao MySQL. Verificando status dos containers..."
+            docker compose -f docker-compose-e2e.yml logs mysql
+            exit 1
+          fi
+          
+          # Preparar banco de dados
+          mysql --protocol=TCP -h localhost -P $MYSQL_PORT -u root -p${{ env.DB_ROOT_PASSWORD }} -e "
+            CREATE DATABASE IF NOT EXISTS ${{ env.DB_NAME }};
+            CREATE USER IF NOT EXISTS '${{ env.DB_USERNAME }}'@'%' IDENTIFIED BY '${{ env.DB_PASSWORD }}';
+            GRANT ALL PRIVILEGES ON ${{ env.DB_NAME }}.* TO '${{ env.DB_USERNAME }}'@'%';
+            FLUSH PRIVILEGES;
+            USE ${{ env.DB_NAME }};
+          "
+          
+          echo "✅ Dados de teste preparados!"
+
+      - name: 🚀 Iniciando Backend
+        working-directory: ./code/backend
+        run: |
+          # Compilar aplicação primeiro
+          mvn clean compile -DskipTests -q
+          
+          # Criar arquivo temporário de credenciais FCM para testes
+          echo '{"type": "service_account","project_id": "dummy"}' > dummy-credentials.json
+          
+          # Iniciar aplicação em background com perfil E2E
+          nohup mvn spring-boot:run \
+            -Dspring.profiles.active=e2e \
+            -Dspring-boot.run.jvmArguments="-Dserver.port=$BACKEND_PORT" \
+            > ../backend.log 2>&1 &
+          
+          # Aguardar backend estar pronto
+          echo "Aguardando backend estar pronto na porta $BACKEND_PORT..."
+          timeout 120 bash -c "until curl -f http://localhost:$BACKEND_PORT/actuator/health 2>/dev/null; do sleep 2; done" || {
+            echo "Backend não ficou pronto a tempo. Verificando logs..."
+            tail -50 ../backend.log
+            exit 1
+          }
+          echo "Backend está pronto!"
+        timeout-minutes: 5
+
+      - name: 🌐 Iniciando FrontEndWeb
+        working-directory: ./code/frontEndWeb
+        run: |
+          # Configurar variável de ambiente para apontar para o backend com porta dinâmica
+          export VITE_API_BASE_URL="http://localhost:$BACKEND_PORT"
+          
+          # Iniciar frontEndWeb em background  
+          nohup npm run dev -- --host 0.0.0.0 --port 5173 > ../frontEndWeb.log 2>&1 &
+          
+          # Aguardar frontEndWeb estar pronto
+          echo "Aguardando frontend estar pronto..."
+          timeout 60 bash -c 'until curl -f http://localhost:5173 2>/dev/null; do sleep 2; done' || {
+            echo "Frontend não ficou pronto a tempo. Verificando logs..."
+            tail -50 ../frontEndWeb.log
+            exit 1
+          }
+          echo "FrontEndWeb está pronto!"
+        timeout-minutes: 3
+
+      - name: 🧪 Executando testes Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ./code/frontEndWeb
+          install: false
+          command: |
+            # Verificar se serviços estão respondendo antes dos testes
+            echo "🔍 Verificando serviços antes dos testes..."
+            
+            # Verificar frontend
+            if ! curl -f http://localhost:5173 >/dev/null 2>&1; then
+              echo "❌ Frontend não está respondendo"
+              echo "📋 Logs do frontend:"
+              tail -20 ../frontEndWeb.log
+              exit 1
+            fi
+            echo "✅ Frontend está respondendo"
+            
+            # Verificar backend
+            if ! curl -f http://localhost:$BACKEND_PORT/actuator/health >/dev/null 2>&1; then
+              echo "❌ Backend não está respondendo na porta $BACKEND_PORT"
+              echo "📋 Logs do backend:"
+              tail -20 ../backend.log
+              exit 1
+            fi
+            echo "✅ Backend está respondendo na porta $BACKEND_PORT"
+            
+            # Verificar MySQL
+            if ! mysqladmin ping -h localhost -P $MYSQL_PORT --silent; then
+              echo "❌ MySQL não está respondendo na porta $MYSQL_PORT"
+              exit 1
+            fi
+            echo "✅ MySQL está respondendo na porta $MYSQL_PORT"
+            
+            # Verificar RabbitMQ
+            if ! curl -f http://localhost:$RABBITMQ_MGMT_PORT >/dev/null 2>&1; then
+              echo "❌ RabbitMQ Management não está respondendo na porta $RABBITMQ_MGMT_PORT"
+              exit 1
+            fi
+            echo "✅ RabbitMQ está respondendo na porta $RABBITMQ_MGMT_PORT"
+            
+            echo "🚀 Todos os serviços estão prontos! Iniciando testes..."
+            
+            # Executar testes Cypress com portas dinâmicas
+            npx cypress run \
+              --browser ${{ matrix.browser }} \
+              --config "baseUrl=http://localhost:5173,defaultCommandTimeout=10000,requestTimeout=15000,responseTimeout=15000,video=true,screenshotOnRunFailure=true" \
+              --env "apiUrl=http://localhost:$BACKEND_PORT,adminEmail=${{ env.CYPRESS_adminEmail }},adminPassword=${{ env.CYPRESS_adminPassword }},CI=true"
+        env:
+          CYPRESS_baseUrl: ${{ env.CYPRESS_baseUrl }}
+          CYPRESS_apiUrl: http://localhost:${{ env.BACKEND_PORT }}
+          CYPRESS_adminEmail: ${{ env.CYPRESS_adminEmail }}
+          CYPRESS_adminPassword: ${{ env.CYPRESS_adminPassword }}
+          CI: true
+
+      - name: 📊 Upload de artefatos Cypress
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-artifacts-${{ matrix.browser }}
+          path: |
+            code/frontEndWeb/cypress/videos
+            code/frontEndWeb/cypress/screenshots
+          retention-days: 7
+
+      - name: 📝 Upload de logs dos servidores
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: server-logs-${{ matrix.browser }}
+          path: |
+            backend.log
+            frontEndWeb.log
+          retention-days: 3
+
+      - name: 📋 Comentando resultados no PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request' && (success() || failure())
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🧪 Resultados dos Testes E2E')
+            );
+            
+            const status = '${{ job.status }}' === 'success' ? '✅ PASSOU' : '❌ FALHOU';
+            const emoji = '${{ job.status }}' === 'success' ? '🎉' : '💥';
+            
+            const body = `## 🧪 Resultados dos Testes E2E - ${{ matrix.browser }}
+            
+            **Status**: ${status}
+            **Browser**: ${{ matrix.browser }}
+            **Commit**: ${context.sha.substring(0, 7)}
+            **Workflow**: [Ver detalhes](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ${
+              '${{ job.status }}' !== 'success' 
+                ? '📊 Verifique os artefatos para vídeos e screenshots das falhas.' 
+                : '🎉 Todos os testes passaram com sucesso!'
+            }
+            
+            ### 📋 Suítes Testadas
+            - 🔐 Autenticação e Login
+            - 🏠 Dashboard Principal  
+            - 👥 Aprovação de Usuários
+            - 👤 Gerenciamento de Usuários
+            - 📊 Métricas e Relatórios
+            
+            ${emoji}
+            `;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: 📈 Gerando resumo dos testes
+        if: always()
+        run: |
+          echo "## 🧪 Resumo dos Testes E2E" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Informação | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "| ---------- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Browser | ${{ matrix.browser }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Port Offset | ${{ matrix.port_offset }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ job.status == 'success' && '✅ Passou' || '❌ Falhou' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| FrontEndWeb | http://localhost:5173 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | http://localhost:$BACKEND_PORT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Database | MySQL 8.0 (port $MYSQL_PORT) |" >> $GITHUB_STEP_SUMMARY
+          echo "| RabbitMQ | 3-management (port $RABBITMQ_MGMT_PORT) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "### 🔍 Debug" >> $GITHUB_STEP_SUMMARY
+            echo "- Verifique os logs dos servidores nos artefatos" >> $GITHUB_STEP_SUMMARY
+            echo "- Screenshots e vídeos estão disponíveis para análise" >> $GITHUB_STEP_SUMMARY
+            echo "- Execute localmente: \`npm run cypress:web\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Logs de debug: backend.log, frontEndWeb.log" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🎉 Sucesso!" >> $GITHUB_STEP_SUMMARY
+            echo "Todos os testes E2E passaram com sucesso!" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Frontend funcionando corretamente" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Backend respondendo adequadamente" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Integração MySQL funcionando" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ RabbitMQ configurado corretamente" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🧹 Limpeza dos recursos Docker
+        if: always()
+        run: |
+          echo "Parando e removendo containers Docker..."
+          docker compose -f docker-compose-e2e.yml down -v --remove-orphans || true
+          
+          # Remover volumes órfãos
+          docker volume prune -f || true
+          
+          echo "✅ Limpeza concluída!"
+
+# 📋 RESUMO DO PIPELINE E2E:
+# 
+# Este workflow executa testes end-to-end completos para o sistema carpool:
+#
+# 🎯 SMOKE TESTS:
+# - Testa apenas o frontend em modo preview
+# - Não requer backend/database
+# - Execução rápida para validação básica
+#
+# 🧪 E2E TESTS COMPLETOS:
+# - MySQL 8.0 como banco de dados
+# - RabbitMQ 3-management para mensageria  
+# - Backend Spring Boot com perfil E2E
+# - Frontend React/Vite em modo desenvolvimento
+# - Testes Cypress em Chrome e Firefox
+#
+# 🔧 SERVIÇOS CONFIGURADOS:
+# - MySQL: localhost:3306 (carpool_test_e2e)
+# - RabbitMQ: localhost:5672 + Management:15672
+# - Backend: localhost:8080 (Spring Boot)
+# - Frontend: localhost:5173 (Vite Dev Server)
+#
+# 📊 MONITORAMENTO:
+# - Health checks para todos os serviços
+# - Logs detalhados salvos como artefatos
+# - Screenshots/vídeos em caso de falha
+# - Comentários automáticos em PRs
+# - Resumo detalhado no GitHub Actions

@@ -67,11 +67,11 @@ public class AvaliacaoService {
         // Obter estudante atual (avaliador)
         final Estudante avaliador = currentUserService.getCurrentEstudante();
 
-        // Verificar se o estudante participou da carona (como motorista ou passageiro)
-//        boolean participouDaCarona = verificarParticipacaoNaCarona(carona, avaliador);
-//        if (!participouDaCarona) {
-//            throw new ErroDeCliente(MensagensResposta.NAO_PARTICIPOU_DA_CARONA);
-//        }
+
+        boolean participouDaCarona = verificarParticipacaoNaCarona(carona, avaliador);
+        if (!participouDaCarona) {
+            throw new ErroDeCliente(MensagensResposta.NAO_PARTICIPOU_DA_CARONA);
+        }
 
         // Buscar estudante avaliado
         final Estudante avaliado = estudanteRepository.findById(avaliacaoRequest.getAvaliadoId())
@@ -80,9 +80,9 @@ public class AvaliacaoService {
 
         // Verificar se o avaliado participou da carona
         boolean avaliadoParticipouDaCarona = verificarParticipacaoNaCarona(carona, avaliado);
-//        if (!avaliadoParticipouDaCarona) {
-//            throw new ErroDeCliente(MensagensResposta.AVALIADO_NAO_PARTICIPOU_DA_CARONA);
-//        }
+        if (!avaliadoParticipouDaCarona) {
+            throw new ErroDeCliente(MensagensResposta.AVALIADO_NAO_PARTICIPOU_DA_CARONA);
+        }
 
         // Verificar se o avaliador já avaliou o avaliado nesta carona
         if (avaliacaoRepository.existsByCaronaAndAvaliadorAndAvaliado(carona, avaliador, avaliado)) {

@@ -44,6 +44,7 @@ _**Resumo**. O projeto Carona? é uma solução para facilitar a mobilidade dos 
 | 18/03/2025 | José Victor Mendes Dias | Pequenos ajustes estruturais de documentação | v0.4       |
 | 20/03/2025 | Renato Matos            | Melhorando seção de abreviaturas             | v0.5       |
 | 20/03/2025 | Renato Matos            | Melhorando a descrição da persona            | v0.6       |
+| 11/06/2025 | Felipe Picinin          | Implementando ATAM                           | v0.7       |
 
 ## SUMÁRIO
 
@@ -566,7 +567,251 @@ _Apresente as telas dos sistema construído com uma descrição sucinta de cada 
 
 # 7. Avaliação da Arquitetura
 
-_Esta seção descreve a avaliação da arquitetura apresentada, baseada no método ATAM._
+## 1. Apresentação do ATAM
+
+### 1.1 Participantes
+- Equipe de desenvolvimento do CarPool  
+- Stakeholders da PUC Minas  
+- Usuários finais (estudantes)  
+- Professores orientadores  
+
+### 1.2 Objetivos da Análise
+- Avaliar a arquitetura do sistema CarPool  
+- Identificar pontos fortes e fracos  
+- Propor melhorias  
+- Validar decisões arquiteturais  
+
+---
+
+## 2. Apresentação da Arquitetura
+
+### 2.1 Visão Geral
+O sistema CarPool é uma aplicação de compartilhamento de caronas com três componentes principais:
+- **Backend:** Spring Boot  
+- **Frontend Web:** React  
+- **Aplicativo Móvel:** React Native  
+
+### 2.2 Drivers Arquiteturais
+
+**Qualidade do Serviço**  
+- Performance (RNF04)  
+- Disponibilidade (RNF02)  
+- Segurança (RNF05, RNF06, RNF07)  
+- Escalabilidade  
+
+**Requisitos Funcionais**  
+- Gerenciamento de caronas (RF09, RF10)  
+- Autenticação de usuários (RF01, RF02, RF11, RF12)  
+- Notificações em tempo real (RF06)  
+- Geolocalização (RF14)  
+
+**Restrições**  
+- Tecnologias específicas: Java Spring, React, React Native  
+- Padrão RESTful  
+- Banco de dados relacional  
+
+---
+
+## 3. Análise de Cenários
+
+### 3.1 Cenários de Utilidade
+
+**Cenário de Performance**  
+- Descrição: Sistema deve processar buscas em menos de 2 segundos com 1.000 usuários simultâneos  
+- Importância: Alta  
+- Risco: Alto  
+- Arquitetura: Implementação de cache e otimização de consultas  
+
+**Cenário de Disponibilidade**  
+- Descrição: Sistema deve estar disponível das 6:00 às 13:00 e das 16:00 às 23:00  
+- Importância: Alta  
+- Risco: Médio  
+- Arquitetura: Implementação de redundância e failover  
+
+**Cenário de Segurança**  
+- Descrição: Proteção contra falhas de segurança (controle de acesso, criptografia, injeção)  
+- Importância: Alta  
+- Risco: Alto  
+- Arquitetura: JWT, HTTPS, validação de entrada  
+
+### 3.2 Cenários de Custo
+
+**Cenário de Infraestrutura**  
+- Descrição: Custos de hospedagem e manutenção  
+- Importância: Média  
+- Risco: Médio  
+- Arquitetura: Containerização com Docker  
+
+**Cenário de Desenvolvimento**  
+- Descrição: Custos de desenvolvimento e manutenção  
+- Importância: Alta  
+- Risco: Baixo  
+- Arquitetura: Uso de frameworks e bibliotecas open-source  
+
+---
+
+## 4. Análise de Atributos de Qualidade
+
+### 4.1 Performance
+
+**Pontos Fortes**  
+- Cache implementado  
+- Otimização de consultas  
+- Lazy loading  
+
+**Pontos Fracos**  
+- Possível gargalo em operações de geolocalização  
+- Dependência de serviços externos (Google Maps API)  
+
+**Tradeoffs**  
+- Cache vs. Consistência de Dados  
+- Performance vs. Complexidade  
+
+### 4.2 Disponibilidade
+
+**Pontos Fortes**  
+- Arquitetura distribuída  
+- Health checks  
+- Monitoramento  
+
+**Pontos Fracos**  
+- Dependência de serviços externos  
+- Falta de redundância em alguns componentes  
+
+**Tradeoffs**  
+- Disponibilidade vs. Custo  
+- Simplicidade vs. Redundância  
+
+### 4.3 Segurança
+
+**Pontos Fortes**  
+- Autenticação JWT  
+- HTTPS  
+- Validação de entrada  
+
+**Pontos Fracos**  
+- Possíveis vulnerabilidades em APIs  
+- Complexidade na gestão de tokens  
+
+**Tradeoffs**  
+- Segurança vs. Usabilidade  
+- Complexidade vs. Manutenibilidade  
+
+### 4.4 Escalabilidade
+
+**Pontos Fortes**  
+- Arquitetura modular  
+- Containerização  
+- Microserviços planejados  
+
+**Pontos Fracos**  
+- Acoplamento entre componentes  
+- Limitações de banco de dados  
+
+**Tradeoffs**  
+- Escalabilidade vs. Complexidade  
+- Performance vs. Escalabilidade  
+
+---
+
+## 5. Análise de Riscos e Não-Riscos
+
+### 5.1 Riscos
+
+**Risco de Performance**  
+- Descrição: Degradação de performance com aumento de usuários  
+- Impacto: Alto  
+- Mitigação: Implementação de cache e otimização  
+
+**Risco de Segurança**  
+- Descrição: Vulnerabilidades em APIs e autenticação  
+- Impacto: Alto  
+- Mitigação: Auditorias regulares e atualizações  
+
+**Risco de Disponibilidade**  
+- Descrição: Falhas em serviços críticos  
+- Impacto: Alto  
+- Mitigação: Implementação de redundância  
+
+### 5.2 Não-Riscos
+
+**Não-Risco de Tecnologia**  
+- Descrição: Uso de tecnologias maduras e estáveis  
+- Justificativa: Frameworks bem estabelecidos (Spring Boot, React, React Native)  
+
+**Não-Risco de Escalabilidade**  
+- Descrição: Arquitetura preparada para crescimento  
+- Justificativa: Design modular e containerização  
+
+---
+
+## 6. Análise de Sensibilidade
+
+### 6.1 Pontos de Sensibilidade
+
+**Performance**  
+- Sensível à carga de usuários  
+- Sensível a operações de geolocalização  
+- Sensível a consultas ao banco de dados  
+
+**Segurança**  
+- Sensível a vulnerabilidades em APIs  
+- Sensível à gestão de tokens  
+- Sensível à validação de entrada  
+
+**Disponibilidade**  
+- Sensível a falhas em serviços externos  
+- Sensível a problemas de rede  
+- Sensível à sobrecarga do sistema  
+
+### 6.2 Tradeoffs
+
+- Performance vs. Consistência  
+- Cache vs. Dados atualizados  
+- Otimização vs. Complexidade  
+- Segurança vs. Usabilidade  
+- Autenticação vs. Experiência do usuário  
+- Validação vs. Performance  
+- Escalabilidade vs. Complexidade  
+- Microserviços vs. Manutenção  
+- Redundância vs. Custo  
+
+---
+
+## 7. Recomendações
+
+### 7.1 Melhorias Imediatas
+- Implementar cache distribuído  
+- Adicionar redundância em serviços críticos  
+- Otimizar consultas de geolocalização  
+
+### 7.2 Melhorias Futuras
+- Migrar para arquitetura de microserviços  
+- Implementar sistema de cache mais robusto  
+- Adicionar mais camadas de segurança  
+
+---
+
+## 8. Conclusão
+
+### 8.1 Pontos Fortes
+- Arquitetura modular e bem estruturada  
+- Uso de tecnologias modernas e estáveis  
+- Boa separação de responsabilidades  
+- Preparação para escalabilidade  
+
+### 8.2 Pontos de Atenção
+- Dependência de serviços externos  
+- Possíveis gargalos de performance  
+- Complexidade na gestão de estado  
+- Necessidade de melhorias em segurança  
+
+### 8.3 Decisões Arquiteturais
+- Manter arquitetura atual com melhorias incrementais  
+- Implementar cache distribuído  
+- Adicionar redundância em serviços críticos  
+- Planejar migração para microserviços  
+
 
 ## 7.1. Cenários
 

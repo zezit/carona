@@ -68,6 +68,8 @@ public class RideMatchingServiceTest {
 
     @Captor
     private ArgumentCaptor<SolicitacaoCarona> solicitacaoCaptor;
+    @Captor
+    private ArgumentCaptor<PedidoDeEntrada> pedidoCaptor;
 
     private SolicitacaoCaronaRequest request;
     private LocationDTO studentOrigin;
@@ -121,10 +123,9 @@ public class RideMatchingServiceTest {
         caronas = List.of(carona1, carona2);
 
         // Setup routes
-        originalRoute = new RouteDetails(10000.0, 1200.0); // 10km, 20min
-        detourRoute1 = new RouteDetails(11000.0, 1320.0); // 11km, 22min - smaller detour
-        detourRoute2 = new RouteDetails(12500.0, 1500.0); // 12.5km, 25min - larger detour
-
+              originalRoute = new RouteDetails(10000.0, 1200.0); // 10km, 20min
+        detourRoute1 = new RouteDetails(11000.0, 1320.0); // 11km, 22min - desvio: +1000m, +120s 
+        detourRoute2 = new RouteDetails(11500.0, 1400.0); // 11.5km, 23.33min - desvio: +1500m, +200s 
         // Setup solicitacao
         solicitacaoCarona = SolicitacaoCarona.builder()
                 .id(1L)
@@ -146,7 +147,7 @@ public class RideMatchingServiceTest {
                 websocketService);
     }
 
-    @Test
+     @Test
     @DisplayName("Deve fazer matching e atribuir estudante à carona com sucesso")
     void deveFazerMatchingEAtribuirEstudanteACaronaComSucesso() {
         // Given
@@ -162,15 +163,27 @@ public class RideMatchingServiceTest {
                 Mockito.any(Carona.class),
                 Mockito.any(LocationDTO.class),
                 Mockito.any(LocationDTO.class)))
-                .thenReturn(detourRoute1);
+                .thenReturn(detourRoute1); // Usar apenas detourRoute1 que está dentro dos limites
+        
+        Mockito.when(pedidoDeEntradaRepository.findByCaronaIdAndSolicitacaoEstudanteId(
+                Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Optional.empty());
+        
         Mockito.when(solicitacaoCaronaMapper.toEntity(
                 Mockito.any(SolicitacaoCaronaRequest.class),
                 Mockito.any(Estudante.class)))
                 .thenReturn(solicitacaoCarona);
         Mockito.when(solicitacaoCaronaRepository.save(Mockito.any(SolicitacaoCarona.class)))
                 .thenReturn(solicitacaoCarona);
+
+        
+        PedidoDeEntrada mockPedido = PedidoDeEntrada.builder()
+                .id(1L)
+                .carona(carona1)
+                .solicitacao(solicitacaoCarona)
+                .build();
         Mockito.when(pedidoDeEntradaRepository.save(Mockito.any(PedidoDeEntrada.class)))
-                .thenReturn(new PedidoDeEntrada());
+                .thenReturn(mockPedido);
 
         // When
         rideMatchingService.matchAndAssign(request);
@@ -182,14 +195,14 @@ public class RideMatchingServiceTest {
                 Mockito.any(LocalDateTime.class),
                 Mockito.any(LocationDTO.class),
                 Mockito.any(LocationDTO.class));
-        Mockito.verify(routeCalculator, Mockito.times(caronas.size() * 2)).getOriginalRoute(Mockito.any(Carona.class));
-        Mockito.verify(routeCalculator, Mockito.times(caronas.size() * 2)).calculateDetourRoute(
-                Mockito.any(Carona.class),
-                Mockito.any(LocationDTO.class),
-                Mockito.any(LocationDTO.class));
+        
+        Mockito.verify(pedidoDeEntradaRepository).findByCaronaIdAndSolicitacaoEstudanteId(
+                Mockito.anyLong(), Mockito.anyLong());
+        
         Mockito.verify(solicitacaoCaronaMapper).toEntity(Mockito.any(SolicitacaoCaronaRequest.class),
                 Mockito.any(Estudante.class));
         Mockito.verify(solicitacaoCaronaRepository).save(solicitacaoCaptor.capture());
+
         Mockito.verify(websocketService).sendRideMatchNotification(Mockito.any(PedidoDeEntrada.class));
         Mockito.verify(pedidoDeEntradaRepository).save(Mockito.any(PedidoDeEntrada.class));
 
@@ -206,36 +219,56 @@ public class RideMatchingServiceTest {
         // Given
         Mockito.when(estudanteRepository.findById(2L)).thenReturn(Optional.of(student));
         Mockito.when(caronaRepository.findViableCaronas(
-                Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class), Mockito.any(LocationDTO.class),
-                Mockito.any(LocationDTO.class)))
+                Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class), 
+                Mockito.any(LocationDTO.class), Mockito.any(LocationDTO.class)))
                 .thenReturn(caronas);
+        
         Mockito.when(routeCalculator.getOriginalRoute(Mockito.any(Carona.class))).thenReturn(originalRoute);
 
-        // Setup different detour routes for different caronas
+        // ✅ Setup different detour routes - AMBOS dentro dos limites
         Mockito.when(routeCalculator.calculateDetourRoute(
-                carona1, studentOrigin, studentDestination))
-                .thenReturn(detourRoute1); // smaller detour for carona1
+                Mockito.eq(carona1), Mockito.eq(studentOrigin), Mockito.eq(studentDestination)))
+                .thenReturn(detourRoute1); // +1000m, +120s - menor desvio
 
         Mockito.when(routeCalculator.calculateDetourRoute(
-                carona2, studentOrigin, studentDestination))
-                .thenReturn(detourRoute2); // larger detour for carona2
+                Mockito.eq(carona2), Mockito.eq(studentOrigin), Mockito.eq(studentDestination)))
+                .thenReturn(detourRoute2); // +1500m, +200s - maior desvio
 
-        Mockito.when(solicitacaoCaronaMapper.toEntity(Mockito.any(SolicitacaoCaronaRequest.class),
-                Mockito.any(Estudante.class)))
+        Mockito.when(pedidoDeEntradaRepository.findByCaronaIdAndSolicitacaoEstudanteId(
+                Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Optional.empty());
+
+        Mockito.when(solicitacaoCaronaMapper.toEntity(
+                Mockito.any(SolicitacaoCaronaRequest.class), Mockito.any(Estudante.class)))
                 .thenReturn(solicitacaoCarona);
         Mockito.when(solicitacaoCaronaRepository.save(Mockito.any(SolicitacaoCarona.class)))
                 .thenReturn(solicitacaoCarona);
+
+        
+        // ✅ Mock para PedidoDeEntradaRepository.save()
+        PedidoDeEntrada mockPedido = PedidoDeEntrada.builder()
+                .id(1L)
+                .carona(carona1) // Deve escolher carona1 (menor desvio)
+                .solicitacao(solicitacaoCarona)
+                .build();
         Mockito.when(pedidoDeEntradaRepository.save(Mockito.any(PedidoDeEntrada.class)))
-                .thenReturn(new PedidoDeEntrada());
+                .thenReturn(mockPedido);
+
 
         // When
         rideMatchingService.matchAndAssign(request);
 
         // Then
+        Mockito.verify(pedidoDeEntradaRepository).save(pedidoCaptor.capture());
         Mockito.verify(websocketService).sendRideMatchNotification(Mockito.any(PedidoDeEntrada.class));
-        Mockito.verify(pedidoDeEntradaRepository).save(Mockito.any(PedidoDeEntrada.class));
-    }
 
+        final PedidoDeEntrada savedPedido = pedidoCaptor.getValue();
+        
+        
+        Assertions.assertEquals(1L, savedPedido.getCarona().getId());
+        Assertions.assertEquals(solicitacaoCarona, savedPedido.getSolicitacao());
+
+    }
     @Test
     @DisplayName("Deve lançar exceção quando não encontra carona compatível")
     void deveLancarExcecaoQuandoNaoEncontraCaronaCompativel() {
