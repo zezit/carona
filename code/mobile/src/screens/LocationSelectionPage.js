@@ -357,6 +357,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
               <View style={[styles.locationDot, styles.departureDot]} />
             </View>
             <TouchableOpacity
+              testID="departure-input-container"
               style={[
                 styles.inputWrapper,
                 activeInput === 'departure' && styles.activeInput
@@ -369,6 +370,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
                   <Text style={styles.loadingText}>Obtendo localização...</Text>
                 </View>
               ) : (<TextInput
+                testID="departure-input"
                 style={styles.textInput}
                 placeholder="De onde você está saindo?"
                 value={departure}
@@ -382,6 +384,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
               )}
               {departure.length > 0 && (
                 <TouchableOpacity
+                  testID="clear-departure-button"
                   style={styles.clearButton}
                   onPress={() => {
                     setDeparture('');
@@ -403,6 +406,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
               <View style={[styles.locationDot, styles.arrivalDot]} />
             </View>
             <TouchableOpacity
+              testID="arrival-input-container"
               style={[
                 styles.inputWrapper,
                 activeInput === 'arrival' && styles.activeInput
@@ -410,6 +414,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
               onPress={() => setActiveInput('arrival')}
             >
               <TextInput
+                testID="arrival-input"
                 style={styles.textInput}
                 placeholder="Para onde você vai?"
                 value={arrival}
@@ -422,6 +427,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
               />
               {arrival.length > 0 && (
                 <TouchableOpacity
+                  testID="clear-arrival-button"
                   style={styles.clearButton}
                   onPress={() => {
                     setArrival('');
@@ -434,8 +440,9 @@ const LocationSelectionPage = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Switch Button - Moved to bottom right of inputs container */}
+          {/* Switch Button */}
           <TouchableOpacity
+            testID="switch-locations-button"
             style={[
               styles.switchButton,
               (!departure || !arrival) && styles.switchButtonDisabled
@@ -456,6 +463,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
           {/* Current Location Option (only for departure) */}
           {activeInput === 'departure' && showCurrentLocationOption && (
             <TouchableOpacity
+              testID="use-current-location-button"
               style={styles.suggestionItem}
               onPress={handleCurrentLocationPress}
             >
@@ -470,16 +478,10 @@ const LocationSelectionPage = ({ navigation, route }) => {
           )}
 
           {/* Search Results */}
-          {isSearching && (
-            <View style={styles.loadingItem}>
-              <ActivityIndicator size="small" color={COLORS.primary.main} />
-              <Text style={styles.loadingText}>Buscando endereços...</Text>
-            </View>
-          )}
-
           {searchResults.map((result, index) => (
             <TouchableOpacity
               key={index}
+              testID={`location-suggestion-${index}`}
               style={styles.suggestionItem}
               onPress={() => handleSelectAddress(result)}
             >
@@ -560,6 +562,7 @@ const LocationSelectionPage = ({ navigation, route }) => {
       {/* Bottom Action Button */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity
+          testID="confirm-locations-button"
           style={styles.confirmButton}
           onPress={handleNextPress}
         >

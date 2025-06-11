@@ -1,0 +1,60 @@
+appId: host.exp.exponent
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: "Carona?"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 
+        id: "start-page"
+    timeout: 10000
+
+- runFlow:
+    when:
+      visible: 
+        text: "Perfil"
+        index: 0
+    commands:
+      # Login only if not already logged in
+      - tapOn:
+         point: "76%,9%"
+      - tapOn: SIM, SAIR
+
+- runFlow:
+    when:  
+      true: true
+    commands:
+      # Login first
+      - tapOn:
+          id: "email-input"
+      - inputText: "newuser@pucminas.br"
+      - tapOn:
+          id: "password-input"
+      - inputText: "newpassword123"
+      - tapOn:
+          id: "login-button"
+      - tapOn:
+          id: "login-button"
+      - assertVisible: "Perfil"
+
+
+      - tapOn: "Perfil"
+      - waitForAnimationToEnd
+      - tapOn: "Tornar-se Motorista"
+      - waitForAnimationToEnd
+      - tapOn: "Ex: 12345678901"
+      - inputText: "12345678900"
+      - tapOn: "Ex: +5531912345678"
+      - inputText: "+5537945487513"
+
+      - scroll
+      - tapOn: "Ex: Gol 1.0"
+      - inputText: "Mercedes Benz"
+      - tapOn: "Ex: ABC1234"
+      - inputText: "HNC0995"
+      - tapOn: "Ex: Prata"
+      - inputText: "Branco"
+      - tapOn: "Cadastrar como Motorista"
+      - tapOn: "Cadastrar como Motorista"
+      - waitForAnimationToEnd
+      - assertVisible: "Sucesso"

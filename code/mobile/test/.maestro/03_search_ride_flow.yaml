@@ -1,0 +1,63 @@
+appId: host.exp.exponent
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: "Carona?"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 
+        id: "start-page"
+    timeout: 10000
+
+- runFlow:
+    when:
+      visible: 
+        text: "Perfil"
+        index: 0
+    commands:
+      # Login only if not already logged in
+      - tapOn:
+         point: "76%,9%"
+      - tapOn: SIM, SAIR
+
+# Test 2: Create Ride Flow
+- runFlow:
+    when:
+      true: true
+    commands:
+      # Login first
+      - tapOn:
+          id: "email-input"
+      - inputText: "newuser@pucminas.br"
+      - tapOn:
+          id: "password-input"
+      - inputText: "newpassword123"
+      - tapOn:
+          id: "login-button"
+      - tapOn:
+          id: "login-button"
+
+      - assertVisible: "Perfil"
+
+      # Navigate to Create Ride
+      - tapOn:
+          text: "Caronas"
+          index: 0
+
+
+      - tapOn: "Buscar Carona"
+
+      # Select origin and destination
+      - tapOn:
+          id: "arrival-text"
+      - tapOn:
+          id: "arrival-input-container"
+      - inputText: "Curimata"
+      - tapOn: "Endereço sugerido"
+      - tapOn: "Endereço sugerido"
+
+      - tapOn:
+          id: "confirm-locations-button"
+        
+      - assertVisible:
+          id: "ride-map"

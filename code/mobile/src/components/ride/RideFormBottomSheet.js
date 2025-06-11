@@ -173,6 +173,7 @@ const RideFormBottomSheet = forwardRef(({
                                 onDateChange={onDateChange}
                                 activeMode={activeTimeMode}
                                 duration={duration}
+                                testID="date-picker"
                             />
                         </FormSection>
 
@@ -183,6 +184,7 @@ const RideFormBottomSheet = forwardRef(({
                                 onSeatsChange={(newSeats) => onSeatsChange(newSeats.toString())}
                                 maxSeats={initialCarAvailableSeats || 8}
                                 minSeats={1}
+                                testID="seats-input"
                             />
                         </FormSection>
 
@@ -192,6 +194,7 @@ const RideFormBottomSheet = forwardRef(({
                                 value={observations}
                                 onChangeText={onObservationsChange}
                                 placeholder="Informações adicionais para os passageiros"
+                                testID="observations-input"
                             />
                         </FormSection>
                     </KeyboardAvoidingView>
@@ -204,6 +207,7 @@ const RideFormBottomSheet = forwardRef(({
                     title="Registrar Carona"
                     icon="car-outline"
                     isEditMode={isEditMode}
+                    testID="submit-ride-button"
                 />
             </View>
         </BottomSheet>

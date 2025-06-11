@@ -1,11 +1,11 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import { API_BASE_URL } from '@env';
 import errorMessages from '../../constants/errors.json';
 
 // Determine the base URL based on environment
 const getBaseUrl = () => {
-  // NGROK ROUTE HERE ↓
-  return "https://ac19-2804-14c-5b85-99a7-809e-6d06-920-2c06.ngrok-free.app/api";
+  // NGROK ROUTE HERE â†“
+  return "https://b89f-2804-14c-5b85-99a7-6caa-602b-306-2e90.ngrok-free.app/api";
 };
 
 export const BASE_URL = getBaseUrl();
@@ -61,7 +61,7 @@ const formatError = (error) => {
   });
 
   // Default error message
-  let errorMessage = 'Erro de conexão com o servidor';
+  let errorMessage = 'Erro de conexÃ£o com o servidor';
   let statusCode = 500;
   let errorCode = null;
   let errorDetails = null;
@@ -241,7 +241,7 @@ export const getUpcomingRides = async (motoristaId, authToken) => {
     console.error('Error fetching upcoming rides:', error);
     return {
       success: false,
-      error: 'Falha na comunicação com o servidor'
+      error: 'Falha na comunicaÃ§Ã£o com o servidor'
     };
   }
 };
@@ -283,7 +283,7 @@ export const getDriverRides = async (motoristaId, authToken, pageable = {}) => {
     console.error('Error fetching driver rides:', error);
     return {
       success: false,
-      error: 'Falha na comunicação com o servidor'
+      error: 'Falha na comunicaÃ§Ã£o com o servidor'
     };
   }
 }

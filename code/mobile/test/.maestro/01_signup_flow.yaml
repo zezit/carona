@@ -1,0 +1,38 @@
+appId: host.exp.exponent
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: "Carona?"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Cadastre-se"
+- waitForAnimationToEnd
+- tapOn: "Seu nome completo"
+- inputText: "usuarioteste"
+- tapOn: "seu.email@exemplo.com"
+- inputText: "newuser@pucminas.br"
+- tapOn: "Crie uma senha forte"
+- inputText: "newpassword123"
+- tapOn: "Confirme sua senha"
+- inputText: "newpassword123"
+- tapOn: Continuar
+- tapOn: Continuar
+- waitForAnimationToEnd
+# Second registration page
+- tapOn: "Selecione sua data de nascimento, "
+- waitForAnimationToEnd
+# Select a valid date (example: 10/06/2000)
+- tapOn: "10"
+- tapOn: "Junho"
+- tapOn: "2000"
+- tapOn: "Confirmar"
+- waitForAnimationToEnd
+- tapOn: "Digite seu número de matrícula"
+- inputText: "2025123456"
+- tapOn: "Digite seu curso"
+- inputText: "Engenharia de Software"
+- tapOn: "Finalizar Cadastro"
+- tapOn: "Finalizar Cadastro"
+- waitForAnimationToEnd
+- assertVisible: "Sucesso"
+ 

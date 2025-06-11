@@ -19,6 +19,7 @@ const RideMap = React.forwardRef(({
 }, ref) => {
   return (
     <MapView
+      testID="ride-map"
       ref={ref}
       style={[styles.map, { height: mapHeight }]}
       provider={PROVIDER_GOOGLE}
@@ -33,6 +34,7 @@ const RideMap = React.forwardRef(({
     >
       {departureLocation && (
         <Marker
+          testID="departure-marker"
           coordinate={departureLocation}
           title="Ponto de Partida"
           description="Local de saída da carona"
@@ -42,6 +44,7 @@ const RideMap = React.forwardRef(({
 
       {arrivalLocation && (
         <Marker
+          testID="arrival-marker"
           coordinate={arrivalLocation}
           title="Ponto de Chegada"
           description="Destino da carona"
@@ -52,6 +55,7 @@ const RideMap = React.forwardRef(({
       {/* Render all routes with the selected one having a thicker line */}
       {routes.map((route, index) => (
         <Polyline
+          testID={`route-polyline-${index}`}
           key={index}
           coordinates={route.pontos}
           strokeWidth={route === selectedRoute ? 6 : 4}

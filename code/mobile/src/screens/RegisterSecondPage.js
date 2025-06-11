@@ -260,6 +260,7 @@ export default function RegisterSecondPage({ navigation, route }) {
                 <TouchableOpacity
                   style={styles.datePickerButton}
                   onPress={openDateModal}
+                  testID="register-date-picker"
                 >
                   <Text style={day && month && year ? styles.dateText : styles.datePlaceholder}>
                     {day && month && year ? formatDateToDisplay() : 'Selecione sua data de nascimento'}
@@ -284,6 +285,7 @@ export default function RegisterSecondPage({ navigation, route }) {
                 keyboardType="numeric"
                 icon="card"
                 error={errors.matricula}
+                testID="register-matricula-input"
               />
 
               <FormInput
@@ -292,12 +294,14 @@ export default function RegisterSecondPage({ navigation, route }) {
                 onChangeText={setCurso}
                 placeholder="Digite seu curso"
                 icon="school"
+                testID="register-curso-input"
               />
             </View>
 
             <TouchableOpacity
               style={styles.finalizeButton}
               onPress={handleFinalize}
+              testID="register-finalize-button"
             >
               <Text style={styles.finalizeButtonText}>Finalizar Cadastro</Text>
             </TouchableOpacity>
@@ -421,6 +425,7 @@ export default function RegisterSecondPage({ navigation, route }) {
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={handleDateSelection}
+              testID="register-date-confirm-button"
             >
               <Text style={styles.confirmButtonText}>Confirmar</Text>
             </TouchableOpacity>

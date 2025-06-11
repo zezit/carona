@@ -4,13 +4,14 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
-    "test:e2e:coverage": "cypress run --env coverage=true",
-    "coverage:report": "nyc report --reporter=html --reporter=text",
-    "coverage:open": "open coverage/index.html || start coverage/index.html || xdg-open coverage/index.html"
-
+    "start:coverage": "cross-env COVERAGE=true nyc --silent expo start --no-dev",
+    "test:e2e": "maestro test test/.maestro/",
+    "test:e2e:simple": "powershell -Command \"$env:EXPO_DEVTOOLS='false'; Start-Process npx -ArgumentList 'expo','start' -PassThru; Start-Sleep 15; maestro test test/.maestro/\"",
+    "test:e2e:coverage": "powershell -Command \"$env:COVERAGE='true'; $env:NODE_ENV='test'; $env:EXPO_DEVTOOLS='false'; Start-Process npx -ArgumentList 'expo','start' -PassThru; Start-Sleep 15; maestro test test/.maestro/; nyc report\"",
+    "coverage:report": "nyc report --reporter=html --reporter=text --reporter=lcov"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
@@ -29,7 +30,7 @@
     "expo": "~52.0.42",
     "expo-av": "~15.0.2",
     "expo-blur": "~14.0.3",
-    "expo-constants": "^17.0.8",
+    "expo-constants": "~17.0.8",
     "expo-haptics": "~14.0.1",
     "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "~14.0.2",
@@ -51,14 +52,61 @@
     "socket.io-client": "^4.8.1",
     "sockjs-client": "^1.6.1"
   },
-   "nyc": {
-    "reporter": ["html", "text"],
-    "include": ["src/**/*.{js,jsx,ts,tsx}"],
-    "exclude": ["**/*.test.*", "**/*.spec.*", "cypress/**"]
+  "nyc": {
+    "include": [
+      "App.js",
+      "App.jsx", 
+      "App.ts",
+      "App.tsx",
+      "src/**/*.js",
+      "src/**/*.jsx",
+      "src/**/*.ts", 
+      "src/**/*.tsx",
+      "*.js",
+      "*.jsx",
+      "*.ts",
+      "*.tsx"
+    ],
+    "exclude": [
+      "node_modules/**",
+      "**/*.test.js",
+      "**/*.test.jsx",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.js",
+      "**/*.spec.jsx", 
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "**/e2e/**",
+      "coverage/**",
+      "metro.config.js",
+      "babel.config.js",
+      "**/__tests__/**",
+      "**/.expo/**"
+    ],
+    "extension": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx"
+    ],
+    "reporter": [
+      "html",
+      "text",
+      "lcov"
+    ],
+    "sourceMap": true,
+    "instrument": true,
+    "cache": false,
+    "all": true
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@react-native-community/cli": "latest",
+    "babel-plugin-istanbul": "^7.0.0",
+    "cross-env": "^7.0.3",
+    "metro-react-native-babel-transformer": "^0.77.0",
+    "nyc": "^17.1.0",
     "react-native-dotenv": "^3.4.11"
   },
   "private": true
