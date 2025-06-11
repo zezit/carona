@@ -109,11 +109,6 @@ public class SupabaseStorageService {
             throw new ImagemInvalidaException(MensagensResposta.FORMATO_ARQUIVO_INVALIDO);
         }
 
-        final long maxSizeInBytes = 5 * 1024 * 1024; // 5MB
-        if (file.getSize() > maxSizeInBytes) {
-            throw new ImagemInvalidaException(MensagensResposta.ARQUIVO_MUITO_GRANDE);
-        }
-
         BufferedImage image;
         try {
             image = ImageIO.read(file.getInputStream());
