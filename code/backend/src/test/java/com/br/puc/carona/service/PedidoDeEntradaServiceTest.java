@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -44,11 +45,14 @@ import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.mapper.PedidoDeEntradaMapper;
+import com.br.puc.carona.messaging.MensagemProducer;
+import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.PedidoDeEntrada;
 import com.br.puc.carona.model.PerfilMotorista;
 import com.br.puc.carona.model.SolicitacaoCarona;
+import com.br.puc.carona.model.Usuario;
 import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.PedidoDeEntradaRepository;
 import com.br.puc.carona.repository.SolicitacaoCaronaRepository;
@@ -76,6 +80,9 @@ class PedidoDeEntradaServiceTest {
     @Mock
     private CurrentUserService currentUserService;
 
+    @Mock
+    private MensagemProducer mensagemProducer;
+
     @InjectMocks
     private PedidoDeEntradaService pedidoDeEntradaService;
 
@@ -101,9 +108,18 @@ class PedidoDeEntradaServiceTest {
                 .statusCadastro(Status.APROVADO)
                 .build();
 
+        // Create a separate estudante for the motorista with ID 2L
+        Estudante estudanteMotorista = Estudante.builder()
+                .id(2L)
+                .nome("Motorista Teste")
+                .email("motorista@email.com")
+                .matricula("789012")
+                .statusCadastro(Status.APROVADO)
+                .build();
+
         motorista = PerfilMotorista.builder()
                 .id(1L)
-                .estudante(estudante)
+                .estudante(estudanteMotorista)
                 .build();
 
         carona = Carona.builder()
@@ -145,11 +161,10 @@ class PedidoDeEntradaServiceTest {
 
     @AfterEach
     void tearDown(){
+        // Note: mensagemProducer and caronaRepository are not checked for no more interactions
+        // because they are now legitimately used in cancellation logic for notifications and route recalculation
         verifyNoMoreInteractions(
-            caronaRepository,
             solicitacaoRepository,
-            pedidoEntradaRepository,
-            caronaService,
             pedidoDeEntradaMapper,
             currentUserService
         );
@@ -655,7 +670,8 @@ class PedidoDeEntradaServiceTest {
                 .build();
 
         when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(otherStudentPedido));
-        when(currentUserService.getCurrentUser()).thenReturn(estudante);
+        when(currentUserService.getCurrentUser()).thenReturn(motorista.getEstudante()); // Changed to return driver
+        when(pedidoEntradaRepository.save(any(PedidoDeEntrada.class))).thenReturn(otherStudentPedido);
 
         // When
         pedidoDeEntradaService.cancelarPedidoDeEntrada(1L);
@@ -664,6 +680,7 @@ class PedidoDeEntradaServiceTest {
         verify(pedidoEntradaRepository, times(1)).findById(1L);
         verify(currentUserService, times(1)).getCurrentUser();
         verify(pedidoEntradaRepository, times(1)).save(any(PedidoDeEntrada.class));
+        verify(mensagemProducer, times(1)).enviarMensagemCancelamentoCarona(any(RideCancellationMessageDTO.class));
     }
 
     @ParameterizedTest
@@ -702,5 +719,92 @@ class PedidoDeEntradaServiceTest {
 
         verify(pedidoEntradaRepository, times(1)).findById(1L);
         verify(pedidoEntradaRepository, times(1)).save(any(PedidoDeEntrada.class));
+    }
+
+    @Test
+    @DisplayName("Deve enviar notificação quando passageiro cancela participação")
+    void deveEnviarNotificacaoQuandoPassageiroCancelaParticipacao() {
+        // Given
+        pedido.setStatus(Status.APROVADO);
+        
+        when(currentUserService.getCurrentUser()).thenReturn(estudante);
+        when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoEntradaRepository.save(any(PedidoDeEntrada.class))).thenReturn(pedido);
+        when(caronaRepository.save(any(Carona.class))).thenReturn(carona);
+
+        final ArgumentCaptor<RideCancellationMessageDTO> messageCaptor = ArgumentCaptor.forClass(RideCancellationMessageDTO.class);
+
+        // When
+        pedidoDeEntradaService.cancelarPedidoDeEntrada(1L);
+
+        // Then
+        verify(mensagemProducer, times(1)).enviarMensagemCancelamentoCarona(messageCaptor.capture());
+        verify(caronaService, times(1)).recalculateRoute(carona);
+        verify(caronaRepository, times(1)).save(carona);
+        
+        final RideCancellationMessageDTO capturedMessage = messageCaptor.getValue();
+        assertNotNull(capturedMessage);
+        assertEquals(1L, capturedMessage.getPedidoId());
+        assertEquals(1L, capturedMessage.getCaronaId());
+        assertEquals(1L, capturedMessage.getCancelledByUserId());
+        assertEquals(2L, capturedMessage.getAffectedUserId()); // motorista ID
+        assertEquals(RideCancellationMessageDTO.RideCancellationTypeEnum.PASSENGER_CANCELLED, capturedMessage.getCancellationType());
+        assertNotNull(capturedMessage.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve enviar notificação quando motorista rejeita pedido")
+    void deveEnviarNotificacaoQuandoMotoristaRejeitaPedido() {
+        // Given
+        final Usuario motorista = Usuario.builder()
+                .id(2L)
+                .nome("Motorista Teste")
+                .email("motorista@email.com")
+                .build();
+
+        when(currentUserService.getCurrentUser()).thenReturn(motorista);
+        when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoEntradaRepository.save(any(PedidoDeEntrada.class))).thenReturn(pedido);
+        when(pedidoDeEntradaMapper.toDto(any(PedidoDeEntrada.class))).thenReturn(pedidoDto);
+
+        final ArgumentCaptor<RideCancellationMessageDTO> messageCaptor = ArgumentCaptor.forClass(RideCancellationMessageDTO.class);
+
+        // When
+        pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(1L, Status.REJEITADO);
+
+        // Then
+        verify(mensagemProducer, times(1)).enviarMensagemCancelamentoCarona(messageCaptor.capture());
+        
+        final RideCancellationMessageDTO capturedMessage = messageCaptor.getValue();
+        assertNotNull(capturedMessage);
+        assertEquals(1L, capturedMessage.getPedidoId());
+        assertEquals(1L, capturedMessage.getCaronaId());
+        assertEquals(2L, capturedMessage.getCancelledByUserId());
+        assertEquals(1L, capturedMessage.getAffectedUserId()); // estudante ID
+        assertEquals(RideCancellationMessageDTO.RideCancellationTypeEnum.DRIVER_CANCELLED, capturedMessage.getCancellationType());
+        assertNotNull(capturedMessage.getMessage());
+    }
+
+    @Test
+    @DisplayName("Não deve enviar notificação quando aprova pedido")
+    void naoDeveEnviarNotificacaoQuandoAprovaPedido() {
+        // Given
+        final Usuario motorista = Usuario.builder()
+                .id(2L)
+                .nome("Motorista Teste")
+                .email("motorista@email.com")
+                .build();
+
+        when(currentUserService.getCurrentUser()).thenReturn(motorista);
+        when(pedidoEntradaRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoEntradaRepository.save(any(PedidoDeEntrada.class))).thenReturn(pedido);
+        when(pedidoDeEntradaMapper.toDto(any(PedidoDeEntrada.class))).thenReturn(pedidoDto);
+        doNothing().when(caronaService).adicionarPassageiro(anyLong(), any(Estudante.class));
+
+        // When
+        pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(1L, Status.APROVADO);
+
+        // Then
+        verify(mensagemProducer, never()).enviarMensagemCancelamentoCarona(any(RideCancellationMessageDTO.class));
     }
 }

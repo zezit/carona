@@ -75,6 +75,13 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
            "LOWER(c.pontoDestino) LIKE :searchTerm)")
     Page<Carona> findBySearch(@Param("searchTerm") String searchTerm, Pageable pageable);
 
+    // Method to find caronas where a student was a passenger
+    @Query("SELECT c FROM Carona c " +
+           "JOIN c.passageiros p " +
+           "WHERE p.id = :estudanteId " +
+           "ORDER BY c.dataHoraPartida DESC")
+    List<Carona> findByPassageiroIdOrderByDataHoraPartidaDesc(@Param("estudanteId") Long estudanteId);
+
     // Statistics count methods
     Long countByStatus(StatusCarona status);
 }

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.messaging.contract.AvaliacaoMessageDTO;
-import com.br.puc.carona.messaging.contract.CancelamentoCaronaPassageiroMessage;
+import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +37,13 @@ public class MensagemProducer {
         rabbitTemplate.convertAndSend(avaliacoesQueue, avaliacaoMessage);
     }
 
-    public void enviarMensagemCancelamentoCaronaPassageiro(final CancelamentoCaronaPassageiroMessage msg) {
+    public void enviarMensagemCancelamentoCaronaPassageiro(final RideCancellationMessageDTO msg) {
         log.info("Enviando mensagem de cancelamento de carona para passageiro: {}", notificationsQueue);
+        rabbitTemplate.convertAndSend(notificationsQueue, msg);
+    }
+
+    public void enviarMensagemCancelamentoCarona(final RideCancellationMessageDTO msg) {
+        log.info("Enviando mensagem de cancelamento de carona: {}", notificationsQueue);
         rabbitTemplate.convertAndSend(notificationsQueue, msg);
     }
 }

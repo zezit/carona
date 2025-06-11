@@ -30,8 +30,17 @@ const HomePage = ({ navigation }) => {
 
   // Check if user is a driver and get driver details
   const checkDriverStatus = useCallback(async () => {
+    if (!user?.id || !authToken) {
+      console.log('Cannot check driver status: missing user ID or auth token', { userId: user?.id, hasToken: !!authToken });
+      setIsDriver(false);
+      setDriverDetails(null);
+      setNextRide(null);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await apiClient.get(`/estudante/${user?.id}/motorista`, {
+      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'

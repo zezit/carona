@@ -10,10 +10,13 @@ import org.springframework.stereotype.Service;
 import com.br.puc.carona.dto.response.CaronaDto;
 import com.br.puc.carona.enums.NotificationStatus;
 import com.br.puc.carona.enums.NotificationType;
+import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.Notification;
 import com.br.puc.carona.model.PedidoDeEntrada;
+import com.br.puc.carona.repository.EstudanteRepository;
 import com.br.puc.carona.repository.NotificationRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +31,7 @@ public class WebsocketService {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationRepository notificationRepository;
+    private final EstudanteRepository estudanteRepository;
     private final ObjectMapper objectMapper;
     private static final int MAX_RIDE_MATCH_REQUEST_RETRIES = 3;
 
@@ -130,5 +134,71 @@ public class WebsocketService {
 
     public void emitirEventoCaronaAtualizada(CaronaDto caronadto) {
         messagingTemplate.convertAndSend("/topic/carona/" + caronadto.getId() + "/iniciada", caronadto);
+    }
+
+    public void sendRideCancellationNotification(final RideCancellationMessageDTO cancellationMessage) {
+        log.info("Start of sending ride cancellation notification for Carona ID: {}, Affected User ID: {}",
+                cancellationMessage.getCaronaId(), cancellationMessage.getAffectedUserId());
+
+        // Find the affected user (recipient)
+        final Estudante recipient = findEstudanteById(cancellationMessage.getAffectedUserId());
+
+        try {
+            final String payload = objectMapper.writeValueAsString(cancellationMessage);
+
+            final Notification notification = createNotification(
+                    recipient,
+                    NotificationType.RIDE_CANCELLED,
+                    payload,
+                    false); // Cancellation notifications don't require response
+
+            // Update notification status after creating
+            notification.setStatus(NotificationStatus.ENVIADO);
+            notification.setLastAttemptAt(Instant.now());
+            notificationRepository.save(notification);
+
+            try {
+                final String topicDestination = new StringBuilder("/topic/user/")
+                        .append(cancellationMessage.getAffectedUserId())
+                        .append("/notifications")
+                        .toString();
+
+                log.info("Sending ride cancellation notification to {}: {}", topicDestination, payload);
+                messagingTemplate.convertAndSend(topicDestination, payload);
+            } catch (MessagingException e) {
+                log.error("Failed to send ride cancellation notification for Carona ID {}: {}",
+                        cancellationMessage.getCaronaId(), e.getFailedMessage(), e);
+
+                notification.setStatus(NotificationStatus.FALHOU);
+                if (notification.getRetryCount() < MAX_RIDE_MATCH_REQUEST_RETRIES) {
+                    log.info("Retrying to send ride cancellation notification for Carona ID {}. Attempt {}",
+                            cancellationMessage.getCaronaId(), notification.getRetryCount() + 1);
+
+                    notification.setRetryCount(notification.getRetryCount() + 1);
+                    notification.setLastAttemptAt(Instant.now());
+                    notification.setNextAttemptAt(
+                            Instant.now().plusSeconds(5 * notification.getRetryCount()));
+                } else {
+                    log.error("Max retry attempts reached for Carona ID {}. Notification will not be retried.",
+                            cancellationMessage.getCaronaId());
+
+                    notification.setNextAttemptAt(null);
+                }
+
+                notificationRepository.save(notification);
+            }
+
+            log.info("End of sending ride cancellation notification for Carona ID: {}",
+                    cancellationMessage.getCaronaId());
+
+        } catch (JsonProcessingException e) {
+            log.error("Error creating payload for ride cancellation notification: {}", e.getMessage(), e);
+            throw new RuntimeException("Error creating payload for ride cancellation notification", e);
+        }
+    }
+
+    private Estudante findEstudanteById(final Long estudanteId) {
+        return estudanteRepository.findById(estudanteId)
+                .orElseThrow(() -> new EntidadeNaoEncontrada("Estudante não encontrado com ID: " + estudanteId));
     }
 }

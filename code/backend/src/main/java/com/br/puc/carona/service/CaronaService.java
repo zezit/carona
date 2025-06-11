@@ -1,7 +1,9 @@
 package com.br.puc.carona.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,16 +14,23 @@ import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.dto.request.CaronaRequest;
 import com.br.puc.carona.dto.response.CaronaDto;
+import com.br.puc.carona.dto.response.CompleteRouteDto;
+import com.br.puc.carona.dto.response.PassengerWaypointDto;
 import com.br.puc.carona.enums.StatusCarona;
+import com.br.puc.carona.enums.Status;
 import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
 import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.CaronaMapper;
+import com.br.puc.carona.utils.RouteOptimizer;
+import com.br.puc.carona.utils.RouteOptimizer.Waypoint;
 import com.br.puc.carona.mapper.TrajetoMapper;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
+import com.br.puc.carona.model.PedidoDeEntrada;
 import com.br.puc.carona.model.PerfilMotorista;
+import com.br.puc.carona.model.SolicitacaoCarona;
 import com.br.puc.carona.model.Trajeto;
 import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.PerfilMotoristaRepository;
@@ -200,6 +209,21 @@ public class CaronaService {
                         StatusCarona.AGENDADA,
                         LocalDateTime.now());
 
+        return caronas.stream()
+                .map(caronaMapper::toDto)
+                .toList();
+    }
+
+    // Método para buscar histórico de caronas onde um estudante foi passageiro
+    public List<CaronaDto> buscarCaronasDoPassageiro(final Long estudanteId) {
+        log.info("Buscando histórico de caronas do passageiro ID: {}", estudanteId);
+
+        // Buscar caronas onde o estudante foi passageiro
+        final List<Carona> caronas = caronaRepository
+                .findByPassageiroIdOrderByDataHoraPartidaDesc(estudanteId);
+
+        log.info("Encontradas {} caronas para o passageiro ID: {}", caronas.size(), estudanteId);
+        
         return caronas.stream()
                 .map(caronaMapper::toDto)
                 .toList();
@@ -435,6 +459,163 @@ public class CaronaService {
         carona.removerPassageiro(idPassageiro);
 
         caronaRepository.save(carona);
-       
+    }
+
+    /**
+     * Calcula a rota completa da carona incluindo todos os pontos de embarque e desembarque
+     * dos passageiros confirmados, ordenados de forma otimizada.
+     * 
+     * @param caronaId ID da carona
+     * @return CompleteRouteDto com a rota completa e pontos dos passageiros
+     */
+    public CompleteRouteDto calcularRotaCompleta(final Long caronaId) {
+        log.info("Calculando rota completa para carona ID: {}", caronaId);
+        
+        final Carona carona = caronaRepository.findById(caronaId)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, caronaId));
+
+        // Obter todos os pedidos aprovados da carona
+        final List<PedidoDeEntrada> pedidosAprovados = carona.getPedidosEntrada().stream()
+                .filter(pedido -> pedido.getStatus() == Status.APROVADO)
+                .collect(Collectors.toList());
+
+        if (pedidosAprovados.isEmpty()) {
+            log.info("Nenhum passageiro confirmado encontrado para carona ID: {}", caronaId);
+            
+            // Retornar apenas a rota original sem passageiros
+            final Trajeto rotaOriginal = carona.getTrajetos().stream()
+                    .filter(Trajeto::getPrincipal)
+                    .findFirst()
+                    .orElse(carona.getTrajetos().isEmpty() ? null : carona.getTrajetos().get(0));
+
+            if (rotaOriginal != null) {
+                return CompleteRouteDto.builder()
+                        .caronaId(caronaId)
+                        .rotaCompleta(trajetoMapper.toDto(rotaOriginal))
+                        .pontosPassageiros(new ArrayList<>())
+                        .distanciaTotalMetros(rotaOriginal.getDistanciaMetros())
+                        .tempoTotalSegundos(rotaOriginal.getTempoSegundos())
+                        .build();
+            }
+        }
+
+        // Criar lista de waypoints dos passageiros para otimização
+        final List<Waypoint> passengerWaypoints = new ArrayList<>();
+        
+        for (final PedidoDeEntrada pedido : pedidosAprovados) {
+            final SolicitacaoCarona solicitacao = pedido.getSolicitacao();
+            final Estudante estudante = solicitacao.getEstudante();
+            
+            // Adicionar ponto de embarque
+            if (solicitacao.getOrigemLatitude() != null && solicitacao.getOrigemLongitude() != null) {
+                passengerWaypoints.add(new Waypoint(
+                    solicitacao.getOrigemLatitude(),
+                    solicitacao.getOrigemLongitude(),
+                    "pickup",
+                    estudante.getId(),
+                    estudante.getNome(),
+                    solicitacao.getOrigem(),
+                    pedido.getId()
+                ));
+            }
+            
+            // Adicionar ponto de desembarque
+            if (solicitacao.getDestinoLatitude() != null && solicitacao.getDestinoLongitude() != null) {
+                passengerWaypoints.add(new Waypoint(
+                    solicitacao.getDestinoLatitude(),
+                    solicitacao.getDestinoLongitude(),
+                    "dropoff",
+                    estudante.getId(),
+                    estudante.getNome(),
+                    solicitacao.getDestino(),
+                    pedido.getId()
+                ));
+            }
+        }
+
+        // Otimizar a ordem dos waypoints
+        final List<Waypoint> optimizedWaypoints = RouteOptimizer.optimizeRoute(
+            carona.getLatitudePartida(), carona.getLongitudePartida(),
+            carona.getLatitudeDestino(), carona.getLongitudeDestino(),
+            passengerWaypoints
+        );
+
+        // Converter waypoints otimizados para coordenadas e DTOs
+        final List<Double[]> waypoints = RouteOptimizer.waypointsToCoordinates(optimizedWaypoints);
+        final List<PassengerWaypointDto> pontosPassageiros = new ArrayList<>();
+        
+        int ordem = 1;
+        for (final Waypoint waypoint : optimizedWaypoints) {
+            pontosPassageiros.add(PassengerWaypointDto.builder()
+                    .pedidoId(waypoint.getPedidoId())
+                    .passageiroId(waypoint.getPassengerId())
+                    .nomePassageiro(waypoint.getPassengerName())
+                    .tipo(waypoint.isPickup() ? PassengerWaypointDto.TipoWaypoint.EMBARQUE : PassengerWaypointDto.TipoWaypoint.DESEMBARQUE)
+                    .latitude(waypoint.getLatitude())
+                    .longitude(waypoint.getLongitude())
+                    .endereco(waypoint.getAddress())
+                    .ordem(ordem++)
+                    .build());
+        }
+
+        try {
+            // Calcular a rota completa com todos os waypoints
+            final List<TrajetoDto> rotasCompletas = mapService.calculateTrajectories(
+                    carona.getLatitudePartida(), carona.getLongitudePartida(),
+                    carona.getLatitudeDestino(), carona.getLongitudeDestino(),
+                    waypoints);
+
+            if (!rotasCompletas.isEmpty()) {
+                final TrajetoDto rotaCompleta = rotasCompletas.get(0);
+                
+                log.info("Rota completa calculada: {}km, {}min para carona ID: {}",
+                        rotaCompleta.getDistanciaMetros() / 1000.0,
+                        rotaCompleta.getTempoSegundos() / 60.0,
+                        caronaId);
+
+                // Debug: Log the rotaCompleta object details
+                log.debug("DEBUG: rotaCompleta object: distancia={}, tempo={}, coordenadas size={}, descricao='{}'",
+                        rotaCompleta.getDistanciaMetros(),
+                        rotaCompleta.getTempoSegundos(),
+                        rotaCompleta.getCoordenadas() != null ? rotaCompleta.getCoordenadas().size() : "null",
+                        rotaCompleta.getDescricao());
+
+                final CompleteRouteDto result = CompleteRouteDto.builder()
+                        .caronaId(caronaId)
+                        .rotaCompleta(rotaCompleta)
+                        .pontosPassageiros(pontosPassageiros)
+                        .distanciaTotalMetros(rotaCompleta.getDistanciaMetros())
+                        .tempoTotalSegundos(rotaCompleta.getTempoSegundos())
+                        .build();
+
+                // Debug: Log the final result structure
+                log.debug("DEBUG: Returning CompleteRouteDto with caronaId={}, rotaCompleta is null={}, pontosPassageiros size={}",
+                        result.getCaronaId(),
+                        result.getRotaCompleta() == null,
+                        result.getPontosPassageiros() != null ? result.getPontosPassageiros().size() : "null");
+
+                return result;
+            }
+        } catch (final Exception e) {
+            log.error("Erro ao calcular rota completa para carona ID: {}", caronaId, e);
+            
+            // Fallback: retornar rota original se o cálculo falhar
+            final Trajeto rotaOriginal = carona.getTrajetos().stream()
+                    .filter(Trajeto::getPrincipal)
+                    .findFirst()
+                    .orElse(carona.getTrajetos().isEmpty() ? null : carona.getTrajetos().get(0));
+
+            if (rotaOriginal != null) {
+                return CompleteRouteDto.builder()
+                        .caronaId(caronaId)
+                        .rotaCompleta(trajetoMapper.toDto(rotaOriginal))
+                        .pontosPassageiros(pontosPassageiros)
+                        .distanciaTotalMetros(rotaOriginal.getDistanciaMetros())
+                        .tempoTotalSegundos(rotaOriginal.getTempoSegundos())
+                        .build();
+            }
+        }
+
+        throw new ErroDeCliente("Não foi possível calcular a rota completa da carona");
     }
 }

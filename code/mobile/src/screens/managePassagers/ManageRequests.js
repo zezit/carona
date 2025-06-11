@@ -141,7 +141,15 @@ export default function ManageRequests({ navigation, route }) {
     const chegadaFormatada = formatDate(solicitacao.horarioChegada);
 
     return (
-      <View key={id} style={styles.card}>
+      <TouchableOpacity 
+        key={id} 
+        style={styles.card}
+        onPress={() => navigation.navigate('RequestDetailsScreen', { 
+          request: { id, solicitacao, carona }, 
+          ride 
+        })}
+        activeOpacity={0.7}
+      >
         <View style={styles.cardHeader}>
           <View style={styles.cardRow}>
             <Ionicons name="person-circle-outline" size={24} color={COLORS.text.dark} />
@@ -193,23 +201,36 @@ export default function ManageRequests({ navigation, route }) {
           </View>
         </View>
 
-        <View style={styles.actionsRow}>
+        {/* Quick action buttons */}
+        {/* <View style={styles.actionsRow}>
           <TouchableOpacity
             style={[styles.actionButton, styles.approveButton]}
-            onPress={() => handleRequestAction(id, 'APROVADO')}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleRequestAction(id, 'APROVADO');
+            }}
           >
             <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.text.light} />
             <Text style={styles.actionText}>Aprovar</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.rejectButton]}
-            onPress={() => handleRequestAction(id, 'REJEITADO')}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleRequestAction(id, 'REJEITADO');
+            }}
           >
             <Ionicons name="close-circle-outline" size={20} color={COLORS.text.light} />
             <Text style={styles.actionText}>Recusar</Text>
           </TouchableOpacity>
+        </View> */}
+
+        {/* Tap to view details indicator */}
+        <View style={styles.tapIndicator}>
+          <Text style={styles.tapIndicatorText}>Toque para ver detalhes da rota</Text>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.text.medium} />
         </View>
-      </View>
+      </TouchableOpacity>
     );
   }, []);
 
@@ -262,7 +283,9 @@ export default function ManageRequests({ navigation, route }) {
           }}
           scrollEventThrottle={400}
         >
-          {requests && requests.length > 0 ? requests.map(request => request ? renderRequestCard(request) : null) : null}
+          {requests && requests.length > 0 ? requests.map((request, index) => 
+            request ? renderRequestCard(request) : null
+          ) : null}
 
           {loadingMore && hasMore && (
             <ActivityIndicator 
@@ -408,6 +431,21 @@ const styles = StyleSheet.create({
     color: COLORS.text.light,
     fontWeight: FONT_WEIGHT.medium,
     fontSize: FONT_SIZE.sm,
+  },
+  tapIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.background.light,
+  },
+  tapIndicatorText: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.text.medium,
+    fontStyle: 'italic',
+    marginRight: SPACING.xs,
   },
   emptyContainer: {
     flex: 1,

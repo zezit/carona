@@ -465,19 +465,22 @@ const NotificationsScreen = () => {
       }
     }
 
+    // Parse payload data once for all notification types
+    let payloadData = notification.payload;
+    if (typeof notification.payload === 'string') {
+      try {
+        payloadData = JSON.parse(notification.payload);
+      } catch (e) {
+        console.log('Failed to parse notification payload:', e);
+        payloadData = {};
+      }
+    } else if (!payloadData) {
+      payloadData = {};
+    }
+
     // Handle different notification types
     switch (notification.type) {
       case 'RIDE_MATCH_REQUEST':
-        // Try to parse payload if it's a string
-        let payloadData = notification.payload;
-        if (typeof notification.payload === 'string') {
-          try {
-            payloadData = JSON.parse(notification.payload);
-          } catch (e) {
-            console.log('Failed to parse notification payload:', e);
-          }
-        }
-        
         // Navigate to ride request details or handle accordingly
         if (payloadData && payloadData.caronaId) {
           console.log('Navigate to ride details:', payloadData.caronaId);
@@ -504,16 +507,10 @@ const NotificationsScreen = () => {
       case 'RIDE_REQUEST_REJECTED':
       case 'RIDE_CANCELLED':
       case 'RIDE_REMINDER':
-        // Try to navigate to ride details if available
-        if (payloadData && payloadData.caronaId) {
-          navigation.navigate('ScheduledRides', { 
-            initialTab: 'details',
-            rideId: payloadData.caronaId 
-          });
-        } else {
-          // Navigate to scheduled rides list as fallback
-          navigation.navigate('ScheduledRides');
-        }
+        // Navigate to the Rides tab to show user's rides
+        navigation.navigate('TabNavigator', {
+          screen: 'Rides'
+        });
         break;
         
       default:

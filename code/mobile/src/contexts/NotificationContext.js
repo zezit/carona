@@ -204,6 +204,8 @@ export const NotificationProvider = ({ children }) => {
                 return 'Solicitação Recusada';
             case 'RIDE_CANCELLED':
                 return 'Carona Cancelada';
+            case 'PASSENGER_REMOVED':
+                return 'Removido da Carona';
             case 'RIDE_REMINDER':
                 return 'Lembrete de Carona';
             case 'SYSTEM':
@@ -249,12 +251,32 @@ export const NotificationProvider = ({ children }) => {
     };
 
     const handleNotificationPress = (notification) => {
+        console.log('Notification pressed:', notification);
+        
+        if (!navigationRef) {
+            console.warn('Navigation ref not available for notification press');
+            return;
+        }
+
         switch (notification.type) {
             case 'RIDE_MATCH_REQUEST':
                 handleRideMatchRequestPress(notification);
                 break;
+            case 'RIDE_REQUEST_ACCEPTED':
+            case 'RIDE_REQUEST_REJECTED':
+            case 'RIDE_CANCELLED':
+            case 'RIDE_REMINDER':
+                // Navigate to the Rides tab to show user's rides
+                navigationRef.current?.navigate('TabNavigator', {
+                    screen: 'Rides'
+                });
+                break;
             default:
-                console.log('Notification pressed:', notification);
+                // For other notifications, navigate to notifications screen
+                navigationRef.current?.navigate('TabNavigator', {
+                    screen: 'Notifications'
+                });
+                break;
         }
     };
 

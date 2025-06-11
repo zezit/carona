@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.br.puc.carona.controller.docs.CaronaExamples;
 import com.br.puc.carona.dto.request.CaronaRequest;
 import com.br.puc.carona.dto.response.CaronaDto;
+import com.br.puc.carona.dto.response.CompleteRouteDto;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.service.CaronaService;
 
@@ -113,6 +114,23 @@ public class CaronaController {
         log.info("Listando próximas caronas agendadas do motorista ID: {}", motoristaId);
         final List<CaronaDto> caronas = caronaService.buscarProximasCaronasDoMotorista(motoristaId);
         log.info("Total de próximas caronas encontradas: {}", caronas.size());
+        return ResponseEntity.ok(caronas);
+    }
+
+    @GetMapping("/estudante/{estudanteId}/historico")
+    @Operation(summary = "Listar histórico de caronas de passageiro", description = "Lista todas as caronas onde um estudante participou como passageiro, ordenadas por data/hora de partida decrescente.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de caronas do passageiro obtida com sucesso",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = List.class))),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+        @ApiResponse(responseCode = "404", description = "Estudante não encontrado"),
+        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<List<CaronaDto>> buscarHistoricoCaronasPassageiro(@PathVariable final Long estudanteId) {
+        log.info("Listando histórico de caronas do passageiro ID: {}", estudanteId);
+        final List<CaronaDto> caronas = caronaService.buscarCaronasDoPassageiro(estudanteId);
+        log.info("Total de caronas encontradas para o passageiro: {}", caronas.size());
         return ResponseEntity.ok(caronas);
     }
 
@@ -285,5 +303,20 @@ public class CaronaController {
         caronaService.finalizarCarona(id);
         log.info("Carona finalizada com sucesso. ID: {}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/complete-route")
+    @Operation(summary = "Obter rota completa com passageiros", 
+              description = "Retorna a rota completa da carona incluindo todos os pontos de embarque e desembarque dos passageiros confirmados")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Rota completa calculada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Carona não encontrada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<CompleteRouteDto> obterRotaCompleta(@PathVariable final Long id) {
+        log.info("Calculando rota completa para carona com ID: {}", id);
+        final CompleteRouteDto rotaCompleta = caronaService.calcularRotaCompleta(id);
+        log.info("Rota completa calculada com sucesso para carona ID: {}", id);
+        return ResponseEntity.ok(rotaCompleta);
     }
 }

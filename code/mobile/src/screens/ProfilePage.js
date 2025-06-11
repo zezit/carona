@@ -60,11 +60,16 @@ const ProfilePage = ({ navigation, route }) => {
 
   // Check if user is a driver
   const checkDriverStatus = useCallback(async () => {
-    if (!user) return;
+    if (!user?.id || !authToken) {
+      console.log('Cannot check driver status: missing user ID or auth token', { userId: user?.id, hasToken: !!authToken });
+      setDriverProfile(null);
+      setIsCheckingDriver(false);
+      return;
+    }
     
     try {
       setIsCheckingDriver(true);
-      const response = await apiClient.get(`/estudante/${user?.id}/motorista`, {
+      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
