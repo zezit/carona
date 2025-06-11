@@ -566,8 +566,6 @@ _Apresente as telas dos sistema construído com uma descrição sucinta de cada 
 
 # 7. Avaliação da Arquitetura
 
-# Architecture Tradeoff Analysis Method (ATAM) - CarPool
-
 ## 1. Apresentação do ATAM
 
 ### 1.1 Participantes
