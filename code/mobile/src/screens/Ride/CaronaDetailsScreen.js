@@ -796,13 +796,31 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
 
         {/* Status and Info Bar */}
         <View style={styles.statusInfoBar}>
-          <View style={[styles.statusBadge, { borderColor: statusColor, backgroundColor: `${statusColor}20` }]}>
+          <View style={[
+            styles.statusBadge, 
+            { 
+              borderColor: statusColor, 
+              backgroundColor: isInProgress ? statusColor : `${statusColor}20`,
+              ...(isInProgress && {
+                shadowColor: statusColor,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 4,
+              })
+            }
+          ]}>
             <Ionicons 
-              name={isInProgress ? "car" : status === 'FINALIZADA' ? "checkmark-circle" : "close-circle"} 
+              name={isInProgress ? "car" : status === 'FINALIZADA' ? "checkmark-circle" : status === 'CANCELADA' ? "close-circle" : "calendar"} 
               size={18} 
-              color={statusColor} 
+              color={isInProgress ? '#fff' : statusColor} 
             />
-            <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+            <Text style={[
+              styles.statusText, 
+              { color: isInProgress ? '#fff' : statusColor }
+            ]}>
+              {statusText}
+            </Text>
           </View>
           
           <View style={styles.mapButtons}>
@@ -992,6 +1010,36 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
               )}
             </View>
           </View>
+
+          {/* Current Status Section for Passengers in Ongoing Rides */}
+          {!isCurrentUserDriver && isInProgress && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Status da Carona</Text>
+              <View style={styles.card}>
+                <View style={styles.statusInfoCard}>
+                  <View style={styles.statusIconContainer}>
+                    <Ionicons name="car" size={32} color={COLORS.primary.main} />
+                  </View>
+                  <View style={styles.statusInfoContent}>
+                    <Text style={styles.statusMainText}>Carona em Andamento</Text>
+                    <Text style={styles.statusSubText}>
+                      Você está participando desta carona. O motorista já iniciou a viagem.
+                    </Text>
+                  </View>
+                </View>
+                
+                {motorista?.mostrarWhatsapp && motorista?.whatsapp && (
+                  <TouchableOpacity 
+                    style={styles.whatsappButton}
+                    onPress={() => launchWhatsApp(motorista.whatsapp)}
+                  >
+                    <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+                    <Text style={styles.whatsappButtonText}>Conversar no WhatsApp</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
 
           {/* Passengers Section */}
           <View style={styles.section}>
@@ -1598,6 +1646,50 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  statusInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  statusIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: `${COLORS.primary.main}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  statusInfoContent: {
+    flex: 1,
+  },
+  statusMainText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginBottom: 4,
+  },
+  statusSubText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    lineHeight: 20,
+  },
+  whatsappButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#25D366',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  whatsappButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 
