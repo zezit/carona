@@ -48,49 +48,39 @@ public class DenunciaService {
     public DenunciaDto criarDenuncia(final Long caronaId, final DenunciaRequest denunciaRequest) {
         log.info("Criando denúncia para carona ID: {}", caronaId);
 
-        // Buscar carona
         final Carona carona = caronaRepository.findById(caronaId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, caronaId));
 
-        // Verificar se a carona já foi finalizada
         if (!StatusCarona.FINALIZADA.equals(carona.getStatus())) {
             throw new ErroDeCliente(MensagensResposta.CARONA_NAO_FINALIZADA);
         }
 
-        // Obter estudante atual (denunciante)
         final Estudante denunciante = currentUserService.getCurrentEstudante();
 
-        // Verificar se o denunciante participou da carona (como motorista ou passageiro)
         boolean participouDaCarona = verificarParticipacaoNaCarona(carona, denunciante);
         if (!participouDaCarona) {
             throw new ErroDeCliente(MensagensResposta.NAO_PARTICIPOU_DA_CARONA);
         }
 
-        // Buscar estudante denunciado
         final Estudante denunciado = estudanteRepository.findById(denunciaRequest.getDenunciadoId())
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID,
                         denunciaRequest.getDenunciadoId()));
 
-        // Verificar se o denunciado participou da carona
         boolean denunciadoParticipouDaCarona = verificarParticipacaoNaCarona(carona, denunciado);
         if (!denunciadoParticipouDaCarona) {
             throw new ErroDeCliente(MensagensResposta.NAO_PARTICIPOU_DA_CARONA);
         }
 
-        // Verificar se o denunciante não está tentando denunciar a si mesmo
         if (denunciante.getId().equals(denunciado.getId())) {
             throw new ErroDeCliente(MensagensResposta.NAO_PODE_DENUNCIAR_A_SI_MESMO);
         }
 
-        // Verificar se o denunciante já denunciou o denunciado nesta carona
         if (denunciaRepository.existsByCaronaAndDenuncianteAndDenunciado(carona, denunciante, denunciado)) {
             throw new ErroDeCliente(MensagensResposta.DENUNCIA_JA_REALIZADA);
         }
 
-        // Validar descrição
         validarDescricao(denunciaRequest.getDescricao());
 
-        // Criar denúncia
         final Denuncia denuncia = new Denuncia();
         denuncia.setCarona(carona);
         denuncia.setDenunciante(denunciante);
@@ -100,7 +90,6 @@ public class DenunciaService {
         denuncia.setDataHora(LocalDateTime.now());
         denuncia.setStatus(Status.PENDENTE);
 
-        // Salvar denúncia
         denunciaRepository.save(denuncia);
         log.info("Denúncia criada com sucesso. ID: {}", denuncia.getId());
 
@@ -134,7 +123,6 @@ public class DenunciaService {
     public Page<DenunciaDto> buscarDenunciasPorCarona(final Long caronaId, final Pageable pageable) {
         log.info("Buscando denúncias da carona ID: {}", caronaId);
 
-        // Verificar se a carona existe
         if (!caronaRepository.existsById(caronaId)) {
             throw new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, caronaId);
         }
@@ -154,7 +142,6 @@ public class DenunciaService {
     public Page<DenunciaDto> buscarDenunciasRealizadas(final Long estudanteId, final Pageable pageable) {
         log.info("Buscando denúncias realizadas pelo estudante ID: {}", estudanteId);
 
-        // Verificar se o estudante existe
         if (!estudanteRepository.existsById(estudanteId)) {
             throw new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId);
         }
@@ -174,7 +161,6 @@ public class DenunciaService {
     public Page<DenunciaDto> buscarDenunciasRecebidas(final Long estudanteId, final Pageable pageable) {
         log.info("Buscando denúncias recebidas pelo estudante ID: {}", estudanteId);
 
-        // Verificar se o estudante existe
         if (!estudanteRepository.existsById(estudanteId)) {
             throw new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId);
         }
@@ -214,30 +200,23 @@ public class DenunciaService {
         final Denuncia denuncia = denunciaRepository.findById(denunciaId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.DENUNCIA_NAO_ENCONTRADA, denunciaId));
 
-        // Verificar se a denúncia ainda está pendente
         if (!Status.PENDENTE.equals(denuncia.getStatus())) {
             throw new ErroDeCliente(MensagensResposta.DENUNCIA_JA_RESOLVIDA);
         }
 
-        // Validar status de resolução
         if (Status.PENDENTE.equals(status)) {
             throw new ErroDeCliente(MensagensResposta.STATUS_RESOLUCAO_INVALIDO);
         }
 
-        // Validar resolução
         validarResolucao(resolucao);
 
-        // Atualizar denúncia
         denuncia.setStatus(status);
         denuncia.setResolucao(resolucao);
         denuncia.setDataHoraResolucao(LocalDateTime.now());
 
-        // Salvar denúncia
         denunciaRepository.save(denuncia);
 
         log.info("Denúncia resolvida com sucesso. ID: {}, Status: {}", denunciaId, status);
-
-        // TODO: Publicar evento de denúncia resolvida (para notificar denunciante)
 
         return denunciaMapper.toDto(denuncia);
     }
@@ -256,21 +235,17 @@ public class DenunciaService {
         final Denuncia denuncia = denunciaRepository.findById(denunciaId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.DENUNCIA_NAO_ENCONTRADA, denunciaId));
 
-        // Verificar se o usuário atual é o denunciante
         final Estudante estudanteAtual = currentUserService.getCurrentEstudante();
         if (!denuncia.getDenunciante().getId().equals(estudanteAtual.getId())) {
             throw new ErroDeCliente(MensagensResposta.NAO_E_DENUNCIANTE);
         }
 
-        // Verificar se a denúncia ainda está pendente
         if (!Status.PENDENTE.equals(denuncia.getStatus())) {
             throw new ErroDeCliente(MensagensResposta.DENUNCIA_JA_RESOLVIDA);
         }
 
-        // Validar descrição
         validarDescricao(descricao);
 
-        // Atualizar descrição
         denuncia.setDescricao(descricao);
         denunciaRepository.save(denuncia);
 
@@ -291,18 +266,15 @@ public class DenunciaService {
         final Denuncia denuncia = denunciaRepository.findById(denunciaId)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.DENUNCIA_NAO_ENCONTRADA, denunciaId));
 
-        // Verificar se o usuário atual é o denunciante
         final Estudante estudanteAtual = currentUserService.getCurrentEstudante();
         if (!denuncia.getDenunciante().getId().equals(estudanteAtual.getId())) {
             throw new ErroDeCliente(MensagensResposta.NAO_E_DENUNCIANTE);
         }
 
-        // Verificar se a denúncia ainda está pendente
         if (!Status.PENDENTE.equals(denuncia.getStatus())) {
             throw new ErroDeCliente(MensagensResposta.DENUNCIA_JA_RESOLVIDA);
         }
 
-        // Excluir denúncia
         denunciaRepository.delete(denuncia);
 
         log.info("Denúncia excluída com sucesso. ID: {}", denunciaId);
@@ -316,12 +288,10 @@ public class DenunciaService {
      * @return true se o estudante participou da carona
      */
     private boolean verificarParticipacaoNaCarona(final Carona carona, final Estudante estudante) {
-        // Verificar se é o motorista da carona
         if (carona.getMotorista().getEstudante().getId().equals(estudante.getId())) {
             return true;
         }
 
-        // Verificar se é um passageiro da carona
         return carona.getPassageiros().stream()
                 .anyMatch(passageiro -> passageiro.getId().equals(estudante.getId()));
     }
