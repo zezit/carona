@@ -130,11 +130,52 @@ public class WebsocketService {
     }
 
     public void emitirEventoCaronaIniciada(Carona carona) {
-        messagingTemplate.convertAndSend("/topic/carona/" + carona.getId() + "/iniciada", carona);
+        try {
+            // Send ride started event
+            messagingTemplate.convertAndSend("/topic/carona/" + carona.getId() + "/iniciada", carona);
+            
+            // Notify passengers to start listening for location updates
+            String locationTopic = "/topic/carona/" + carona.getId() + "/location-enabled";
+            messagingTemplate.convertAndSend(locationTopic, Map.of(
+                "type", "LOCATION_SHARING_ENABLED",
+                "caronaId", carona.getId(),
+                "message", "Location sharing is now active for this ride",
+                "timestamp", Instant.now().toString()
+            ));
+            
+            log.info("Location sharing enabled for ride {}", carona.getId());
+        } catch (Exception e) {
+            log.error("Error emitting ride started event for ride {}: {}", carona.getId(), e.getMessage(), e);
+        }
     }
 
     public void emitirEventoCaronaAtualizada(CaronaDto caronadto) {
         messagingTemplate.convertAndSend("/topic/carona/" + caronadto.getId() + "/iniciada", caronadto);
+    }
+
+    /**
+     * Emit event when ride is finished to disable location sharing
+     * 
+     * @param carona The finished ride
+     */
+    public void emitirEventoCaronaFinalizada(Carona carona) {
+        try {
+            // Send ride finished event
+            messagingTemplate.convertAndSend("/topic/carona/" + carona.getId() + "/finalizada", carona);
+            
+            // Notify to stop location sharing
+            String locationTopic = "/topic/carona/" + carona.getId() + "/location-disabled";
+            messagingTemplate.convertAndSend(locationTopic, Map.of(
+                "type", "LOCATION_SHARING_DISABLED",
+                "caronaId", carona.getId(),
+                "message", "Location sharing has been disabled for this ride",
+                "timestamp", Instant.now().toString()
+            ));
+            
+            log.info("Location sharing disabled for ride {}", carona.getId());
+        } catch (Exception e) {
+            log.error("Error emitting ride finished event for ride {}: {}", carona.getId(), e.getMessage(), e);
+        }
     }
 
     public void sendRideCancellationNotification(final RideCancellationMessageDTO cancellationMessage) {

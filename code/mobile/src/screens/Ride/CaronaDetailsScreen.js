@@ -24,6 +24,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api/apiClient';
 import UserAvatar from '../../components/common/UserAvatar';
 import StarRating from '../../components/common/StarRating';
+import LocationSharingService from '../../services/websocket/LocationSharingService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -41,6 +42,13 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
   const [loadingDriverProfile, setLoadingDriverProfile] = useState(false);
   const [driverStudent, setDriverStudent] = useState(null);
   const [loadingDriverStudent, setLoadingDriverStudent] = useState(false);
+  
+  // Location sharing state
+  const [isLocationSharingActive, setIsLocationSharingActive] = useState(false);
+  const [driverCurrentLocation, setDriverCurrentLocation] = useState(null);
+  const [locationSharingError, setLocationSharingError] = useState(null);
+  const [locationWatchId, setLocationWatchId] = useState(null);
+  
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null);
   
@@ -76,6 +84,38 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
       return () => clearTimeout(timeout);
     }
   }, [routeCoordinates, passengerWaypoints]);
+
+  // Location sharing effect - start/stop based on ride status and user role
+  useEffect(() => {
+    const initializeLocationSharing = async () => {
+      const status = carona.status;
+      const isInProgress = status === 'EM_ANDAMENTO';
+      
+      // Determine user roles
+      const driverId = carona?.motoristaId || carona?.motorista?.id || carona?.motoristId;
+      const isCurrentUserDriver = user?.id && driverId && user.id.toString() === driverId.toString();
+      const passageiros = carona.passageiros || [];
+      const isCurrentUserPassenger = user?.id && passageiros.some(p => 
+        p.id?.toString() === user.id.toString() || 
+        p.estudanteId?.toString() === user.id.toString()
+      );
+
+      if (isInProgress && (isCurrentUserDriver || isCurrentUserPassenger)) {
+        console.log('Starting location sharing for ongoing ride - Role:', isCurrentUserDriver ? 'Driver' : 'Passenger');
+        await startLocationSharing(isCurrentUserDriver);
+      } else {
+        console.log('Stopping location sharing - Ride not in progress or user not involved');
+        await stopLocationSharing();
+      }
+    };
+
+    initializeLocationSharing();
+
+    // Cleanup on unmount
+    return () => {
+      stopLocationSharing();
+    };
+  }, [carona.status, user?.id, authToken]);
 
   // Fetch the complete route with passenger waypoints
   const fetchCompleteRoute = async () => {
@@ -339,6 +379,214 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
       });
     } catch (error) {
       console.error('Error fitting map to coordinates:', error);
+    }
+  };
+
+  // Location sharing functions
+  const startLocationSharing = async (isDriver) => {
+    try {
+      console.log('Starting location sharing as:', isDriver ? 'Driver' : 'Passenger');
+      
+      // Set initial state to show connecting
+      setIsLocationSharingActive(false);
+      setLocationSharingError(null);
+      
+      if (isDriver) {
+        // Driver: Start sending location updates
+        await startDriverLocationSharing();
+      } else {
+        // Passenger: Start listening for driver location updates
+        await startPassengerLocationListening();
+      }
+      
+      setIsLocationSharingActive(true);
+      setLocationSharingError(null);
+      console.log('Location sharing started successfully');
+    } catch (error) {
+      console.error('Error starting location sharing:', error);
+      setLocationSharingError(error.message);
+      setIsLocationSharingActive(false);
+    }
+  };
+
+  const stopLocationSharing = async () => {
+    try {
+      console.log('Stopping location sharing');
+      
+      // Stop location tracking if active
+      if (locationWatchId) {
+        await Location.stopLocationUpdatesAsync(locationWatchId);
+        setLocationWatchId(null);
+      }
+      
+      // Disconnect from WebSocket
+      LocationSharingService.stopLocationSharing();
+      
+      setIsLocationSharingActive(false);
+      setLocationSharingError(null);
+      setDriverCurrentLocation(null);
+    } catch (error) {
+      console.error('Error stopping location sharing:', error);
+    }
+  };
+
+  const startDriverLocationSharing = async () => {
+    // Request location permissions
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Location permission denied');
+    }
+
+    // Initialize WebSocket connection
+    await LocationSharingService.initialize(
+      authToken,
+      null, // Driver doesn't need to receive locations
+      (connected) => {
+        console.log('Driver location sharing connection status:', connected);
+        if (connected) {
+          // Start location sharing when connection is established
+          // Add a small delay to ensure STOMP client is fully ready
+          setTimeout(() => {
+            try {
+              LocationSharingService.startDriverLocationSharing(carona.id);
+              console.log('Driver location sharing service started');
+            } catch (error) {
+              console.error('Error starting driver location sharing service:', error);
+            }
+          }, 100);
+        }
+      }
+    );
+
+    // Wait for connection to be established
+    if (!LocationSharingService.isConnected()) {
+      console.log('Waiting for WebSocket connection...');
+      await new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait (50 * 100ms)
+        
+        const checkConnection = () => {
+          attempts++;
+          if (LocationSharingService.isConnected()) {
+            try {
+              LocationSharingService.startDriverLocationSharing(carona.id);
+              console.log('Driver location sharing service started after connection');
+              resolve();
+            } catch (error) {
+              console.error('Error starting driver location sharing after connection:', error);
+              reject(error);
+            }
+          } else if (attempts >= maxAttempts) {
+            reject(new Error('Connection timeout waiting for WebSocket'));
+          } else {
+            setTimeout(checkConnection, 100);
+          }
+        };
+        checkConnection();
+      });
+    } else {
+      // Connection already established, start immediately
+      LocationSharingService.startDriverLocationSharing(carona.id);
+      console.log('Driver location sharing service started immediately');
+    }
+
+    // Start watching location with high accuracy
+    const watchId = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 5000, // Update every 5 seconds
+        distanceInterval: 10, // Or when moved 10 meters
+      },
+      (location) => {
+        const locationData = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          accuracy: location.coords.accuracy,
+          speed: location.coords.speed,
+          bearing: location.coords.heading,
+          timestamp: new Date(location.timestamp).toISOString(),
+        };
+
+        console.log('Sending driver location update:', locationData);
+        LocationSharingService.sendLocationUpdate(location);
+        
+        // Update current location on map
+        setCurrentLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
+      }
+    );
+
+    setLocationWatchId(watchId);
+    console.log('Driver location sharing started');
+  };
+
+  const startPassengerLocationListening = async () => {
+    // Initialize WebSocket connection
+    await LocationSharingService.initialize(
+      authToken,
+      (locationUpdate) => {
+        console.log('Received driver location update:', locationUpdate);
+        setDriverCurrentLocation({
+          latitude: locationUpdate.latitude,
+          longitude: locationUpdate.longitude,
+          accuracy: locationUpdate.accuracy,
+          speed: locationUpdate.speed,
+          bearing: locationUpdate.bearing,
+          timestamp: locationUpdate.timestamp,
+        });
+      },
+      (connected) => {
+        console.log('Passenger location sharing connection status:', connected);
+        if (connected) {
+          // Only start listening when connection is established
+          // Add a small delay to ensure STOMP client is fully ready
+          setTimeout(() => {
+            try {
+              LocationSharingService.startPassengerLocationReceiving(carona.id);
+              console.log('Passenger location listening started');
+            } catch (error) {
+              console.error('Error starting passenger location receiving:', error);
+              throw error;
+            }
+          }, 100);
+        }
+      }
+    );
+
+    // Wait a bit for connection to be established if not already connected
+    if (!LocationSharingService.isConnected()) {
+      console.log('Waiting for WebSocket connection...');
+      await new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait (50 * 100ms)
+        
+        const checkConnection = () => {
+          attempts++;
+          if (LocationSharingService.isConnected()) {
+            try {
+              LocationSharingService.startPassengerLocationReceiving(carona.id);
+              console.log('Passenger location listening started after connection');
+              resolve();
+            } catch (error) {
+              console.error('Error starting passenger location receiving after connection:', error);
+              reject(error);
+            }
+          } else if (attempts >= maxAttempts) {
+            reject(new Error('Connection timeout waiting for WebSocket'));
+          } else {
+            setTimeout(checkConnection, 100);
+          }
+        };
+        checkConnection();
+      });
+    } else {
+      // Connection already established, start immediately
+      LocationSharingService.startPassengerLocationReceiving(carona.id);
+      console.log('Passenger location listening started immediately');
     }
   };
 
@@ -742,6 +990,25 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
           {/* Passenger waypoint markers */}
           {renderPassengerWaypoints()}
 
+          {/* Driver real-time location marker */}
+          {isInProgress && driverCurrentLocation && !isCurrentUserDriver && (
+            <Marker 
+              coordinate={{
+                latitude: driverCurrentLocation.latitude,
+                longitude: driverCurrentLocation.longitude
+              }} 
+              title="Localização do Motorista"
+              description="Localização em tempo real"
+            >
+              <View style={styles.driverLocationMarker}>
+                <View style={styles.driverLocationInner}>
+                  <Ionicons name="car" size={18} color="white" />
+                </View>
+                <View style={styles.driverLocationPulse} />
+              </View>
+            </Marker>
+          )}
+
           {/* Rota completa ou básica */}
           {routeCoordinates.length > 0 && (
             <Polyline
@@ -1034,6 +1301,33 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
                   </View>
                 </View>
                 
+                {/* Location sharing status */}
+                <View style={styles.locationSharingStatus}>
+                  <View style={styles.locationStatusRow}>
+                    <Ionicons 
+                      name={isLocationSharingActive ? "location" : "location-outline"} 
+                      size={16} 
+                      color={isLocationSharingActive ? COLORS.primary.main : COLORS.text.secondary} 
+                    />
+                    <Text style={[
+                      styles.locationStatusText,
+                      { color: isLocationSharingActive ? COLORS.primary.main : COLORS.text.secondary }
+                    ]}>
+                      {isLocationSharingActive ? 'Localização em tempo real ativa' : 'Conectando localização...'}
+                    </Text>
+                  </View>
+                  {driverCurrentLocation && (
+                    <Text style={styles.lastLocationUpdate}>
+                      Última atualização: {new Date(driverCurrentLocation.timestamp).toLocaleTimeString('pt-BR')}
+                    </Text>
+                  )}
+                  {locationSharingError && (
+                    <Text style={styles.locationError}>
+                      Erro: {locationSharingError}
+                    </Text>
+                  )}
+                </View>
+                
                 {motorista?.mostrarWhatsapp && motorista?.whatsapp && (
                   <TouchableOpacity 
                     style={styles.whatsappButton}
@@ -1098,6 +1392,41 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
                 <Ionicons name="checkmark-circle-outline" size={24} color="#FFF" />
                 <Text style={styles.actionButtonText}>Finalizar Carona</Text>
               </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Location Sharing Status for Drivers */}
+          {isCurrentUserDriver && isInProgress && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Compartilhamento de Localização</Text>
+              <View style={styles.card}>
+                <View style={styles.locationSharingDriverCard}>
+                  <View style={styles.locationStatusRow}>
+                    <Ionicons 
+                      name={isLocationSharingActive ? "radio-button-on" : "radio-button-off"} 
+                      size={20} 
+                      color={isLocationSharingActive ? COLORS.primary.main : COLORS.text.secondary} 
+                    />
+                    <Text style={[
+                      styles.locationDriverStatusText,
+                      { color: isLocationSharingActive ? COLORS.primary.main : COLORS.text.secondary }
+                    ]}>
+                      {isLocationSharingActive ? 'Compartilhando localização' : 'Conectando...'}
+                    </Text>
+                  </View>
+                  <Text style={styles.locationDriverDescription}>
+                    {isLocationSharingActive 
+                      ? 'Sua localização está sendo compartilhada em tempo real com os passageiros.'
+                      : 'Conectando para compartilhar sua localização com os passageiros.'
+                    }
+                  </Text>
+                  {locationSharingError && (
+                    <Text style={styles.locationError}>
+                      Erro: {locationSharingError}
+                    </Text>
+                  )}
+                </View>
+              </View>
             </View>
           )}
 
@@ -1696,6 +2025,80 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  driverLocationMarker: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  driverLocationInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    zIndex: 2,
+  },
+  driverLocationPulse: {
+    position: 'absolute',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 107, 53, 0.3)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.5)',
+    zIndex: 1,
+  },
+  locationSharingStatus: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+  },
+  locationStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  locationStatusText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  lastLocationUpdate: {
+    fontSize: 12,
+    color: COLORS.text.tertiary,
+    marginTop: 4,
+    marginLeft: 24,
+  },
+  locationError: {
+    fontSize: 12,
+    color: COLORS.danger,
+    marginTop: 4,
+    marginLeft: 24,
+  },
+  locationSharingDriverCard: {
+    padding: 4,
+  },
+  locationDriverStatusText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  locationDriverDescription: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginTop: 8,
+    marginLeft: 28,
+    lineHeight: 20,
   },
 });
 
