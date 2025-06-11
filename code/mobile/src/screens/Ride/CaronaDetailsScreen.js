@@ -675,6 +675,12 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
   const driverId = carona?.motoristaId || carona?.motorista?.id || carona?.motoristId;
   const isCurrentUserDriver = user?.id && driverId && user.id.toString() === driverId.toString();
   
+  // Determine if current user is a passenger
+  const isCurrentUserPassenger = user?.id && passageiros.some(p => 
+    p.id?.toString() === user.id.toString() || 
+    p.estudanteId?.toString() === user.id.toString()
+  );
+  
   // Use fetched driver profile data or fallback to carona data
   const motorista = {
     // Merge driver profile data with student data
@@ -784,7 +790,7 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
           
           <Text style={styles.titleText}>Detalhes da Carona</Text>
           
-          {motorista?.mostrarWhatsapp && motorista?.whatsapp && (
+          {isCurrentUserPassenger && motorista?.mostrarWhatsapp && motorista?.whatsapp && (
             <TouchableOpacity 
               style={styles.topBarButton} 
               onPress={() => launchWhatsApp(motorista.whatsapp)}
@@ -1012,7 +1018,7 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
           </View>
 
           {/* Current Status Section for Passengers in Ongoing Rides */}
-          {!isCurrentUserDriver && isInProgress && (
+          {isCurrentUserPassenger && isInProgress && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Status da Carona</Text>
               <View style={styles.card}>
