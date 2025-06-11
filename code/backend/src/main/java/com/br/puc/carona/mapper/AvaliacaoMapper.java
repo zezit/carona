@@ -2,6 +2,7 @@ package com.br.puc.carona.mapper;
 
 import org.springframework.stereotype.Component;
 
+import com.br.puc.carona.dto.response.AvaliacaoAnonimaDto;
 import com.br.puc.carona.dto.response.AvaliacaoDto;
 import com.br.puc.carona.dto.response.EstudanteResumoDto;
 import com.br.puc.carona.model.Avaliacao;
@@ -21,6 +22,21 @@ public class AvaliacaoMapper {
                 .caronaId(entity.getCarona() != null ? entity.getCarona().getId() : null)
                 .avaliador(toEstudanteResumo(entity.getAvaliador()))
                 .avaliado(toEstudanteResumo(entity.getAvaliado()))
+                .nota(entity.getNota())
+                .comentario(entity.getComentario())
+                .dataHora(entity.getDataHora())
+                .tipo(entity.getTipo())
+                .build();
+    }
+
+    public AvaliacaoAnonimaDto toAnonimaDto(final Avaliacao entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return AvaliacaoAnonimaDto.builder()
+                .id(entity.getId())
+                .caronaId(entity.getCarona() != null ? entity.getCarona().getId() : null)
                 .nota(entity.getNota())
                 .comentario(entity.getComentario())
                 .dataHora(entity.getDataHora())

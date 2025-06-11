@@ -5,6 +5,7 @@ import { ToastProvider } from './src/contexts/ToastContext';
 import { NotificationProvider } from './src/contexts/NotificationContext';
 import ToastContainer from './src/components/ui/ToastContainer';
 import AppNavigator from './src/navigation/AppNavigator';
+import RatingOverlay from './src/components/common/RatingOverlay';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <NotificationProvider>
             <AppNavigator />
             <ToastContainer />
+            <RatingOverlay />
           </NotificationProvider>
         </ToastProvider>
       </AuthProvider>

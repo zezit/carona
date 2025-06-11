@@ -1,24 +1,29 @@
 package com.br.puc.carona.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.br.puc.carona.messaging.contract.AvaliacaoMessageDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.request.AvaliacaoRequest;
 import com.br.puc.carona.dto.response.AvaliacaoDto;
+import com.br.puc.carona.dto.response.AvaliacaoAnonimaDto;
+import com.br.puc.carona.dto.response.CaronaSemTrajetoDTO;
+import com.br.puc.carona.dto.response.EstudanteResumoDto;
 import com.br.puc.carona.enums.StatusCarona;
 import com.br.puc.carona.enums.TipoAvaliacao;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.AvaliacaoMapper;
+import com.br.puc.carona.mapper.CaronaMapper;
 import com.br.puc.carona.messaging.MensagemProducer;
+import com.br.puc.carona.messaging.contract.AvaliacaoMessageDTO;
 import com.br.puc.carona.model.Avaliacao;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
@@ -42,6 +47,7 @@ public class AvaliacaoService {
     private final EstudanteRepository estudanteRepository;
 
     private final AvaliacaoMapper avaliacaoMapper;
+    private final CaronaMapper caronaMapper;
     private final CurrentUserService currentUserService;
     private final MensagemProducer mensagemProducer;
 
@@ -190,13 +196,33 @@ public class AvaliacaoService {
     }
 
     /**
+     * Busca todas as avaliações recebidas por um estudante (anonimizadas)
+     *
+     * @param estudanteId ID do estudante
+     * @param pageable configuração de paginação
+     * @return página de DTOs de avaliações anônimas
+     */
+    public Page<AvaliacaoAnonimaDto> buscarAvaliacoesRecebidasAnonimas(final Long estudanteId, final Pageable pageable) {
+        log.info("Buscando avaliações recebidas (anônimas) pelo estudante ID: {}", estudanteId);
+
+        // Verificar se o estudante existe
+        if (!estudanteRepository.existsById(estudanteId)) {
+            throw new EntidadeNaoEncontrada(MensagensResposta.USUARIO_NAO_ENCONTRADO_ID, estudanteId);
+        }
+
+        final Page<Avaliacao> avaliacoes = avaliacaoRepository.findByAvaliadoIdOrderByDataHoraDesc(estudanteId, pageable);
+
+        return avaliacoes.map(avaliacaoMapper::toAnonimaDto);
+    }
+
+    /**
      * Busca todas as avaliações recebidas por um estudante
      *
      * @param estudanteId ID do estudante
      * @param pageable configuração de paginação
-     * @return página de DTOs de avaliações
+     * @return página de DTOs de avaliações anônimas (por privacidade)
      */
-    public Page<AvaliacaoDto> buscarAvaliacoesRecebidas(final Long estudanteId, final Pageable pageable) {
+    public Page<AvaliacaoAnonimaDto> buscarAvaliacoesRecebidas(final Long estudanteId, final Pageable pageable) {
         log.info("Buscando avaliações recebidas pelo estudante ID: {}", estudanteId);
 
         // Verificar se o estudante existe
@@ -206,7 +232,8 @@ public class AvaliacaoService {
 
         final Page<Avaliacao> avaliacoes = avaliacaoRepository.findByAvaliadoIdOrderByDataHoraDesc(estudanteId, pageable);
 
-        return avaliacoes.map(avaliacaoMapper::toDto);
+        // Retornar avaliações anônimas para preservar privacidade
+        return avaliacoes.map(avaliacaoMapper::toAnonimaDto);
     }
 
     /**
@@ -379,5 +406,113 @@ public class AvaliacaoService {
 
         log.info("Média de avaliações atualizada para estudante ID: {}. Nova média: {}",
                 estudante.getId(), estudante.getAvaliacaoMedia());
+    }
+
+    /**
+     * Busca todas as pessoas que o usuário atual precisa avaliar em uma carona finalizada
+     *
+     * @param caronaId ID da carona
+     * @return lista de estudantes que precisam ser avaliados
+     */
+    public List<EstudanteResumoDto> buscarAvaliacoesPendentes(final Long caronaId) {
+        log.info("Buscando avaliações pendentes para carona ID: {}", caronaId);
+
+        // Buscar carona
+        final Carona carona = caronaRepository.findById(caronaId)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, caronaId));
+
+        // Verificar se a carona já foi finalizada
+        if (!StatusCarona.FINALIZADA.equals(carona.getStatus())) {
+            return new ArrayList<>();
+        }
+
+        // Obter estudante atual
+        final Estudante estudanteAtual = currentUserService.getCurrentEstudante();
+
+        // Verificar se o estudante participou da carona
+        if (!verificarParticipacaoNaCarona(carona, estudanteAtual)) {
+            return new ArrayList<>();
+        }
+
+        return buscarParticipantesNaoAvaliados(carona, estudanteAtual);
+    }
+
+    /**
+     * Verifica se o usuário atual tem avaliações pendentes em caronas finalizadas
+     *
+     * @return true se há avaliações pendentes
+     */
+    public Boolean temAvaliacoesPendentes() {
+        log.info("Verificando se usuário atual tem avaliações pendentes");
+
+        final Estudante estudanteAtual = currentUserService.getCurrentEstudante();
+
+        // Buscar todas as caronas finalizadas onde o estudante participou
+        final List<Carona> caronasFinalizadas = caronaRepository.findCaronasFinalizadasComParticipacao(estudanteAtual.getId());
+
+        for (Carona carona : caronasFinalizadas) {
+            List<EstudanteResumoDto> pendentes = buscarParticipantesNaoAvaliados(carona, estudanteAtual);
+            if (!pendentes.isEmpty()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Busca todas as caronas finalizadas onde o usuário atual tem avaliações pendentes
+     *
+     * @return lista de caronas com avaliações pendentes
+     */
+    public List<CaronaSemTrajetoDTO> buscarCaronasFinalizadasSemAvaliacao() {
+        log.info("Buscando caronas finalizadas com avaliações pendentes");
+
+        final Estudante estudanteAtual = currentUserService.getCurrentEstudante();
+
+        // Buscar todas as caronas finalizadas onde o estudante participou
+        final List<Carona> caronasFinalizadas = caronaRepository.findCaronasFinalizadasComParticipacao(estudanteAtual.getId());
+
+        final List<Carona> caronasComAvaliacoesPendentes = caronasFinalizadas.stream()
+                .filter(carona -> !buscarParticipantesNaoAvaliados(carona, estudanteAtual).isEmpty())
+                .collect(Collectors.toList());
+
+        // Converter para DTO usando o mapper
+        return caronasComAvaliacoesPendentes.stream()
+                .map(caronaMapper::toSemTrajetoDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca participantes de uma carona que ainda não foram avaliados pelo estudante
+     *
+     * @param carona carona a verificar
+     * @param estudanteAtual estudante que irá avaliar
+     * @return lista de participantes não avaliados
+     */
+    private List<EstudanteResumoDto> buscarParticipantesNaoAvaliados(final Carona carona, final Estudante estudanteAtual) {
+        // Obter todos os participantes da carona (motorista + passageiros)
+        final List<Estudante> participantes = new ArrayList<>();
+        participantes.add(carona.getMotorista().getEstudante());
+        participantes.addAll(carona.getPassageiros());
+
+        // Remover o estudante atual da lista
+        participantes.removeIf(p -> p.getId().equals(estudanteAtual.getId()));
+
+        // Filtrar apenas aqueles que ainda não foram avaliados pelo estudante atual
+        final List<Estudante> naoAvaliados = participantes.stream()
+                .filter(participante -> !avaliacaoRepository.existsByCaronaAndAvaliadorAndAvaliado(carona, estudanteAtual, participante))
+                .collect(Collectors.toList());
+
+        // Converter para DTO
+        return naoAvaliados.stream()
+                .map(estudante -> EstudanteResumoDto.builder()
+                        .id(estudante.getId())
+                        .nome(estudante.getNome())
+                        .matricula(estudante.getMatricula())
+                        .curso(estudante.getCurso())
+                        .avaliacaoMedia(estudante.getAvaliacaoMedia())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

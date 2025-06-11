@@ -95,4 +95,12 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
 
     // Statistics count methods
     Long countByStatus(StatusCarona status);
+
+    // Method to find finished caronas where a student participated (as driver or passenger)
+    @Query("SELECT c FROM Carona c " +
+           "WHERE c.status = com.br.puc.carona.enums.StatusCarona.FINALIZADA " +
+           "AND (c.motorista.estudante.id = :estudanteId " +
+           "OR EXISTS (SELECT p FROM c.passageiros p WHERE p.id = :estudanteId)) " +
+           "ORDER BY c.dataHoraPartida DESC")
+    List<Carona> findCaronasFinalizadasComParticipacao(@Param("estudanteId") Long estudanteId);
 }

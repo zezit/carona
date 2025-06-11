@@ -83,6 +83,20 @@
         "order": 2
       },
       "stopAll": true
+    },
+    {
+      "name": "Run Full Mobile",
+      "configurations": [
+        "Run Backend API",
+        "Run Ngrok + API Update",
+        "Run Mobile",
+      ],
+      "presentation": {
+        "hidden": false,
+        "group": "mob",
+        "order": 1
+      },
+      "stopAll": true
     }
   ]
 }

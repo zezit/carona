@@ -47,6 +47,7 @@ const ProfilePage = ({ navigation, route }) => {
 
       if (response.success) {
         setUserDetails(response.data);
+        console.debug('User details loaded with rating:', response.data.avaliacaoMedia);
       } else {
         setError('Erro ao carregar dados do usuário');
       }
@@ -199,6 +200,14 @@ const ProfilePage = ({ navigation, route }) => {
             icon="car"
             iconColor={COLORS.secondary.main}
             onPress={handleDriverProfile}
+          />
+
+          <NavigationCard
+            title="Histórico de Avaliações"
+            description="Veja suas avaliações recebidas e enviadas"
+            icon="star"
+            iconColor={COLORS.warning.main}
+            onPress={() => navigation.navigate('RatingHistory')}
           />
         </View>
       </ScrollView>

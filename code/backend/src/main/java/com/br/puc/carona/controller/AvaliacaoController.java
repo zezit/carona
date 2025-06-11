@@ -1,5 +1,7 @@
 package com.br.puc.carona.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.br.puc.carona.dto.request.AvaliacaoRequest;
 import com.br.puc.carona.dto.response.AvaliacaoDto;
+import com.br.puc.carona.dto.response.AvaliacaoAnonimaDto;
+import com.br.puc.carona.dto.response.CaronaSemTrajetoDTO;
+import com.br.puc.carona.dto.response.EstudanteResumoDto;
 import com.br.puc.carona.service.AvaliacaoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -90,7 +95,7 @@ public class AvaliacaoController {
     }
 
     @GetMapping("/recebidas/{estudanteId}")
-    @Operation(summary = "Listar avaliações recebidas", description = "Lista todas as avaliações recebidas por um estudante, ordenadas por data/hora decrescente. Suporta paginação.")
+    @Operation(summary = "Listar avaliações recebidas", description = "Lista todas as avaliações recebidas por um estudante, ordenadas por data/hora decrescente. Suporta paginação. As avaliações são anonimizadas para preservar a privacidade dos avaliadores.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de avaliações recebidas obtida com sucesso",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = Page.class))),
@@ -98,11 +103,11 @@ public class AvaliacaoController {
             @ApiResponse(responseCode = "404", description = "Estudante não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
     })
-    public ResponseEntity<Page<AvaliacaoDto>> listarAvaliacoesRecebidas(
+    public ResponseEntity<Page<AvaliacaoAnonimaDto>> listarAvaliacoesRecebidas(
             @PathVariable final Long estudanteId,
             final Pageable pageable) {
         log.info("Listando avaliações recebidas pelo estudante ID: {}", estudanteId);
-        final Page<AvaliacaoDto> avaliacoes = avaliacaoService.buscarAvaliacoesRecebidas(estudanteId, pageable);
+        final Page<AvaliacaoAnonimaDto> avaliacoes = avaliacaoService.buscarAvaliacoesRecebidas(estudanteId, pageable);
         log.info("Total de avaliações recebidas pelo estudante ID {}: {}", estudanteId, avaliacoes.getTotalElements());
         return ResponseEntity.ok(avaliacoes);
     }
@@ -173,5 +178,48 @@ public class AvaliacaoController {
         avaliacaoService.excluirAvaliacao(id);
         log.info("Avaliação ID {} excluída com sucesso", id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/pendentes/carona/{caronaId}")
+    @Operation(summary = "Listar avaliações pendentes", description = "Lista todas as avaliações pendentes que o usuário atual precisa fazer para uma carona finalizada.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de avaliações pendentes obtida com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "404", description = "Carona não encontrada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<List<EstudanteResumoDto>> listarAvaliacoesPendentes(@PathVariable final Long caronaId) {
+        log.info("Listando avaliações pendentes do usuário atual para carona ID: {}", caronaId);
+        final List<EstudanteResumoDto> avaliacoesPendentes = avaliacaoService.buscarAvaliacoesPendentes(caronaId);
+        log.info("Total de avaliações pendentes para carona ID {}: {}", caronaId, avaliacoesPendentes.size());
+        return ResponseEntity.ok(avaliacoesPendentes);
+    }
+
+    @GetMapping("/pendentes")
+    @Operation(summary = "Verificar se há avaliações pendentes", description = "Verifica se o usuário atual tem avaliações pendentes em caronas finalizadas.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Status de avaliações pendentes obtido com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<Boolean> temAvaliacoesPendentes() {
+        log.info("Verificando se usuário atual tem avaliações pendentes");
+        final Boolean temPendentes = avaliacaoService.temAvaliacoesPendentes();
+        log.info("Usuário tem avaliações pendentes: {}", temPendentes);
+        return ResponseEntity.ok(temPendentes);
+    }
+
+    @GetMapping("/caronas-finalizadas-sem-avaliacao")
+    @Operation(summary = "Listar caronas finalizadas sem avaliação", description = "Lista todas as caronas finalizadas onde o usuário atual ainda tem avaliações pendentes.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de caronas obtida com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<List<CaronaSemTrajetoDTO>> listarCaronasFinalizadasSemAvaliacao() {
+        log.info("Listando caronas finalizadas sem avaliação do usuário atual");
+        final List<CaronaSemTrajetoDTO> caronas = avaliacaoService.buscarCaronasFinalizadasSemAvaliacao();
+        log.info("Total de caronas finalizadas sem avaliação: {}", caronas.size());
+        return ResponseEntity.ok(caronas);
     }
 }
