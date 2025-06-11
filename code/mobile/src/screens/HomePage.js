@@ -162,8 +162,8 @@ const HomePage = ({ navigation }) => {
   //   }
   // };
 
-  // Inicia a carona localmente, sem fazer requisição ao backend, usando os dados já disponíveis da carona
-  const handleStartRide = (carona) => {
+  // Visualiza os detalhes da carona usando os dados já disponíveis da carona
+  const handleViewRideDetails = (carona) => {
     navigation.navigate('CaronaDetailsScreen', {
       carona, // envia os dados já disponíveis da carona para a próxima tela
     });
@@ -340,11 +340,10 @@ const HomePage = ({ navigation }) => {
 
             <TouchableOpacity
                 style={styles.startRideButton}
-                // onPress={() => handleStartRide(nextRide.id)}
-                onPress={() => handleStartRide(nextRide)}
+                onPress={() => handleViewRideDetails(nextRide)}
               >
-              <Ionicons name="play" size={18} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.startRideButtonText}>Iniciar Carona</Text>
+              <Ionicons name="eye" size={18} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.startRideButtonText}>Ver Detalhes</Text>
             </TouchableOpacity>
           </View>
         )}
