@@ -226,6 +226,43 @@ public class CaronaService {
                 .toList();
     }
 
+    // Método para buscar caronas ativas de um motorista (em andamento)
+    public List<CaronaDto> buscarCaronasAtivasDoMotorista(final Long motoristaId) {
+        log.info("Buscando caronas ativas do motorista ID: {}", motoristaId);
+
+        // Verificar se o motorista existe
+        if (!perfilMotoristaRepository.existsById(motoristaId)) {
+            throw new EntidadeNaoEncontrada(MensagensResposta.ESTUDANTE_NAO_E_MOTORISTA, motoristaId);
+        }
+
+        // Buscar caronas com status EM_ANDAMENTO
+        final List<Carona> caronasAtivas = caronaRepository
+                .findByMotoristaIdAndStatusOrderByDataHoraPartidaAsc(
+                        motoristaId,
+                        StatusCarona.EM_ANDAMENTO);
+
+        log.info("Encontradas {} caronas ativas para o motorista ID: {}", caronasAtivas.size(), motoristaId);
+
+        return caronasAtivas.stream()
+                .map(caronaMapper::toDto)
+                .toList();
+    }
+
+    // Método para buscar caronas ativas de um passageiro (em andamento)
+    public List<CaronaDto> buscarCaronasAtivasDoPassageiro(final Long estudanteId) {
+        log.info("Buscando caronas ativas do passageiro ID: {}", estudanteId);
+
+        // Buscar caronas onde o estudante é passageiro e estão com status EM_ANDAMENTO
+        final List<Carona> caronasAtivas = caronaRepository
+                .findByPassageiroIdAndStatusOrderByDataHoraPartidaAsc(estudanteId, StatusCarona.EM_ANDAMENTO);
+
+        log.info("Encontradas {} caronas ativas para o passageiro ID: {}", caronasAtivas.size(), estudanteId);
+        
+        return caronasAtivas.stream()
+                .map(caronaMapper::toDto)
+                .toList();
+    }
+
     // Método para buscar histórico de caronas onde um estudante foi passageiro
     public List<CaronaDto> buscarCaronasDoPassageiro(final Long estudanteId) {
         log.info("Buscando histórico de caronas do passageiro ID: {}", estudanteId);

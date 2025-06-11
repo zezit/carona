@@ -24,6 +24,9 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
     List<Carona> findByMotoristaIdAndStatusAndDataHoraPartidaAfterOrderByDataHoraPartidaAsc(
             Long motoristaId, StatusCarona status, LocalDateTime dataAtual);
 
+    List<Carona> findByMotoristaIdAndStatusOrderByDataHoraPartidaAsc(
+            Long motoristaId, StatusCarona status);
+
     // New method to find active caronas for conflict checking
     List<Carona> findByMotoristaIdAndStatusNotInAndDataHoraChegadaAfter(
             Long motoristaId, List<StatusCarona> statusList, LocalDateTime dataAtual);
@@ -81,6 +84,14 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
            "WHERE p.id = :estudanteId " +
            "ORDER BY c.dataHoraPartida DESC")
     List<Carona> findByPassageiroIdOrderByDataHoraPartidaDesc(@Param("estudanteId") Long estudanteId);
+
+    // Method to find active caronas where a student is a passenger (with specific status)
+    @Query("SELECT c FROM Carona c " +
+           "JOIN c.passageiros p " +
+           "WHERE p.id = :estudanteId " +
+           "AND c.status = :status " +
+           "ORDER BY c.dataHoraPartida ASC")
+    List<Carona> findByPassageiroIdAndStatusOrderByDataHoraPartidaAsc(@Param("estudanteId") Long estudanteId, @Param("status") StatusCarona status);
 
     // Statistics count methods
     Long countByStatus(StatusCarona status);
