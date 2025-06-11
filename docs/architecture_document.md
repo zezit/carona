@@ -44,6 +44,7 @@ _**Resumo**. O projeto Carona? é uma solução para facilitar a mobilidade dos 
 | 18/03/2025 | José Victor Mendes Dias | Pequenos ajustes estruturais de documentação | v0.4       |
 | 20/03/2025 | Renato Matos            | Melhorando seção de abreviaturas             | v0.5       |
 | 20/03/2025 | Renato Matos            | Melhorando a descrição da persona            | v0.6       |
+| 11/06/2025 | Felipe Picinin          | Implementando ATAM                           | v0.7       |
 
 ## SUMÁRIO
 
