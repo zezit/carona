@@ -739,7 +739,6 @@ class PedidoDeEntradaServiceTest {
 
         // Then
         verify(mensagemProducer, times(1)).enviarMensagemCancelamentoCarona(messageCaptor.capture());
-        verify(caronaService, times(1)).recalculateRoute(carona);
         verify(caronaRepository, times(1)).save(carona);
         
         final RideCancellationMessageDTO capturedMessage = messageCaptor.getValue();

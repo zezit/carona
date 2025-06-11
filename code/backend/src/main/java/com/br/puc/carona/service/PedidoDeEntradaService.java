@@ -227,7 +227,6 @@ public class PedidoDeEntradaService {
                 // For approved requests, remove passenger and recalculate route
                 log.info("Cancelando pedido aprovado ID: {} - removendo passageiro e recalculando rota", idPedido);
                 carona.removerPassageiro(pedido.getSolicitacao().getEstudante().getId());
-                caronaService.recalculateRoute(carona);
                 // Save carona changes
                 caronaRepository.save(carona);
                 break;
