@@ -204,6 +204,8 @@ export const NotificationProvider = ({ children }) => {
                 return 'Solicitação Recusada';
             case 'RIDE_CANCELLED':
                 return 'Carona Cancelada';
+            case 'RIDE_STARTED':
+                return 'Carona Iniciada';
             case 'PASSENGER_REMOVED':
                 return 'Removido da Carona';
             case 'RIDE_REMINDER':
@@ -241,6 +243,8 @@ export const NotificationProvider = ({ children }) => {
                 return `Sua solicitação de carona foi recusada`;
             case 'RIDE_CANCELLED':
                 return `Uma carona foi cancelada`;
+            case 'RIDE_STARTED':
+                return `Sua carona foi iniciada pelo motorista`;
             case 'RIDE_REMINDER':
                 return `Lembrete: Você tem uma carona agendada`;
             case 'SYSTEM':
@@ -265,6 +269,7 @@ export const NotificationProvider = ({ children }) => {
             case 'RIDE_REQUEST_ACCEPTED':
             case 'RIDE_REQUEST_REJECTED':
             case 'RIDE_CANCELLED':
+            case 'RIDE_STARTED':
             case 'RIDE_REMINDER':
                 // Navigate to the Rides tab to show user's rides
                 navigationRef.current?.navigate('TabNavigator', {

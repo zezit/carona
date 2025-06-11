@@ -3,6 +3,7 @@ package com.br.puc.carona.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -29,6 +30,7 @@ import com.br.puc.carona.utils.RouteOptimizer.Waypoint;
 import com.br.puc.carona.mapper.TrajetoMapper;
 import com.br.puc.carona.messaging.MensagemProducer;
 import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
+import com.br.puc.carona.messaging.contract.RideStartedMessageDTO;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.PedidoDeEntrada;
@@ -397,13 +399,12 @@ public class CaronaService {
             throw new CaronaStatusInvalido();
         }
 
-
         CaronaDto caronaAtualizada = alterarStatusCarona(idCarona, StatusCarona.EM_ANDAMENTO);
 
-        webSocketService.emitirEventoCaronaAtualizada(caronaAtualizada);
+        // Send ride started notifications to passengers via queue instead of direct WebSocket
+        notificarPassageirosRideIniciada(carona, currentUserService.getCurrentEstudante().getId());
 
         return caronaAtualizada;
-
     }
 
     @Transactional
@@ -679,5 +680,48 @@ public class CaronaService {
                 log.error("Erro ao enviar notificação de cancelamento para passageiro ID: {}", passageiroId, e);
             }
         }
+    }
+
+    /**
+     * Notifica todos os passageiros confirmados sobre o início da carona
+     * 
+     * @param carona A carona que foi iniciada
+     * @param driverId ID do motorista que iniciou a carona
+     */
+    private void notificarPassageirosRideIniciada(final Carona carona, final Long driverId) {
+        log.info("Enviando notificações de carona iniciada para a carona ID: {}", carona.getId());
+        
+        // Get all confirmed passengers for this ride
+        final Set<Estudante> passageiros = carona.getPassageiros();
+        
+        if (passageiros == null || passageiros.isEmpty()) {
+            log.info("Nenhum passageiro confirmado encontrado para a carona ID: {}", carona.getId());
+            return;
+        }
+        
+        for (final Estudante passageiro : passageiros) {
+            final Long passageiroId = passageiro.getId();
+            
+            log.info("Enviando notificação de carona iniciada para passageiro ID: {}", passageiroId);
+            
+            final RideStartedMessageDTO startedMessage = RideStartedMessageDTO.builder()
+                    .caronaId(carona.getId())
+                    .driverId(driverId)
+                    .startedByUserId(driverId)
+                    .affectedUserId(passageiroId) // Set the passenger as affected user
+                    .notificationType(NotificationType.RIDE_STARTED)
+                    .message("A carona foi iniciada pelo motorista")
+                    .build();
+            
+            try {
+                mensagemProducer.enviarMensagemCaronaIniciada(startedMessage);
+                log.info("Notificação de carona iniciada enviada com sucesso para passageiro ID: {}", passageiroId);
+            } catch (Exception e) {
+                log.error("Erro ao enviar notificação de carona iniciada para passageiro ID: {}: {}", 
+                         passageiroId, e.getMessage(), e);
+            }
+        }
+        
+        log.info("Processamento de notificações de carona iniciada concluído para carona ID: {}", carona.getId());
     }
 }

@@ -49,6 +49,12 @@ const NotificationItem = ({ notification, onPress }) => {
           color: COLORS.warning.main,
           backgroundColor: COLORS.warning.main + '15'
         };
+      case 'RIDE_STARTED':
+        return {
+          name: 'play-circle',
+          color: COLORS.success.main,
+          backgroundColor: COLORS.success.main + '15'
+        };
       case 'RIDE_REMINDER':
         return {
           name: 'time',
@@ -80,6 +86,8 @@ const NotificationItem = ({ notification, onPress }) => {
         return 'Solicitação Rejeitada';
       case 'RIDE_CANCELLED':
         return 'Carona Cancelada';
+      case 'RIDE_STARTED':
+        return 'Carona Iniciada';
       case 'RIDE_REMINDER':
         return 'Lembrete de Carona';
       case 'SYSTEM':
@@ -286,6 +294,42 @@ const NotificationItem = ({ notification, onPress }) => {
               <View style={styles.timeContainer}>
                 <Ionicons name="time-outline" size={14} color={COLORS.text.secondary} />
                 <Text style={styles.timeText}>{payloadData.horario}</Text>
+              </View>
+            )}
+          </View>
+        );
+        
+      case 'RIDE_STARTED':
+        return (
+          <View style={styles.contentBody}>
+            <Text style={styles.description}>
+              Sua carona foi iniciada pelo motorista
+            </Text>
+            {(payloadData.origem || payloadData.destino) && (
+              <View style={styles.routeContainer}>
+                <View style={styles.routeItem}>
+                  <Ionicons 
+                    name="radio-button-on" 
+                    size={12} 
+                    color={COLORS.primary.main} 
+                    style={styles.routeIcon}
+                  />
+                  <Text style={styles.routeText} numberOfLines={1}>
+                    {payloadData.origem || 'Origem'}
+                  </Text>
+                </View>
+                <View style={styles.routeLine} />
+                <View style={styles.routeItem}>
+                  <Ionicons 
+                    name="location" 
+                    size={12} 
+                    color={COLORS.danger} 
+                    style={styles.routeIcon}
+                  />
+                  <Text style={styles.routeText} numberOfLines={1}>
+                    {payloadData.destino || 'Destino'}
+                  </Text>
+                </View>
               </View>
             )}
           </View>
@@ -506,6 +550,7 @@ const NotificationsScreen = () => {
       case 'RIDE_REQUEST_ACCEPTED':
       case 'RIDE_REQUEST_REJECTED':
       case 'RIDE_CANCELLED':
+      case 'RIDE_STARTED':
       case 'RIDE_REMINDER':
         // Navigate to the Rides tab to show user's rides
         navigation.navigate('TabNavigator', {

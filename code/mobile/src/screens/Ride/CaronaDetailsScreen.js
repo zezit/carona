@@ -29,7 +29,7 @@ const { width, height } = Dimensions.get('window');
 
 const CaronaDetailsScreen = ({ route, navigation }) => {
   const { carona } = route.params;
-  const { authToken } = useAuthContext();
+  const { authToken, user } = useAuthContext();
   const insets = useSafeAreaInsets();
   const [currentLocation, setCurrentLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
@@ -510,6 +510,46 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
     );
   };
 
+  const iniciarCarona = () => {
+    Alert.alert(
+      'Iniciar Carona',
+      'Deseja realmente iniciar esta carona? Os passageiros serão notificados.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Iniciar',
+          onPress: async () => {
+            try {
+              const response = await apiClient.patch(`/carona/${carona.id}/iniciar`, null, {
+                headers: {
+                  Authorization: `Bearer ${authToken}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (response.success) {
+                Alert.alert('Sucesso', 'Carona iniciada com sucesso! Os passageiros foram notificados.');
+                // Update carona status locally or refresh the screen
+                if (route.params.onUpdate) {
+                  route.params.onUpdate();
+                }
+                navigation.goBack();
+              } else {
+                Alert.alert('Erro', response.error?.message || 'Não foi possível iniciar a carona.');
+              }
+            } catch (error) {
+              console.error('Error starting ride:', error);
+              Alert.alert('Erro', 'Ocorreu um erro ao iniciar a carona. Tente novamente.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSheetChanges = (index) => {
     // Handle bottom sheet changes if needed
   };
@@ -628,7 +668,12 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
   const statusText = getStatusText(status);
   const statusColor = getStatusColor(status);
   const isInProgress = status === 'EM_ANDAMENTO';
+  const isScheduled = status === 'AGENDADA';
   const passageiros = carona.passageiros || [];
+  
+  // Determine if current user is the driver
+  const driverId = carona?.motoristaId || carona?.motorista?.id || carona?.motoristId;
+  const isCurrentUserDriver = user?.id && driverId && user.id.toString() === driverId.toString();
   
   // Use fetched driver profile data or fallback to carona data
   const motorista = {
@@ -984,7 +1029,16 @@ const CaronaDetailsScreen = ({ route, navigation }) => {
           </View>
 
           {/* Action Button */}
-          {isInProgress && (
+          {isCurrentUserDriver && isScheduled && (
+            <View style={styles.section}>
+              <TouchableOpacity style={[styles.actionButton, { backgroundColor: COLORS.primary.main }]} onPress={iniciarCarona}>
+                <Ionicons name="play-circle-outline" size={24} color="#FFF" />
+                <Text style={styles.actionButtonText}>Iniciar Carona</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          {isCurrentUserDriver && isInProgress && (
             <View style={styles.section}>
               <TouchableOpacity style={styles.actionButton} onPress={finalizarCarona}>
                 <Ionicons name="checkmark-circle-outline" size={24} color="#FFF" />

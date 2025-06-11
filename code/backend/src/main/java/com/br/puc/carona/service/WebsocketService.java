@@ -12,6 +12,7 @@ import com.br.puc.carona.enums.NotificationStatus;
 import com.br.puc.carona.enums.NotificationType;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
+import com.br.puc.carona.messaging.contract.RideStartedMessageDTO;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.Notification;
@@ -194,6 +195,52 @@ public class WebsocketService {
         } catch (JsonProcessingException e) {
             log.error("Error creating payload for ride cancellation notification: {}", e.getMessage(), e);
             throw new RuntimeException("Error creating payload for ride cancellation notification", e);
+        }
+    }
+
+    public void sendRideStartedNotification(final RideStartedMessageDTO rideStartedMessage) {
+        log.info("Start of sending ride started notification for Carona ID: {}", rideStartedMessage.getCaronaId());
+
+        // Find the affected user (passenger who should receive the notification)
+        final Long affectedUserId = rideStartedMessage.getAffectedUserId();
+        final Estudante recipient = findEstudanteById(affectedUserId);
+
+        try {
+            final String payload = objectMapper.writeValueAsString(rideStartedMessage);
+
+            final Notification notification = createNotification(
+                    recipient,
+                    NotificationType.RIDE_STARTED,
+                    payload,
+                    false); // Ride started notifications don't require response
+
+            // Update notification status after creating
+            notification.setStatus(NotificationStatus.ENVIADO);
+            notification.setLastAttemptAt(Instant.now());
+            notificationRepository.save(notification);
+
+            try {
+                // Send to the specific passenger topic
+                final String topicDestination = new StringBuilder("/topic/user/")
+                        .append(affectedUserId)
+                        .append("/notifications")
+                        .toString();
+
+                log.info("Sending ride started notification to {}: {}", topicDestination, payload);
+                messagingTemplate.convertAndSend(topicDestination, payload);
+            } catch (MessagingException e) {
+                log.error("Failed to send ride started notification for Carona ID {}: {}",
+                        rideStartedMessage.getCaronaId(), e.getFailedMessage(), e);
+
+                notification.setStatus(NotificationStatus.FALHOU);
+                notificationRepository.save(notification);
+            }
+
+            log.info("End of sending ride started notification for Carona ID: {}", rideStartedMessage.getCaronaId());
+
+        } catch (JsonProcessingException e) {
+            log.error("Error creating payload for ride started notification: {}", e.getMessage(), e);
+            throw new RuntimeException("Error creating payload for ride started notification", e);
         }
     }
 

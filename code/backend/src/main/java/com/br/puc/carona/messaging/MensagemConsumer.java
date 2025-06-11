@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.br.puc.carona.messaging.contract.AvaliacaoMessageDTO;
 import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
+import com.br.puc.carona.messaging.contract.RideStartedMessageDTO;
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.enums.NotificationType;
 import com.br.puc.carona.service.AvaliacaoService;
@@ -79,6 +80,24 @@ public class MensagemConsumer {
                             websocketService.sendRideCancellationNotification(cancellationMessage);
                         } catch (Exception e) {
                             log.error("Erro ao processar mensagem de cancelamento de carona: {}", e.getMessage(), e);
+                        }
+                        break;
+                    case RIDE_STARTED:
+                        log.info("Carona iniciada recebida");
+                        try {
+                            final RideStartedMessageDTO startedMessage = new RideStartedMessageDTO(payload);
+                            final Long caronaId = startedMessage.getCaronaId();
+                            final Long driverId = startedMessage.getDriverId();
+
+                            if (caronaId == null || driverId == null) {
+                                log.error("Carona ID ou Driver ID ausente na mensagem de carona iniciada");
+                                return;
+                            }
+                            log.info("Processando carona iniciada ID: {}, Driver ID: {}", caronaId, driverId);
+
+                            websocketService.sendRideStartedNotification(startedMessage);
+                        } catch (Exception e) {
+                            log.error("Erro ao processar mensagem de carona iniciada: {}", e.getMessage(), e);
                         }
                         break;
                     default:
