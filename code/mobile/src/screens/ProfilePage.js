@@ -47,6 +47,7 @@ const ProfilePage = ({ navigation, route }) => {
 
       if (response.success) {
         setUserDetails(response.data);
+        console.debug('User details loaded with rating:', response.data.avaliacaoMedia);
       } else {
         setError('Erro ao carregar dados do usuário');
       }
@@ -60,11 +61,16 @@ const ProfilePage = ({ navigation, route }) => {
 
   // Check if user is a driver
   const checkDriverStatus = useCallback(async () => {
-    if (!user) return;
+    if (!user?.id || !authToken) {
+      console.log('Cannot check driver status: missing user ID or auth token', { userId: user?.id, hasToken: !!authToken });
+      setDriverProfile(null);
+      setIsCheckingDriver(false);
+      return;
+    }
     
     try {
       setIsCheckingDriver(true);
-      const response = await apiClient.get(`/estudante/${user?.id}/motorista`, {
+      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -194,6 +200,14 @@ const ProfilePage = ({ navigation, route }) => {
             icon="car"
             iconColor={COLORS.secondary.main}
             onPress={handleDriverProfile}
+          />
+
+          <NavigationCard
+            title="Histórico de Avaliações"
+            description="Veja suas avaliações recebidas e enviadas"
+            icon="star"
+            iconColor={COLORS.warning.main}
+            onPress={() => navigation.navigate('RatingHistory')}
           />
         </View>
       </ScrollView>

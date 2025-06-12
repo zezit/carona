@@ -212,6 +212,13 @@ const handleSubmitRide = async () => {
     return;
   }
 
+  // Check if user and user.id exist
+  if (!user || !user.id) {
+    Alert.alert('Erro', 'Usuário não autenticado. Faça login novamente.');
+    console.error('User or user.id is null:', user);
+    return;
+  }
+
   try {
     setLoading(true);
     
@@ -233,6 +240,7 @@ const handleSubmitRide = async () => {
     };
     
     console.debug('Submitting ride request with payload:', payload);
+    console.debug('User object:', user);
     
     // Fazendo a requisição para a API
     const response = await apiClient.post(

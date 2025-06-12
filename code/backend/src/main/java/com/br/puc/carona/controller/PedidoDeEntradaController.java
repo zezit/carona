@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.br.puc.carona.dto.response.DetourInfoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaCompletoDto;
 import com.br.puc.carona.dto.response.PedidoDeEntradaDto;
 import com.br.puc.carona.enums.Status;
@@ -66,10 +67,11 @@ public class PedidoDeEntradaController {
             @PathVariable Long idPedido,
             @PathVariable Status status) {
         log.info("Atualizando status do pedido de entrada com ID: {} para: {}", idPedido, status);
-        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido, status);
+        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido,
+                status);
         return ResponseEntity.ok(pedidoAtualizado);
     }
-    
+
     @PostMapping("/aprovarCarona/{idPedido}/{status}")
     @Operation(summary = "Aprovar pedido de entrada (Legado)", description = "Método legado para aprovar/recusar um pedido de entrada")
     @ApiResponses(value = {
@@ -81,7 +83,8 @@ public class PedidoDeEntradaController {
             @PathVariable Long idPedido,
             @PathVariable final Status status) {
         log.info("Usando endpoint legado para atualizar pedido com ID: {} para status: {}", idPedido, status);
-        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido, status);
+        PedidoDeEntradaDto pedidoAtualizado = pedidoDeEntradaService.atualizarStatusPedidoDeEntrada(idPedido,
+                status);
         return ResponseEntity.ok(pedidoAtualizado);
     }
 
@@ -101,4 +104,35 @@ public class PedidoDeEntradaController {
                 .getPedidoDeEntradasPorMotoristaECaronaId(motoristaId, caronaId, pageable);
         return ResponseEntity.ok(pedidos);
     }
+
+    @PutMapping("/{idPedido}/cancelar")
+    @Operation(summary = "Cancelar pedido de entrada", description = "Cancela um pedido de entrada. Pode ser cancelado pelo passageiro ou pelo motorista. Para pedidos aprovados, remove o passageiro e recalcula a rota.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Pedido cancelado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Pedido não pode ser cancelado (status inválido)"),
+            @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para cancelar este pedido"),
+            @ApiResponse(responseCode = "404", description = "Pedido de entrada não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<Void> cancelarPedidoDeEntrada(@PathVariable final Long idPedido) {
+        log.info("Iniciando requisição de cancelamento do pedido de entrada com ID: {}", idPedido);
+        pedidoDeEntradaService.cancelarPedidoDeEntrada(idPedido);
+        log.info("Finalizando requisição de cancelamento do pedido de entrada com ID: {}", idPedido);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{idPedido}/calculate-detour")
+    @Operation(summary = "Calcular impacto da rota com desvio", description = "Calcula o impacto adicional na rota original se o pedido for aceito, incluindo tempo e distância adicionais")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Informações de desvio calculadas com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Pedido de entrada não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<DetourInfoDto> calculateDetourInfo(@PathVariable final Long idPedido) {
+        log.info("Calculando informações de desvio para o pedido ID: {}", idPedido);
+        DetourInfoDto detourInfo = pedidoDeEntradaService.calculateDetourInfo(idPedido);
+        log.info("Informações de desvio calculadas com sucesso para o pedido ID: {}", idPedido);
+        return ResponseEntity.ok(detourInfo);
+    }
+
 }

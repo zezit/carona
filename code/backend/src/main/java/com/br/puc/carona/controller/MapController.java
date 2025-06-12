@@ -1,5 +1,6 @@
 package com.br.puc.carona.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -52,5 +53,55 @@ public class MapController {
 
         log.info("Trajetórias calculadas com sucesso: {} rotas encontradas", trajectories.size());
         return ResponseEntity.ok(trajectories);
+    }
+
+    @GetMapping("/trajectories-with-waypoints")
+    @Operation(summary = "Calcular trajetórias com pontos de passagem", description = "Calcula trajetórias entre dois pontos passando por waypoints específicos, útil para calcular rotas com desvios para buscar passageiros")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trajetórias com waypoints calculadas com sucesso", content = {
+                    @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TrajetoDto.class))) }),
+            @ApiResponse(responseCode = "400", description = "Coordenadas ou waypoints inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<List<TrajetoDto>> calculateTrajectoriesWithWaypoints(
+            @Parameter(description = "Latitude do ponto de origem", required = true) @RequestParam final Double startLat,
+            @Parameter(description = "Longitude do ponto de origem", required = true) @RequestParam final Double startLon,
+            @Parameter(description = "Latitude do ponto de destino", required = true) @RequestParam final Double endLat,
+            @Parameter(description = "Longitude do ponto de destino", required = true) @RequestParam final Double endLon,
+            @Parameter(description = "Waypoints no formato 'lat1,lon1;lat2,lon2'", required = true) @RequestParam final String waypoints) {
+
+        log.info("Requisição para calcular trajetórias com waypoints de [{}, {}] para [{}, {}] passando por: {}",
+                startLat, startLon, endLat, endLon, waypoints);
+
+        // Parse waypoints string into list of coordinates
+        final List<Double[]> waypointsList = parseWaypoints(waypoints);
+
+        final List<TrajetoDto> trajectories = mapService.calculateTrajectories(startLat, startLon, endLat,
+                endLon, waypointsList);
+
+        log.info("Trajetórias com waypoints calculadas com sucesso: {} rotas encontradas", trajectories.size());
+        return ResponseEntity.ok(trajectories);
+    }
+
+    private List<Double[]> parseWaypoints(final String waypoints) {
+        final List<Double[]> waypointsList = new ArrayList<>();
+        
+        if (waypoints != null && !waypoints.trim().isEmpty()) {
+            final String[] waypointPairs = waypoints.split(";");
+            for (final String pair : waypointPairs) {
+                final String[] coords = pair.trim().split(",");
+                if (coords.length == 2) {
+                    try {
+                        final Double lat = Double.parseDouble(coords[0].trim());
+                        final Double lon = Double.parseDouble(coords[1].trim());
+                        waypointsList.add(new Double[]{lat, lon});
+                    } catch (NumberFormatException e) {
+                        log.warn("Invalid waypoint coordinates: {}", pair);
+                    }
+                }
+            }
+        }
+        
+        return waypointsList;
     }
 }

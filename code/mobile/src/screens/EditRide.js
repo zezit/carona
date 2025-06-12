@@ -22,7 +22,7 @@ import RideFormBottomSheet from '../components/ride/RideFormBottomSheet';
 import { LoadingIndicator } from '../components/ui';
 import { COLORS, RADIUS } from '../constants';
 import { useAuthContext } from '../contexts/AuthContext';
-import { apiClient } from '../services/api/apiClient';
+import { apiClient, checkRideHasConfirmedPassengers } from '../services/api/apiClient';
 import { commonStyles } from '../theme/styles/commonStyles';
 import { parseApiDate } from '../utils/dateUtils';
 
@@ -45,11 +45,19 @@ function formatLocalDateTime(date) {
 }
 
 const EditRide = ({ navigation, route }) => {
-    const { ride, driverDetails, onUpdate } = route.params || {};
+    const { ride, driverDetails, onUpdate, viewOnly } = route.params || {};
     const { authToken } = useAuthContext();
     const [loading, setLoading] = useState(false);
     const mapRef = useRef(null);
     const bottomSheetRef = useRef(null);
+    
+    // New state variables for confirmed passengers and location editing restrictions
+    const [hasConfirmedPassengers, setHasConfirmedPassengers] = useState(false);
+    const [confirmedPassengersCount, setConfirmedPassengersCount] = useState(0);
+    const [checkingPassengers, setCheckingPassengers] = useState(true);
+
+    // New state for passenger pickup/dropoff waypoints - simplified
+    const [passengerWaypoints, setPassengerWaypoints] = useState([]);
 
     // Store the initial ride data to persist across navigation
     const initialRideDataRef = useRef({
@@ -211,6 +219,120 @@ const EditRide = ({ navigation, route }) => {
         }
     }, []);
 
+    // Check for confirmed passengers when component mounts
+    useEffect(() => {
+        checkForConfirmedPassengers();
+        // Note: Don't call fetchPassengerWaypoints() here as it will be handled by fetchRoutes()
+    }, [currentRide?.id, authToken]);
+
+    // Function to check if ride has confirmed passengers
+    const checkForConfirmedPassengers = async () => {
+        if (!currentRide?.id || !authToken) {
+            setCheckingPassengers(false);
+            return;
+        }
+
+        try {
+            setCheckingPassengers(true);
+            const response = await checkRideHasConfirmedPassengers(currentRide.id, authToken);
+            
+            if (response.success) {
+                setHasConfirmedPassengers(response.data.hasConfirmedPassengers);
+                setConfirmedPassengersCount(response.data.passengerCount);
+                console.log('Confirmed passengers check:', response.data);
+            } else {
+                console.error('Error checking confirmed passengers:', response.error);
+            }
+        } catch (error) {
+            console.error('Error checking confirmed passengers:', error);
+        } finally {
+            setCheckingPassengers(false);
+        }
+    };
+
+    // Function to fetch and extract passenger waypoints from confirmed passengers
+    const fetchPassengerWaypoints = async () => {
+        if (!currentRide?.id || !authToken) {
+            return;
+        }
+
+        try {
+            console.log('Fetching passenger waypoints for ride:', currentRide.id);
+            
+            // Get approved ride requests (pedidosEntrada) to access passenger pickup/dropoff locations
+            const motoristaId = currentRide.motorista?.id || currentDriverDetails?.id;
+            
+            if (!motoristaId) {
+                console.error('Missing motorista ID for fetching passenger waypoints');
+                return;
+            }
+
+            const pedidosResponse = await apiClient.get(`/pedidos/motorista/${motoristaId}/carona/${currentRide.id}?page=0&size=100`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (pedidosResponse.success && pedidosResponse.data?.content) {
+                const waypoints = [];
+
+                // Process each approved passenger request
+                pedidosResponse.data.content.forEach((pedido, index) => {
+                    if (pedido.status === 'APROVADO' && pedido.solicitacao) {
+                        const solicitacao = pedido.solicitacao;
+                        const estudante = solicitacao.estudante || {};
+                        
+                        // Add pickup point
+                        if (solicitacao.latitudeOrigem && solicitacao.longitudeOrigem) {
+                            waypoints.push({
+                                latitude: solicitacao.latitudeOrigem,
+                                longitude: solicitacao.longitudeOrigem,
+                                type: 'pickup',
+                                passenger: solicitacao.nomeEstudante || estudante.nome || 'Passageiro',
+                                address: solicitacao.origem,
+                                id: `pickup-${pedido.id}`,
+                                pedidoId: pedido.id,
+                                matricula: estudante.matricula,
+                                curso: estudante.curso,
+                                email: estudante.email,
+                                ordem: (index * 2) + 1, // Pickup has odd numbers
+                                horarioSolicitado: solicitacao.horarioChegada
+                            });
+                        }
+
+                        // Add dropoff point
+                        if (solicitacao.latitudeDestino && solicitacao.longitudeDestino) {
+                            waypoints.push({
+                                latitude: solicitacao.latitudeDestino,
+                                longitude: solicitacao.longitudeDestino,
+                                type: 'dropoff',
+                                passenger: solicitacao.nomeEstudante || estudante.nome || 'Passageiro',
+                                address: solicitacao.destino,
+                                id: `dropoff-${pedido.id}`,
+                                pedidoId: pedido.id,
+                                matricula: estudante.matricula,
+                                curso: estudante.curso,
+                                email: estudante.email,
+                                ordem: (index * 2) + 2, // Dropoff has even numbers
+                                horarioSolicitado: solicitacao.horarioChegada
+                            });
+                        }
+                    }
+                });
+
+                setPassengerWaypoints(waypoints);
+                console.log('Passenger waypoints loaded:', waypoints);
+            } else {
+                console.log('No approved passenger requests found');
+                setPassengerWaypoints([]);
+            }
+        } catch (error) {
+            console.error('Error fetching passenger waypoints:', error);
+            setPassengerWaypoints([]);
+        }
+    };
+
     // Control button visibility based on bottom sheet position
     useEffect(() => {
         if (bottomSheetIndex === 0) {
@@ -231,9 +353,11 @@ const EditRide = ({ navigation, route }) => {
         }
     }, [bottomSheetIndex, centerButtonOpacity, locationButtonHeight, locationButtonOpacity]);
 
-    // Fetch route data between origin and destination - updated with parameters
+    // Fetch route data between origin and destination - updated to use complete route with passenger waypoints
     const fetchRoutes = async (startLat, startLng, endLat, endLng) => {
         try {
+            setLoading(true);
+            
             // Use provided coordinates or fall back to state values
             const latStart = startLat || originLat;
             const lngStart = startLng || originLng;
@@ -245,6 +369,100 @@ const EditRide = ({ navigation, route }) => {
                 return;
             }
 
+            // If we have a ride ID, try to get the complete route with passenger waypoints
+            if (currentRide?.id) {
+                try {
+                    console.log('Fetching complete route for ride:', currentRide.id);
+                    
+                    const completeRouteResponse = await apiClient.get(
+                        `/carona/${currentRide.id}/complete-route`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (completeRouteResponse.data?.rotaCompleta) {
+                        const completeRoute = completeRouteResponse.data;
+                        
+                        // Convert complete route coordinates to mobile format
+                        // rotaCompleta is a TrajetoDto object with coordenadas field
+                        const pontos = completeRoute.rotaCompleta.coordenadas.map(coord => ({
+                            latitude: coord[0],
+                            longitude: coord[1]
+                        }));
+
+                        // Update passenger waypoints from the response
+                        if (completeRoute.pontosPassageiros && completeRoute.pontosPassageiros.length > 0) {
+                            const waypoints = completeRoute.pontosPassageiros.map(ponto => ({
+                                latitude: ponto.latitude,
+                                longitude: ponto.longitude,
+                                type: ponto.tipo === 'EMBARQUE' ? 'pickup' : 'dropoff',
+                                passenger: ponto.nomePassageiro,
+                                address: ponto.endereco,
+                                id: `${ponto.tipo.toLowerCase()}-${ponto.passageiroId}`,
+                                pedidoId: ponto.pedidoId,
+                                ordem: ponto.ordem,
+                                matricula: ponto.matricula,
+                                curso: ponto.curso,
+                                email: ponto.email
+                            }));
+                            setPassengerWaypoints(waypoints);
+                            console.log('Updated passenger waypoints from complete route (optimized order):', waypoints);
+                        } else {
+                            // No passengers, clear waypoints
+                            setPassengerWaypoints([]);
+                            console.log('No passenger waypoints found for this ride');
+                        }
+
+                        // Create the processed route
+                        const processedRoute = {
+                            coordenadas: completeRoute.rotaCompleta.coordenadas,
+                            pontos,
+                            distanciaMetros: completeRoute.distanciaTotalMetros || 0,
+                            duracaoSegundos: completeRoute.tempoTotalSegundos || 0,
+                            descricao: 'Rota Completa com Passageiros',
+                            isCompleteRoute: true
+                        };
+
+                        setRoutes([processedRoute]);
+                        setSelectedRoute(processedRoute);
+                        setDuration(processedRoute.duracaoSegundos || 0);
+
+                        // Fit map to show the complete route including passenger waypoints
+                        const allCoordinates = [...pontos];
+                        if (completeRoute.pontosPassageiros) {
+                            completeRoute.pontosPassageiros.forEach(ponto => {
+                                allCoordinates.push({
+                                    latitude: ponto.latitude,
+                                    longitude: ponto.longitude
+                                });
+                            });
+                        }
+                        fitMapToCoordinates(allCoordinates);
+                        
+                        console.log('Complete route loaded successfully:', {
+                            totalDistance: completeRoute.distanciaTotalMetros,
+                            totalTime: completeRoute.tempoTotalSegundos,
+                            passengerStops: completeRoute.pontosPassageiros?.length || 0
+                        });
+                        
+                        return; // Success, exit early
+                    }
+                } catch (completeRouteError) {
+                    console.warn('Complete route not available, falling back to basic route:', completeRouteError);
+                    // Fall through to basic route calculation
+                }
+            }
+
+            // Fallback: Use basic trajectory endpoint if complete route is not available
+            console.log('Using basic route calculation');
+            
+            // Clear passenger waypoints since we're not using the complete route
+            setPassengerWaypoints([]);
+            
             const response = await apiClient.get(
                 `/maps/trajectories?startLat=${latStart}&startLon=${lngStart}&endLat=${latEnd}&endLon=${lngEnd}`,
                 {
@@ -273,7 +491,8 @@ const EditRide = ({ navigation, route }) => {
                         // Ensure distance and duration fields are correctly mapped
                         distanciaMetros: route.distanciaMetros ?? 0,
                         duracaoSegundos: route.tempoSegundos || 0,
-                        descricao: description
+                        descricao: description,
+                        isCompleteRoute: false
                     };
                 });
 
@@ -351,8 +570,18 @@ const EditRide = ({ navigation, route }) => {
         }
     };
 
-    // Handle change locations button press
+    // Handle change locations button press - now with passenger restriction
     const handleChangeLocations = () => {
+        // Check if locations can be edited
+        if (hasConfirmedPassengers) {
+            Alert.alert(
+                'Não é possível alterar',
+                `Esta carona possui ${confirmedPassengersCount} passageiro(s) confirmado(s). Não é possível alterar os pontos de origem e destino.`,
+                [{ text: 'OK', style: 'default' }]
+            );
+            return;
+        }
+
         navigation.navigate('LocationSelection', {
             departure: origin,
             departureLocation,
@@ -374,6 +603,8 @@ const EditRide = ({ navigation, route }) => {
         setSelectedRoute(route);
         setDuration(route.duracaoSegundos || 0);
         fitMapToCoordinates(route.pontos);
+        // Refresh passenger waypoints when route changes
+        fetchPassengerWaypoints();
     };
 
     const handleDateChange = (mode, date) => {
@@ -509,6 +740,78 @@ const EditRide = ({ navigation, route }) => {
         }
     };
 
+    // Check for confirmed passengers when ride details change
+    useEffect(() => {
+        const checkConfirmedPassengers = async () => {
+            if (currentRide?.id) {
+                setCheckingPassengers(true);
+                try {
+                    const response = await checkRideHasConfirmedPassengers(currentRide.id, authToken);
+                    if (response?.data) {
+                        setHasConfirmedPassengers(response.data.hasConfirmedPassengers);
+                        setConfirmedPassengersCount(response.data.confirmedPassengersCount);
+                    }
+                } catch (error) {
+                    console.error('Error checking confirmed passengers:', error);
+                } finally {
+                    setCheckingPassengers(false);
+                }
+            }
+        };
+
+        checkConfirmedPassengers();
+    }, [currentRide, authToken]);
+
+    // Function to load existing route waypoints from ride data
+    const loadExistingRouteWaypoints = () => {
+        if (currentRide?.trajetorias && currentRide.trajetorias.length > 0) {
+            // Get the principal (main) route from trajetorias
+            const principalRoute = currentRide.trajetorias.find(t => t.principal) || currentRide.trajetorias[0];
+            
+            if (principalRoute?.coordenadas) {
+                try {
+                    // Parse coordenadas string - it should be in format like "[[-19.9227318,-43.9908267], ...]"
+                    const coordinates = JSON.parse(principalRoute.coordenadas);
+                    
+                    // Convert to the expected format
+                    const routePoints = coordinates.map(coord => ({
+                        latitude: parseFloat(coord[0]),
+                        longitude: parseFloat(coord[1])
+                    }));
+
+                    // Extract waypoints (exclude start and end points)
+                    const waypoints = extractWaypoints({ pontos: routePoints });
+                    setRouteWaypoints(waypoints);
+
+                    // Also set this as the selected route if no routes have been loaded yet
+                    if (routes.length === 0) {
+                        const existingRoute = {
+                            pontos: routePoints,
+                            distanciaMetros: principalRoute.distanciaMetros || 0,
+                            duracaoSegundos: principalRoute.tempoSegundos || 0,
+                            descricao: 'Rota Atual',
+                            principal: true
+                        };
+                        
+                        setRoutes([existingRoute]);
+                        setSelectedRoute(existingRoute);
+                        setDuration(existingRoute.duracaoSegundos || 0);
+                    }
+                } catch (error) {
+                    console.error('Error parsing existing route coordinates:', error);
+                }
+            }
+        }
+    };
+
+    // Load existing route when component mounts
+    useEffect(() => {
+        loadExistingRouteWaypoints();
+    }, [currentRide?.trajetorias]);
+
+    // Determine if the screen should be view-only (either from navigation or confirmed passengers)
+    const isViewOnly = viewOnly || hasConfirmedPassengers;
+
     if (loading && !routes.length) {
         return (
             <View style={[commonStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -549,7 +852,7 @@ const EditRide = ({ navigation, route }) => {
                         />
                     )}
 
-                    {/* Render all routes (up to 2) with the selected one having a thicker line */}
+                    {/* Render routes */}
                     {routes.map((route, index) => (
                         <Polyline
                             key={index}
@@ -557,6 +860,20 @@ const EditRide = ({ navigation, route }) => {
                             strokeWidth={route === selectedRoute ? 5 : 3}
                             strokeColor={route === selectedRoute ? COLORS.primary.main : '#7FB3F5'}
                             onPress={() => handleSelectRoute(route)}
+                        />
+                    ))}
+
+                    {/* Render passenger waypoints */}
+                    {passengerWaypoints.map((waypoint) => (
+                        <Marker
+                            key={waypoint.id}
+                            coordinate={{
+                                latitude: waypoint.latitude,
+                                longitude: waypoint.longitude,
+                            }}
+                            title={`${waypoint.type === 'pickup' ? 'Embarque' : 'Desembarque'}: ${waypoint.passenger}`}
+                            description={waypoint.address}
+                            pinColor={waypoint.type === 'pickup' ? '#FF6B35' : '#8E44AD'}
                         />
                     ))}
                 </MapView>
@@ -570,7 +887,9 @@ const EditRide = ({ navigation, route }) => {
                         <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
                     </TouchableOpacity>
 
-                    <Text style={styles.titleText}>Editar Carona</Text>
+                    <Text style={styles.titleText}>
+                        {isViewOnly ? 'Visualizar Carona' : 'Editar Carona'}
+                    </Text>
 
                     <TouchableOpacity
                         style={styles.centerMapButton}
@@ -581,11 +900,16 @@ const EditRide = ({ navigation, route }) => {
                 </View>
 
                 {/* Location edit button */}
-                <Reanimated.View style={[styles.locationEditButton, locationButtonStyle]}>
+                <Reanimated.View style={[
+                    styles.locationEditButton, 
+                    locationButtonStyle,
+                    isViewOnly && styles.locationEditButtonDisabled
+                ]}>
                     <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={handleChangeLocations}
+                        activeOpacity={isViewOnly ? 0.3 : 0.7}
+                        onPress={isViewOnly ? undefined : handleChangeLocations}
                         style={{ flex: 1 }}
+                        disabled={isViewOnly}
                     >
                         <View style={styles.locationEditContent}>
                             <View style={styles.locationIcons}>
@@ -598,15 +922,34 @@ const EditRide = ({ navigation, route }) => {
                                 </View>
                             </View>
                             <View style={styles.locationTexts}>
-                                <Text numberOfLines={1} style={styles.locationEditText}>
+                                <Text numberOfLines={1} style={[
+                                    styles.locationEditText,
+                                    isViewOnly && styles.locationEditTextDisabled
+                                ]}>
                                     {origin || 'Selecionar partida'}
                                 </Text>
-                                <Text numberOfLines={1} style={styles.locationEditText}>
+                                <Text numberOfLines={1} style={[
+                                    styles.locationEditText,
+                                    isViewOnly && styles.locationEditTextDisabled
+                                ]}>
                                     {destination || 'Selecionar destino'}
                                 </Text>
+                                {hasConfirmedPassengers && (
+                                    <Text style={styles.passengerWarningText}>
+                                        {confirmedPassengersCount} passageiro(s) confirmado(s)
+                                    </Text>
+                                )}
                             </View>
                             <View style={styles.locationEditIcon}>
-                                <Ionicons name="pencil" size={16} color={COLORS.primary.main} />
+                                {checkingPassengers ? (
+                                    <LoadingIndicator size="small" color={COLORS.primary.main} />
+                                ) : (
+                                    <Ionicons 
+                                        name={hasConfirmedPassengers ? "lock-closed" : "pencil"} 
+                                        size={16} 
+                                        color={hasConfirmedPassengers ? "#999" : COLORS.primary.main} 
+                                    />
+                                )}
                             </View>
                         </View>
                     </TouchableOpacity>
@@ -618,25 +961,30 @@ const EditRide = ({ navigation, route }) => {
                 departure={origin}
                 arrival={destination}
                 departureDate={departureDate}
-                onDateChange={handleDateChange}
+                onDateChange={isViewOnly ? undefined : handleDateChange}
                 showDatePicker={showDatePicker}
-                setShowDatePicker={setShowDatePicker}
+                setShowDatePicker={isViewOnly ? undefined : setShowDatePicker}
                 seats={availableSeats}
-                onSeatsChange={handleSeatsChange}
+                onSeatsChange={isViewOnly ? undefined : handleSeatsChange}
                 observations={notes}
-                onObservationsChange={setNotes}
-                onSubmit={handleSubmitRide}
+                onObservationsChange={isViewOnly ? undefined : setNotes}
+                onSubmit={isViewOnly ? undefined : handleSubmitRide}
                 loading={loading}
                 duration={duration}
                 hasValidRoute={!!selectedRoute}
                 onSheetChange={handleSheetChanges}
                 routes={routes}
                 selectedRoute={selectedRoute}
-                onSelectRoute={handleSelectRoute}
+                onSelectRoute={isViewOnly ? undefined : handleSelectRoute}
                 formatDuration={formatDuration}
                 formatDistance={formatDistance}
                 initialCarAvailableSeats={driverDetails?.carro?.capacidadePassageiros}
-                isEditMode={true}
+                isEditMode={!isViewOnly}
+                hasConfirmedPassengers={hasConfirmedPassengers}
+                confirmedPassengersCount={confirmedPassengersCount}
+                checkingPassengers={checkingPassengers}
+                navigation={navigation}
+                isViewOnly={isViewOnly}
             />
         </SafeAreaView>
     );
@@ -776,6 +1124,63 @@ const styles = StyleSheet.create({
     },
     locationEditIcon: {
         padding: 4,
+    },
+    // New styles for disabled location editing
+    locationEditButtonDisabled: {
+        backgroundColor: '#f5f5f5',
+        opacity: 0.8,
+    },
+    locationEditTextDisabled: {
+        color: '#999',
+    },
+    passengerWarningText: {
+        fontSize: 11,
+        color: '#ff6b35',
+        fontWeight: '500',
+        marginTop: 2,
+    },
+    // Custom marker styles
+    customMarker: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    markerInner: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: 'white',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5,
+    },
+    pickupMarker: {
+        // Orange for pickup
+    },
+    dropoffMarker: {
+        // Purple for dropoff
+    },
+    markerNumber: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        backgroundColor: COLORS.primary.main,
+        borderRadius: 10,
+        width: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'white',
+    },
+    markerNumberText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
 });
 

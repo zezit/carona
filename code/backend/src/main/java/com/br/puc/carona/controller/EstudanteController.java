@@ -60,7 +60,7 @@ public class EstudanteController {
     })
     public ResponseEntity<PerfilMotoristaDto> buscarPerfilMotorista(@PathVariable final Long estudanteId) {
         log.info("Inicio requisição busca perfil de motorista para estudante ID: {}", estudanteId);
-        PerfilMotoristaDto perfilMotorista = estudanteService.buscarPerfilMotorista(estudanteId);
+        final PerfilMotoristaDto perfilMotorista = estudanteService.buscarPerfilMotorista(estudanteId);
         log.info("Fim requisição busca perfil de motorista para estudante ID: {}", estudanteId);
         return ResponseEntity.ok(perfilMotorista);
     }
@@ -84,9 +84,10 @@ public class EstudanteController {
         @ApiResponse(responseCode = "200", description = "Estudante encontrado"),
         @ApiResponse(responseCode = "404", description = "Estudante não encontrado")
     })
-    public ResponseEntity<EstudanteDto> buscarEstudantePorId(@PathVariable Long id) {
+    public ResponseEntity<EstudanteDto> buscarEstudantePorId(@PathVariable final Long id) {
         log.info("Buscando estudante com ID: {}", id);
-        EstudanteDto estudante = estudanteService.buscarEstudantePorId(id);
+        final EstudanteDto estudante = estudanteService.buscarEstudantePorId(id);
+        log.info("Estudante encontrado com sucesso para ID: {}", id);
         return ResponseEntity.ok(estudante);
     }
 
@@ -98,11 +99,11 @@ public class EstudanteController {
             @ApiResponse(responseCode = "404", description = "Estudante não encontrado")
     })
     public ResponseEntity<EstudanteDto> atualizarEstudante(
-            @PathVariable Long id,
-            @RequestBody @Valid EstudanteUpdateRequest request) {
-
+            @PathVariable final Long id,
+            @RequestBody @Valid final EstudanteUpdateRequest request) {
         log.info("Atualizando estudante com ID: {}", id);
-        EstudanteDto estudanteAtualizado = estudanteService.atualizarEstudante(id, request);
+        final EstudanteDto estudanteAtualizado = estudanteService.atualizarEstudante(id, request);
+        log.info("Estudante atualizado com sucesso para ID: {}", id);
         return ResponseEntity.ok(estudanteAtualizado);
     }
 
@@ -113,9 +114,10 @@ public class EstudanteController {
         @ApiResponse(responseCode = "204", description = "Estudante removido com sucesso"),
         @ApiResponse(responseCode = "404", description = "Estudante não encontrado")
     })
-    public ResponseEntity<Void> deletarEstudante(@PathVariable Long id) {
+    public ResponseEntity<Void> deletarEstudante(@PathVariable final Long id) {
         log.info("Deletando estudante com ID: {}", id);
         estudanteService.deletarEstudante(id);
+        log.info("Estudante deletado com sucesso para ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -127,10 +129,11 @@ public class EstudanteController {
         @ApiResponse(responseCode = "404", description = "Estudante não encontrado ou não é motorista")
     })
     public ResponseEntity<PerfilMotoristaDto> atualizarPerfilMotorista(
-            @PathVariable Long estudanteId,
-            @Valid @RequestBody PerfilMotoristaRequest request) {
+            @PathVariable final Long estudanteId,
+            @Valid @RequestBody final PerfilMotoristaRequest request) {
         log.info("Atualizando perfil de motorista para estudante ID: {}", estudanteId);
-        PerfilMotoristaDto perfilAtualizado = estudanteService.atualizarPerfilMotorista(estudanteId, request);
+        final PerfilMotoristaDto perfilAtualizado = estudanteService.atualizarPerfilMotorista(estudanteId, request);
+        log.info("Perfil de motorista atualizado com sucesso para estudante ID: {}", estudanteId);
         return ResponseEntity.ok(perfilAtualizado);
     }
 }

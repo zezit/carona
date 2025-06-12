@@ -5,7 +5,7 @@ import errorMessages from '../../constants/errors.json';
 // Determine the base URL based on environment
 const getBaseUrl = () => {
   // NGROK ROUTE HERE ↓
-  return "https://ac19-2804-14c-5b85-99a7-809e-6d06-920-2c06.ngrok-free.app/api";
+  return "https://cdb9-189-71-58-174.ngrok-free.app/api";
 };
 
 export const BASE_URL = getBaseUrl();
@@ -287,3 +287,388 @@ export const getDriverRides = async (motoristaId, authToken, pageable = {}) => {
     };
   }
 }
+
+/**
+ * Fetches active ongoing rides for a driver
+ * @param {string} motoristaId - The driver's ID
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const getActiveDriverRides = async (motoristaId, authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/carona/motorista/${motoristaId}/ativas`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar caronas ativas'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching active driver rides:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Fetches active ongoing rides for a passenger
+ * @param {string} estudanteId - The student's ID (passenger)
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const getActivePassengerRides = async (estudanteId, authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/carona/estudante/${estudanteId}/ativas`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar caronas ativas como passageiro'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching active passenger rides:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Finalizes an ongoing ride and sends notifications to all passengers
+ * @param {string} caronaId - The ride's ID
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const finalizarCarona = async (caronaId, authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/carona/${caronaId}/finalizar`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: 'Carona finalizada com sucesso'
+      };
+    } else {
+      const responseData = await response.json();
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao finalizar carona'
+      };
+    }
+  } catch (error) {
+    console.error('Error finalizing ride:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Checks if user has pending ratings for finished rides
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const checkPendingRatings = async (authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/avaliacao/pendentes`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData // boolean indicating if there are pending ratings
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao verificar avaliações pendentes'
+      };
+    }
+  } catch (error) {
+    console.error('Error checking pending ratings:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Gets list of finished rides with pending ratings
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const getFinishedRidesWithPendingRatings = async (authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/avaliacao/caronas-finalizadas-sem-avaliacao`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData // array of rides with pending ratings
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar caronas com avaliações pendentes'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching rides with pending ratings:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Gets list of people that need to be rated for a specific ride
+ * @param {string} caronaId - The ride's ID
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const getPendingRatingsForRide = async (caronaId, authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/avaliacao/pendentes/carona/${caronaId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData // array of people to rate
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar pessoas para avaliar'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching pending ratings for ride:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Submits a rating for a person in a ride
+ * @param {string} caronaId - The ride's ID
+ * @param {Object} ratingData - Rating data object
+ * @param {number} ratingData.avaliadoId - ID of the person being rated
+ * @param {number} ratingData.nota - Rating score (1-5)
+ * @param {string} ratingData.comentario - Optional comment
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const submitRating = async (caronaId, ratingData, authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/avaliacao/carona/${caronaId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(ratingData)
+    });
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: 'Avaliação enviada com sucesso'
+      };
+    } else {
+      const responseData = await response.json();
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao enviar avaliação'
+      };
+    }
+  } catch (error) {
+    console.error('Error submitting rating:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Gets ratings received by a user
+ * @param {number} userId - The user's ID
+ * @param {string} authToken - Authentication token
+ * @param {number} page - Page number (default 0)
+ * @param {number} size - Page size (default 20)
+ * @returns {Promise} - Promise with the API response
+ */
+export const getReceivedRatings = async (userId, authToken, page = 0, size = 20) => {
+  try {
+    const response = await fetch(`${BASE_URL}/avaliacao/recebidas/${userId}?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData // paginated ratings received
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar avaliações recebidas'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching received ratings:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Gets ratings given by a user
+ * @param {number} userId - The user's ID
+ * @param {string} authToken - Authentication token
+ * @param {number} page - Page number (default 0)
+ * @param {number} size - Page size (default 20)
+ * @returns {Promise} - Promise with the API response
+ */
+export const getGivenRatings = async (userId, authToken, page = 0, size = 20) => {
+  try {
+    const response = await fetch(`${BASE_URL}/avaliacao/realizadas/${userId}?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData // paginated ratings given
+      };
+    } else {
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar avaliações realizadas'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching given ratings:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};
+
+/**
+ * Gets a user's rating average
+ * @param {number} userId - The user's ID
+ * @param {string} authToken - Authentication token
+ * @returns {Promise} - Promise with the API response
+ */
+export const getUserRatingAverage = async (userId, authToken) => {
+  try {
+    const response = await fetch(`${BASE_URL}/avaliacao/media/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const rating = await response.text(); // The endpoint returns a Float as plain text
+      return {
+        success: true,
+        data: rating ? parseFloat(rating) : null
+      };
+    } else {
+      const responseData = await response.json();
+      return {
+        success: false,
+        error: responseData.mensagem || 'Erro ao buscar média de avaliações'
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching user rating average:', error);
+    return {
+      success: false,
+      error: 'Falha na comunicação com o servidor'
+    };
+  }
+};

@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { Alert, FlatList, StyleSheet, View, RefreshControl, TouchableOpacity } from 'react-native';
+import { Alert, FlatList, StyleSheet, View, RefreshControl, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { COLORS, SPACING } from '../constants';
+import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../constants';
 import { LoadingIndicator } from '../components/ui';
 import ScheduledRideCard from '../components/ui/ScheduledRide/ScheduledRideCard';
 import EmptyRidesState from '../components/ui/ScheduledRide/EmptyRidesState';
-import EnhancedPageHeader from '../components/ui/common/EnhancedPageHeader';
 import { apiClient } from '../services/api/apiClient';
 import { useAuthContext } from '../contexts/AuthContext';
+import { commonStyles } from '../theme/styles/commonStyles';
 
 const ScheduledRides = ({ navigation, route }) => {
-  const { rides = [], driverDetails } = route.params;
+  const { rides = [], driverDetails } = route.params || {}; // Add fallback for missing route.params
   const { authToken } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,7 +48,11 @@ const ScheduledRides = ({ navigation, route }) => {
 
   // Refresh rides list
   const onRefresh = async () => {
-    if (!driverDetails?.id) return;
+    if (!driverDetails?.id || !authToken) {
+      console.log('Cannot refresh rides: missing driver details or auth token');
+      setRefreshing(false);
+      return;
+    }
     
     setRefreshing(true);
     try {
@@ -57,9 +62,15 @@ const ScheduledRides = ({ navigation, route }) => {
       
       if (response.success && response.data) {
         setScheduledRides(response.data);
+      } else {
+        console.warn('Failed to refresh rides:', response.error);
       }
     } catch (error) {
       console.error('Error refreshing rides:', error);
+      // Only show alert if we expect the user to be a driver
+      if (driverDetails?.id) {
+        Alert.alert('Erro', 'Não foi possível atualizar as caronas agendadas.');
+      }
     } finally {
       setRefreshing(false);
     }
@@ -108,10 +119,15 @@ const ScheduledRides = ({ navigation, route }) => {
 
   // Edit a scheduled ride
   const handleEditRide = (ride) => {
+    // If the ride has any confirmed passengers, open in view-only mode
+    const hasPassengers = Array.isArray(ride.pedidosEntrada)
+      ? ride.pedidosEntrada.some(p => p.status === 'APROVADO')
+      : false;
     navigation.navigate('EditRide', { 
       rideId: ride.id,
       ride: ride,
       driverDetails: driverDetails,
+      viewOnly: hasPassengers, // Pass viewOnly flag
       onUpdate: (updatedRide) => {
         // Update the local state with the edited ride
         const updatedRides = scheduledRides.map(r => 
@@ -137,82 +153,105 @@ const ScheduledRides = ({ navigation, route }) => {
     });
   };
 
-  // Render a ride item using the new ScheduledRideCard component
-  // Render a ride item using the new ScheduledRideCard component
-  const renderRideItem = ({ item }) => (
-    <ScheduledRideCard 
-      item={item}
-      onManage={handleManageRide}
-      onEdit={handleEditRide}
-      onCancel={handleCancelRide}
-      formatDisplayDate={formatDisplayDate}
-    />
-  );
-
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <LoadingIndicator text="Processando..." />
-      </View>
+      <SafeAreaView style={commonStyles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <LoadingIndicator text="Carregando suas caronas..." />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <EnhancedPageHeader 
-        title="Minhas Caronas"
-        subtitle={`${scheduledRides.length} ${scheduledRides.length === 1 ? 'carona agendada' : 'caronas agendadas'}`}
-        onBack={() => navigation.goBack()}
-        rightComponent={
+    <SafeAreaView style={commonStyles.container}>
+      <LinearGradient
+        colors={[COLORS.primary.main, COLORS.primary.dark]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.5 }}
+        style={{ height: 150, paddingTop: SPACING.lg }}
+      >
+        <View style={{ paddingHorizontal: SPACING.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons 
+              name="arrow-back" 
+              size={24} 
+              color={COLORS.text.light} 
+              style={{ marginRight: SPACING.md }} 
+              onPress={() => navigation.goBack()}
+            />
+            <Text style={{ fontSize: 28, fontWeight: 'bold', color: COLORS.text.light }}>
+              Minhas Caronas
+            </Text>
+          </View>
           <TouchableOpacity 
             onPress={handleOfferRide}
             style={styles.addButton}
           >
             <Ionicons name="add" size={24} color={COLORS.text.light} />
           </TouchableOpacity>
-        }
-      />
+        </View>
+      </LinearGradient>
 
-      <View style={styles.contentContainer}>
-        {scheduledRides.length > 0 ? (
-          <FlatList
-            data={scheduledRides}
-            renderItem={renderRideItem}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={[COLORS.primary.main]}
-                tintColor={COLORS.primary.main}
-              />
-            }
+      <ScrollView
+        style={{ flex: 1, marginTop: -50 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary.main]}
+            tintColor={COLORS.primary.main}
           />
-        ) : (
-          <EmptyRidesState onOfferRide={handleOfferRide} />
-        )}
-      </View>
+        }
+      >
+        <View style={[commonStyles.profileCard, {
+          marginHorizontal: SPACING.lg,
+          paddingVertical: SPACING.lg,
+          marginBottom: SPACING.lg,
+          alignItems: 'center'
+        }]}>
+          <Text style={styles.title}>Suas Caronas Agendadas</Text>
+          <Text style={styles.subtitle}>
+            {scheduledRides.length > 0 
+              ? `Você tem ${scheduledRides.length} carona${scheduledRides.length === 1 ? '' : 's'} agendada${scheduledRides.length === 1 ? '' : 's'}` 
+              : 'Você não tem caronas agendadas'}
+          </Text>
+        </View>
+
+        <View style={{ paddingHorizontal: SPACING.lg }}>
+          {scheduledRides.length > 0 ? (
+            scheduledRides.map((item) => (
+              <ScheduledRideCard 
+                key={item.id}
+                item={item}
+                onManage={handleManageRide}
+                onEdit={handleEditRide}
+                onCancel={handleCancelRide}
+                formatDisplayDate={formatDisplayDate}
+              />
+            ))
+          ) : (
+            <EmptyRidesState onOfferRide={handleOfferRide} />
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background.main,
+  title: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
   },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background.main,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    marginTop: -20,
-  },
-  listContainer: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xl,
+  subtitle: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
   },
   addButton: {
     width: 40,

@@ -10,7 +10,8 @@ const SubmitButton = ({
   disabled = false, 
   title = "Confirmar",
   icon = "checkmark",
-  isEditMode = false 
+  isEditMode = false,
+  isViewMode = false 
 }) => {
   const isDisabled = disabled || loading;
   
@@ -19,7 +20,8 @@ const SubmitButton = ({
       <TouchableOpacity
         style={[
           styles.button,
-          isDisabled && styles.buttonDisabled
+          isDisabled && styles.buttonDisabled,
+          isViewMode && styles.buttonViewMode
         ]}
         onPress={onPress}
         disabled={isDisabled}
@@ -40,7 +42,7 @@ const SubmitButton = ({
         ]}>
           {loading 
             ? (isEditMode ? 'Atualizando...' : 'Criando carona...') 
-            : (isEditMode ? 'Atualizar Carona' : title)
+            : (isViewMode ? title : (isEditMode ? 'Atualizar Carona' : title))
           }
         </Text>
       </TouchableOpacity>
@@ -89,6 +91,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray[300],
     shadowOpacity: 0,
     elevation: 0,
+  },
+  buttonViewMode: {
+    backgroundColor: COLORS.secondary.main,
   },
   buttonText: {
     color: COLORS.white,

@@ -49,6 +49,12 @@ const NotificationItem = ({ notification, onPress }) => {
           color: COLORS.warning.main,
           backgroundColor: COLORS.warning.main + '15'
         };
+      case 'RIDE_STARTED':
+        return {
+          name: 'play-circle',
+          color: COLORS.success.main,
+          backgroundColor: COLORS.success.main + '15'
+        };
       case 'RIDE_REMINDER':
         return {
           name: 'time',
@@ -80,6 +86,8 @@ const NotificationItem = ({ notification, onPress }) => {
         return 'Solicitação Rejeitada';
       case 'RIDE_CANCELLED':
         return 'Carona Cancelada';
+      case 'RIDE_STARTED':
+        return 'Carona Iniciada';
       case 'RIDE_REMINDER':
         return 'Lembrete de Carona';
       case 'SYSTEM':
@@ -291,6 +299,42 @@ const NotificationItem = ({ notification, onPress }) => {
           </View>
         );
         
+      case 'RIDE_STARTED':
+        return (
+          <View style={styles.contentBody}>
+            <Text style={styles.description}>
+              Sua carona foi iniciada pelo motorista
+            </Text>
+            {(payloadData.origem || payloadData.destino) && (
+              <View style={styles.routeContainer}>
+                <View style={styles.routeItem}>
+                  <Ionicons 
+                    name="radio-button-on" 
+                    size={12} 
+                    color={COLORS.primary.main} 
+                    style={styles.routeIcon}
+                  />
+                  <Text style={styles.routeText} numberOfLines={1}>
+                    {payloadData.origem || 'Origem'}
+                  </Text>
+                </View>
+                <View style={styles.routeLine} />
+                <View style={styles.routeItem}>
+                  <Ionicons 
+                    name="location" 
+                    size={12} 
+                    color={COLORS.danger} 
+                    style={styles.routeIcon}
+                  />
+                  <Text style={styles.routeText} numberOfLines={1}>
+                    {payloadData.destino || 'Destino'}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        );
+        
       case 'SYSTEM':
         return (
           <View style={styles.contentBody}>
@@ -465,19 +509,22 @@ const NotificationsScreen = () => {
       }
     }
 
+    // Parse payload data once for all notification types
+    let payloadData = notification.payload;
+    if (typeof notification.payload === 'string') {
+      try {
+        payloadData = JSON.parse(notification.payload);
+      } catch (e) {
+        console.log('Failed to parse notification payload:', e);
+        payloadData = {};
+      }
+    } else if (!payloadData) {
+      payloadData = {};
+    }
+
     // Handle different notification types
     switch (notification.type) {
       case 'RIDE_MATCH_REQUEST':
-        // Try to parse payload if it's a string
-        let payloadData = notification.payload;
-        if (typeof notification.payload === 'string') {
-          try {
-            payloadData = JSON.parse(notification.payload);
-          } catch (e) {
-            console.log('Failed to parse notification payload:', e);
-          }
-        }
-        
         // Navigate to ride request details or handle accordingly
         if (payloadData && payloadData.caronaId) {
           console.log('Navigate to ride details:', payloadData.caronaId);
@@ -503,17 +550,12 @@ const NotificationsScreen = () => {
       case 'RIDE_REQUEST_ACCEPTED':
       case 'RIDE_REQUEST_REJECTED':
       case 'RIDE_CANCELLED':
+      case 'RIDE_STARTED':
       case 'RIDE_REMINDER':
-        // Try to navigate to ride details if available
-        if (payloadData && payloadData.caronaId) {
-          navigation.navigate('ScheduledRides', { 
-            initialTab: 'details',
-            rideId: payloadData.caronaId 
-          });
-        } else {
-          // Navigate to scheduled rides list as fallback
-          navigation.navigate('ScheduledRides');
-        }
+        // Navigate to the Rides tab to show user's rides
+        navigation.navigate('TabNavigator', {
+          screen: 'Rides'
+        });
         break;
         
       default:

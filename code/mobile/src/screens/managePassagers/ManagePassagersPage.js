@@ -17,8 +17,10 @@ import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS } from '../../constants
 import { commonStyles } from '../../theme/styles/commonStyles';
 import { LoadingIndicator } from '../../components/ui';
 import { apiClient } from '../../services/api/apiClient';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const ManagePassengers = ({ navigation, route }) => {
+  const { authToken } = useAuthContext();
   const [loading, setLoading] = useState(false);
   // Pega os passageiros do objeto ride, se houver
   const { ride } = route.params || {};
@@ -34,18 +36,38 @@ const ManagePassengers = ({ navigation, route }) => {
           text: 'Remover',
           style: 'destructive',
           onPress: async () => {
-          setLoading(true);
-         await apiClient
-            .patch(`/carona/remover-passageiro/${ride.id}/${passenger.id}`)
-            .then(() => {
-              // Atualiza a lista de passageiros na tela anterior, se necessário
-                navigation.goBack();
-              Alert.alert('Sucesso', 'Passageiro removido com sucesso!');
-            })
-            .catch(() => {
-              Alert.alert('Erro', 'Não foi possível remover o passageiro.');
-            })
-            .finally(() => setLoading(false));
+            setLoading(true);
+            try {
+              const response = await apiClient.patch(
+                `/carona/remover-passageiro/${ride.id}/${passenger.id}`,
+                null,
+                {
+                  headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+              
+              if (response.success) {
+                Alert.alert('Sucesso', 'Passageiro removido com sucesso!', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Navigate back to refresh the parent screen
+                      navigation.goBack();
+                    }
+                  }
+                ]);
+              } else {
+                Alert.alert('Erro', response.error?.message || 'Não foi possível remover o passageiro.');
+              }
+            } catch (error) {
+              console.error('Error removing passenger:', error);
+              Alert.alert('Erro', 'Ocorreu um erro ao remover o passageiro.');
+            } finally {
+              setLoading(false);
+            }
           },
         },
       ]

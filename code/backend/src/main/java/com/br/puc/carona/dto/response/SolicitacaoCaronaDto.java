@@ -1,12 +1,17 @@
 package com.br.puc.carona.dto.response;
 
-import com.br.puc.carona.dto.AbstractDto;
-import com.br.puc.carona.enums.Status;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-
 import java.time.LocalDateTime;
+
+import com.br.puc.carona.dto.AbstractDto;
+import com.br.puc.carona.enums.StatusSolicitacaoCarona;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -48,7 +53,7 @@ public class SolicitacaoCaronaDto extends AbstractDto {
     private LocalDateTime horarioChegada;
 
     @Schema(description = "Status atual da solicitação", example = "PENDENTE")
-    private Status status;
+    private StatusSolicitacaoCarona status;
 
     public String toStringBaseInfo() {
         return new StringBuilder()
