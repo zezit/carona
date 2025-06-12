@@ -55,7 +55,7 @@ _Instituto de Informática e Ciências Exatas – Pontifícia Universidade de Mi
 [ ] Outro: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
 **1.5 Objetivo do projeto:**
-Oferecer uma solução alternativa para os alunos que precisam se deslocar entre a universidade e suas residências
+Desenvolver uma aplicação de caronas universitárias.
 
 **1.6 Benefícios que justificam o projeto:** Conexões facilitadas entre usuários, facilidade de locomoção para a faculdade, Garantir Segurança e Confiabilidade e Alternativa Mais Econômica e Sustentável.
 
