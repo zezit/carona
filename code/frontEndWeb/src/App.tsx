@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 import Report from "./pages/Report";
 import { ReportTest } from "./pages/ReportTest";
+import DenunciasManagement from "./pages/Denuncias";
 
 // Configuração do React Query com opções mais estáveis
 const queryClient = new QueryClient({
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/rides" element={<RideManagement />} />
               <Route path="/report" element={<Report />} />
               <Route path="/report-test" element={<ReportTest />} />
+              <Route path="/denuncias-management" element={<DenunciasManagement />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </UserProvider>

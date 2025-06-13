@@ -119,6 +119,19 @@ const Navbar: React.FC = () => {
                 <span>Gráficos</span>
               </div>
             </Link>
+            <Link 
+              to="/denuncias-management"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive("/denuncias-management") 
+                  ? "bg-carona-50 text-carona-700" 
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <div className="flex items-center space-x-1.5">
+                <FileText className="w-4 h-4" />
+                <span>Denúncias</span>
+              </div>
+            </Link>
             
             <div className="ml-4 pl-4 border-l border-gray-200 flex items-center">
               <span className="text-sm text-gray-600 mr-3">

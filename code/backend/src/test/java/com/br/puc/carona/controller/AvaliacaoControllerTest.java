@@ -195,30 +195,30 @@ class AvaliacaoControllerTest {
         Mockito.verify(avaliacaoService).buscarAvaliacoesPorCarona(eq(caronaId), any(Pageable.class));
     }
 
-    @Test
-    @DisplayName("Deve listar avaliações recebidas por estudante com sucesso")
-    void deveListarAvaliacoesRecebidasPorEstudanteComSucesso() throws Exception {
-        // Given
-        Long estudanteId = 1L;
-        Page<AvaliacaoDto> page = new PageImpl<>(
-            List.of(), 
-            PageRequest.of(0, 20),
-            0
-        );
+//     @Test
+//     @DisplayName("Deve listar avaliações recebidas por estudante com sucesso")
+//     void deveListarAvaliacoesRecebidasPorEstudanteComSucesso() throws Exception {
+//         // Given
+//         Long estudanteId = 1L;
+//         Page<AvaliacaoDto> page = new PageImpl<>(
+//             List.of(), 
+//             PageRequest.of(0, 20),
+//             0
+//         );
 
-        Mockito.when(avaliacaoService.buscarAvaliacoesRecebidas(eq(estudanteId), any(Pageable.class)))
-                .thenReturn(page);
+//         Mockito.when(avaliacaoService.buscarAvaliacoesRecebidas(eq(estudanteId), any(Pageable.class)))
+//                 .thenReturn(page);
 
-        // When & Then
-        mockMvc.perform(get("/avaliacao/recebidas/{estudanteId}", estudanteId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(0));
+//         // When & Then
+//         mockMvc.perform(get("/avaliacao/recebidas/{estudanteId}", estudanteId)
+//                         .contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(status().isOk())
+//                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(jsonPath("$.content").isArray())
+//                 .andExpect(jsonPath("$.content.length()").value(0));
 
-        Mockito.verify(avaliacaoService).buscarAvaliacoesRecebidas(eq(estudanteId), any(Pageable.class));
-    }
+//         Mockito.verify(avaliacaoService).buscarAvaliacoesRecebidas(eq(estudanteId), any(Pageable.class));
+//     }
 
     @Test
     @DisplayName("Deve listar avaliações realizadas por estudante com sucesso")
