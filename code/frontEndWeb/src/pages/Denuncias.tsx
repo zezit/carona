@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RefreshCw, AlertTriangle, CheckCircle, Clock, Eye, FileText, User, Calendar, Filter, Search, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { apiClient } from "@/lib/api";
 
 // Enum para tipos de denúncia
 export enum TipoDenuncia {
@@ -47,40 +48,40 @@ const tipoLabels: Record<TipoDenuncia, string> = {
 };
 
 // Dados mockados para demonstração
-const mockDenuncias: DenunciaDto[] = [
-  {
-    id: 1,
-    caronaId: 101,
-    denunciante: { id: 1, nome: "João Silva", email: "joao@email.com" },
-    denunciado: { id: 2, nome: "Maria Santos", email: "maria@email.com" },
-    tipo: TipoDenuncia.COMPORTAMENTO_INADEQUADO,
-    descricao: "Motorista foi grosseiro durante a viagem e usou linguagem inapropriada.",
-    dataHora: "2024-06-10T14:30:00",
-    status: "PENDENTE"
-  },
-  {
-    id: 2,
-    caronaId: 102,
-    denunciante: { id: 3, nome: "Pedro Costa", email: "pedro@email.com" },
-    denunciado: { id: 4, nome: "Ana Oliveira", email: "ana@email.com" },
-    tipo: TipoDenuncia.ATRASO_EXCESSIVO,
-    descricao: "Passageiro chegou 30 minutos atrasado sem justificativa.",
-    dataHora: "2024-06-11T09:15:00",
-    status: "PENDENTE"
-  },
-  {
-    id: 3,
-    caronaId: 103,
-    denunciante: { id: 5, nome: "Carlos Lima", email: "carlos@email.com" },
-    denunciado: { id: 6, nome: "Julia Pereira", email: "julia@email.com" },
-    tipo: TipoDenuncia.CANCELAMENTO_INJUSTIFICADO,
-    descricao: "Cancelou a carona 5 minutos antes do horário marcado sem motivo válido.",
-    dataHora: "2024-06-09T16:45:00",
-    status: "RESOLVIDA",
-    resolucao: "Usuário foi advertido sobre a política de cancelamentos.",
-    dataHoraResolucao: "2024-06-10T10:00:00"
-  }
-];
+// const mockDenuncias: DenunciaDto[] = [
+//   {
+//     id: 1,
+//     caronaId: 101,
+//     denunciante: { id: 1, nome: "João Silva", email: "joao@email.com" },
+//     denunciado: { id: 2, nome: "Maria Santos", email: "maria@email.com" },
+//     tipo: TipoDenuncia.COMPORTAMENTO_INADEQUADO,
+//     descricao: "Motorista foi grosseiro durante a viagem e usou linguagem inapropriada.",
+//     dataHora: "2024-06-10T14:30:00",
+//     status: "PENDENTE"
+//   },
+//   {
+//     id: 2,
+//     caronaId: 102,
+//     denunciante: { id: 3, nome: "Pedro Costa", email: "pedro@email.com" },
+//     denunciado: { id: 4, nome: "Ana Oliveira", email: "ana@email.com" },
+//     tipo: TipoDenuncia.ATRASO_EXCESSIVO,
+//     descricao: "Passageiro chegou 30 minutos atrasado sem justificativa.",
+//     dataHora: "2024-06-11T09:15:00",
+//     status: "PENDENTE"
+//   },
+//   {
+//     id: 3,
+//     caronaId: 103,
+//     denunciante: { id: 5, nome: "Carlos Lima", email: "carlos@email.com" },
+//     denunciado: { id: 6, nome: "Julia Pereira", email: "julia@email.com" },
+//     tipo: TipoDenuncia.CANCELAMENTO_INJUSTIFICADO,
+//     descricao: "Cancelou a carona 5 minutos antes do horário marcado sem motivo válido.",
+//     dataHora: "2024-06-09T16:45:00",
+//     status: "RESOLVIDA",
+//     resolucao: "Usuário foi advertido sobre a política de cancelamentos.",
+//     dataHoraResolucao: "2024-06-10T10:00:00"
+//   }
+// ];
 
 // Componente FilterBar
 const FilterBar = ({ onFilterChange, categories }) => {
@@ -380,38 +381,36 @@ const DenunciaDetails = ({ denuncia, isOpen, onClose, tipoLabel }) => {
 
 // Componente principal
 const DenunciasManagement = () => {
-  const [activeTab, setActiveTab] = useState("PENDENTE");
-  const [filteredDenuncias, setFilteredDenuncias] = useState([]);
-  const [selectedDenuncia, setSelectedDenuncia] = useState(null);
+  const [activeTab, setActiveTab] = useState<"PENDENTE" | "RESOLVIDA" | "ARQUIVADA">("PENDENTE");
+  const [denuncias, setDenuncias] = useState<DenunciaDto[]>([]);
+  const [filteredDenuncias, setFilteredDenuncias] = useState<DenunciaDto[]>([]);
+  const [selectedDenuncia, setSelectedDenuncia] = useState<DenunciaDto | null>(null);
   const [isDenunciaDetailsOpen, setIsDenunciaDetailsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [counts, setCounts] = useState({ PENDENTE: 0, RESOLVIDA: 0, ARQUIVADA: 0 });
 
-  // Simular dados baseados na aba ativa
-  const getDenunciasByStatus = (status) => {
-    return mockDenuncias.filter(d => d.status === status);
+  // Busca as denúncias por status
+  const fetchDenuncias = async (status: string) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.get(`/denuncia/status?status=${status}`);
+      const content = response.data.content || [];
+      setDenuncias(content);
+      setFilteredDenuncias(content);
+      setCounts((prev) => ({ ...prev, [status]: content.length }));
+    } catch (error) {
+      console.error("Erro ao buscar denúncias:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const denunciasPendentes = getDenunciasByStatus("PENDENTE");
-  const denunciasResolvidas = getDenunciasByStatus("RESOLVIDA");
-  const denunciasArquivadas = getDenunciasByStatus("ARQUIVADA");
-
+  // Atualiza sempre que mudar de aba
   useEffect(() => {
-    let currentDenuncias = [];
-    switch (activeTab) {
-      case "PENDENTE":
-        currentDenuncias = denunciasPendentes;
-        break;
-      case "RESOLVIDA":
-        currentDenuncias = denunciasResolvidas;
-        break;
-      case "ARQUIVADA":
-        currentDenuncias = denunciasArquivadas;
-        break;
-    }
-    setFilteredDenuncias(currentDenuncias);
+    fetchDenuncias(activeTab);
   }, [activeTab]);
 
-  const handleViewDenuncia = (denuncia) => {
+  const handleViewDenuncia = (denuncia: DenunciaDto) => {
     setSelectedDenuncia(denuncia);
     setIsDenunciaDetailsOpen(true);
   };
@@ -421,51 +420,32 @@ const DenunciasManagement = () => {
     setSelectedDenuncia(null);
   };
 
-  const handleResolveClick = (denunciaId) => {
+  const handleResolveClick = (denunciaId: number) => {
     alert(`Resolver denúncia ${denunciaId} - Implementar popup aqui`);
   };
 
-  const handleArchiveClick = (denunciaId) => {
+  const handleArchiveClick = (denunciaId: number) => {
     alert(`Arquivar denúncia ${denunciaId} - Implementar popup aqui`);
   };
 
-  const handleFilter = (query, tipo) => {
-    let currentDenuncias = [];
-    switch (activeTab) {
-      case "PENDENTE":
-        currentDenuncias = denunciasPendentes;
-        break;
-      case "RESOLVIDA":
-        currentDenuncias = denunciasResolvidas;
-        break;
-      case "ARQUIVADA":
-        currentDenuncias = denunciasArquivadas;
-        break;
-    }
-    
-    const filtered = currentDenuncias.filter(denuncia => {
-      const matchesQuery = query 
-        ? denuncia.descricao.toLowerCase().includes(query.toLowerCase()) || 
+  const handleFilter = (query: string, tipo: string) => {
+    const filtered = denuncias.filter((denuncia) => {
+      const matchesQuery = query
+        ? denuncia.descricao.toLowerCase().includes(query.toLowerCase()) ||
           denuncia.denunciante.nome.toLowerCase().includes(query.toLowerCase()) ||
           denuncia.denunciado.nome.toLowerCase().includes(query.toLowerCase())
         : true;
-      
-      const matchesTipo = tipo && tipo !== "all"
-        ? denuncia.tipo === tipo
-        : true;
-      
+
+      const matchesTipo = tipo && tipo !== "all" ? denuncia.tipo === tipo : true;
+
       return matchesQuery && matchesTipo;
     });
-    
+
     setFilteredDenuncias(filtered);
   };
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    // Simular carregamento
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    fetchDenuncias(activeTab);
   };
 
   const getEmptyStateContent = () => {
@@ -494,10 +474,9 @@ const DenunciasManagement = () => {
   const emptyState = getEmptyStateContent();
 
   return (
-    
     <div className="min-h-screen bg-gray-50">
-      {/* Header */
-      <Navbar />}
+      {/* Header */}
+      <Navbar />
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
@@ -507,7 +486,7 @@ const DenunciasManagement = () => {
                 Gerencie denúncias e mantenha a plataforma segura
               </p>
             </div>
-            <button 
+            <button
               onClick={handleRefresh}
               className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={isLoading}
@@ -531,7 +510,7 @@ const DenunciasManagement = () => {
             }`}
           >
             <Clock className="mr-2 h-4 w-4" />
-            Pendentes ({denunciasPendentes.length})
+            Pendentes ({counts.PENDENTE})
           </button>
           <button
             onClick={() => setActiveTab("RESOLVIDA")}
@@ -542,7 +521,7 @@ const DenunciasManagement = () => {
             }`}
           >
             <CheckCircle className="mr-2 h-4 w-4" />
-            Resolvidas ({denunciasResolvidas.length})
+            Resolvidas ({counts.RESOLVIDA})
           </button>
           <button
             onClick={() => setActiveTab("ARQUIVADA")}
@@ -553,12 +532,12 @@ const DenunciasManagement = () => {
             }`}
           >
             <AlertTriangle className="mr-2 h-4 w-4" />
-            Arquivadas ({denunciasArquivadas.length})
+            Arquivadas ({counts.ARQUIVADA})
           </button>
         </div>
 
-        <FilterBar 
-          onFilterChange={handleFilter} 
+        <FilterBar
+          onFilterChange={handleFilter}
           categories={Object.entries(tipoLabels).map(([value, label]) => ({ value, label }))}
         />
 
@@ -590,7 +569,7 @@ const DenunciasManagement = () => {
           </div>
         )}
       </main>
-      
+
       {selectedDenuncia && (
         <DenunciaDetails
           denuncia={selectedDenuncia}
@@ -602,5 +581,6 @@ const DenunciasManagement = () => {
     </div>
   );
 };
+
 
 export default DenunciasManagement;

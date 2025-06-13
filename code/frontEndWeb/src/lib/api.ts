@@ -317,6 +317,89 @@ export const api = {
       }
     },
   },
+  denuncias: {
+  // Get all denúncias with optional filters
+  getAllDenunciasByStatus: async (status?: string, page: number = 0, size: number = 10) => {
+  try {
+    let url = `/denuncia/status?page=${page}&size=${size}&sort=dataHora,desc`;
+    if (status && status !== 'all') {
+      url += `&status=${status}`;
+    }
+    const response = await apiClient.get(url);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error fetching denúncias:', error);
+    return { success: false, error };
+  }
+},
+
+
+  // Get denúncia by ID
+  getDenunciaById: async (denunciaId: string) => {
+    try {
+      const response = await apiClient.get(`/denuncias/${denunciaId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error fetching denúncia:', error);
+      return { success: false, error };
+    }
+  },
+
+  // Resolve a denúncia
+  resolveDenuncia: async (denunciaId: string, resolucao: string) => {
+    try {
+      const response = await apiClient.patch(`/denuncias/${denunciaId}/resolver`, {
+        resolucao
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error resolving denúncia:', error);
+      return { success: false, error };
+    }
+  },
+
+  // Archive a denúncia
+  arquivarDenuncia: async (denunciaId: string, motivo?: string) => {
+    try {
+      const response = await apiClient.patch(`/denuncias/${denunciaId}/arquivar`, {
+        motivo
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error archiving denúncia:', error);
+      return { success: false, error };
+    }
+  },
+
+  // Get denúncias statistics
+  getDenunciasStats: async () => {
+    try {
+      const response = await apiClient.get('/denuncias/stats');
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error fetching denúncias stats:', error);
+      return { success: false, error };
+    }
+  },
+
+  // Search denúncias
+  searchDenuncias: async (query: string, status?: string, tipo?: string, page: number = 0, size: number = 10) => {
+    try {
+      let url = `/denuncias/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}`;
+      if (status && status !== 'all') {
+        url += `&status=${status}`;
+      }
+      if (tipo && tipo !== 'all') {
+        url += `&tipo=${tipo}`;
+      }
+      const response = await apiClient.get(url);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error searching denúncias:', error);
+      return { success: false, error };
+    }
+  }
+}
 };
 
 export default api;
