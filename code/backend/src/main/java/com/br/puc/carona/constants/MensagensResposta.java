@@ -118,6 +118,9 @@ public final class MensagensResposta {
     public static final String RESOLUCAO_OBRIGATORIA = "denuncia.resolucao.obrigatoria";
     public static final String RESOLUCAO_MUITO_LONGA = "denuncia.resolucao.muito.longa";
 
+    // Usuario Banido
+    public static final String USUARIO_BANIDO = "usuario.banido";
+
     private MensagensResposta() {
         throw new IllegalStateException("Utility class");
     }
