@@ -30,7 +30,7 @@ interface DenunciaDto {
   tipo: TipoDenuncia;
   descricao: string;
   dataHora: string;
-  status: "PENDENTE" | "RESOLVIDA" | "ARQUIVADA";
+  status: "PENDENTE" | "FINALIZADO";
   resolucao?: string;
   dataHoraResolucao?: string;
 }
@@ -48,40 +48,40 @@ const tipoLabels: Record<TipoDenuncia, string> = {
 };
 
 // Dados mockados para demonstração
-// const mockDenuncias: DenunciaDto[] = [
-//   {
-//     id: 1,
-//     caronaId: 101,
-//     denunciante: { id: 1, nome: "João Silva", email: "joao@email.com" },
-//     denunciado: { id: 2, nome: "Maria Santos", email: "maria@email.com" },
-//     tipo: TipoDenuncia.COMPORTAMENTO_INADEQUADO,
-//     descricao: "Motorista foi grosseiro durante a viagem e usou linguagem inapropriada.",
-//     dataHora: "2024-06-10T14:30:00",
-//     status: "PENDENTE"
-//   },
-//   {
-//     id: 2,
-//     caronaId: 102,
-//     denunciante: { id: 3, nome: "Pedro Costa", email: "pedro@email.com" },
-//     denunciado: { id: 4, nome: "Ana Oliveira", email: "ana@email.com" },
-//     tipo: TipoDenuncia.ATRASO_EXCESSIVO,
-//     descricao: "Passageiro chegou 30 minutos atrasado sem justificativa.",
-//     dataHora: "2024-06-11T09:15:00",
-//     status: "PENDENTE"
-//   },
-//   {
-//     id: 3,
-//     caronaId: 103,
-//     denunciante: { id: 5, nome: "Carlos Lima", email: "carlos@email.com" },
-//     denunciado: { id: 6, nome: "Julia Pereira", email: "julia@email.com" },
-//     tipo: TipoDenuncia.CANCELAMENTO_INJUSTIFICADO,
-//     descricao: "Cancelou a carona 5 minutos antes do horário marcado sem motivo válido.",
-//     dataHora: "2024-06-09T16:45:00",
-//     status: "RESOLVIDA",
-//     resolucao: "Usuário foi advertido sobre a política de cancelamentos.",
-//     dataHoraResolucao: "2024-06-10T10:00:00"
-//   }
-// ];
+const mockDenuncias: DenunciaDto[] = [
+  {
+    id: 1,
+    caronaId: 101,
+    denunciante: { id: 1, nome: "João Silva", email: "joao@email.com" },
+    denunciado: { id: 2, nome: "Maria Santos", email: "maria@email.com" },
+    tipo: TipoDenuncia.COMPORTAMENTO_INADEQUADO,
+    descricao: "Motorista foi grosseiro durante a viagem e usou linguagem inapropriada.",
+    dataHora: "2024-06-10T14:30:00",
+    status: "PENDENTE"
+  },
+  {
+    id: 2,
+    caronaId: 102,
+    denunciante: { id: 3, nome: "Pedro Costa", email: "pedro@email.com" },
+    denunciado: { id: 4, nome: "Ana Oliveira", email: "ana@email.com" },
+    tipo: TipoDenuncia.ATRASO_EXCESSIVO,
+    descricao: "Passageiro chegou 30 minutos atrasado sem justificativa.",
+    dataHora: "2024-06-11T09:15:00",
+    status: "PENDENTE"
+  },
+  {
+    id: 3,
+    caronaId: 103,
+    denunciante: { id: 5, nome: "Carlos Lima", email: "carlos@email.com" },
+    denunciado: { id: 6, nome: "Julia Pereira", email: "julia@email.com" },
+    tipo: TipoDenuncia.CANCELAMENTO_INJUSTIFICADO,
+    descricao: "Cancelou a carona 5 minutos antes do horário marcado sem motivo válido.",
+    dataHora: "2024-06-09T16:45:00",
+    status: "FINALIZADO",
+    resolucao: "Usuário foi advertido sobre a política de cancelamentos.",
+    dataHoraResolucao: "2024-06-10T10:00:00"
+  }
+];
 
 // Componente FilterBar
 const FilterBar = ({ onFilterChange, categories }) => {
@@ -175,8 +175,8 @@ const DenunciaCard = ({ denuncia, onResolve, onArchive, onView, mode, tipoLabel 
   const getStatusColor = (status) => {
     switch (status) {
       case "PENDENTE": return "bg-yellow-100 text-yellow-800";
-      case "RESOLVIDA": return "bg-green-100 text-green-800";
-      case "ARQUIVADA": return "bg-gray-100 text-gray-800";
+      case "FINALIZADO": return "bg-green-100 text-green-800";
+      // case "ARQUIVADA": return "bg-gray-100 text-gray-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -251,13 +251,13 @@ const DenunciaCard = ({ denuncia, onResolve, onArchive, onView, mode, tipoLabel 
               <CheckCircle className="h-4 w-4 mr-1" />
               Resolver
             </button>
-            <button
+            {/* <button
               onClick={() => onArchive && onArchive(denuncia.id)}
               className="flex items-center px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
             >
               <AlertTriangle className="h-4 w-4 mr-1" />
               Arquivar
-            </button>
+            </button> */}
           </>
         )}
       </div>
@@ -301,7 +301,7 @@ const DenunciaDetails = ({ denuncia, isOpen, onClose, tipoLabel }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
               <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                 denuncia.status === "PENDENTE" ? "bg-yellow-100 text-yellow-800" :
-                denuncia.status === "RESOLVIDA" ? "bg-green-100 text-green-800" :
+                denuncia.status === "FINALIZADO" ? "bg-green-100 text-green-800" :
                 "bg-gray-100 text-gray-800"
               }`}>
                 {denuncia.status}
@@ -351,7 +351,7 @@ const DenunciaDetails = ({ denuncia, isOpen, onClose, tipoLabel }) => {
             </div>
           </div>
 
-          {denuncia.status === "RESOLVIDA" && denuncia.resolucao && (
+          {denuncia.status === "FINALIZADO" && denuncia.resolucao && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Resolução</label>
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
@@ -379,15 +379,95 @@ const DenunciaDetails = ({ denuncia, isOpen, onClose, tipoLabel }) => {
   );
 };
 
+const ResolverDenunciaModal = ({ denuncia, isOpen, onClose, onConfirm, isLoading }) => {
+  const [resolucao, setResolucao] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (resolucao.trim()) {
+      onConfirm(resolucao.trim());
+    }
+  };
+
+  const handleClose = () => {
+    setResolucao("");
+    onClose();
+  };
+
+  if (!isOpen || !denuncia) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Resolver Denúncia #{denuncia.id}
+          </h2>
+          <button
+            onClick={handleClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={isLoading}
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Resolução da denúncia
+            </label>
+            <textarea
+              value={resolucao}
+              onChange={(e) => setResolucao(e.target.value)}
+              placeholder="Descreva como a denúncia foi resolvida..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={4}
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              disabled={isLoading}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || !resolucao.trim()}
+            >
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              {isLoading ? "Resolvendo..." : "Resolver"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Componente principal
 const DenunciasManagement = () => {
-  const [activeTab, setActiveTab] = useState<"PENDENTE" | "RESOLVIDA" | "ARQUIVADA">("PENDENTE");
+  const [activeTab, setActiveTab] = useState<"PENDENTE" | "FINALIZADO" >("PENDENTE");
   const [denuncias, setDenuncias] = useState<DenunciaDto[]>([]);
   const [filteredDenuncias, setFilteredDenuncias] = useState<DenunciaDto[]>([]);
   const [selectedDenuncia, setSelectedDenuncia] = useState<DenunciaDto | null>(null);
   const [isDenunciaDetailsOpen, setIsDenunciaDetailsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [counts, setCounts] = useState({ PENDENTE: 0, RESOLVIDA: 0, ARQUIVADA: 0 });
+  const [counts, setCounts] = useState({ PENDENTE: 0, FINALIZADO: 0});
+  const [denunciaParaResolver, setDenunciaParaResolver] = useState<DenunciaDto | null>(null);
+const [isResolverModalOpen, setIsResolverModalOpen] = useState(false);
+const [isResolvingDenuncia, setIsResolvingDenuncia] = useState(false);
 
   // Busca as denúncias por status
   const fetchDenuncias = async (status: string) => {
@@ -421,12 +501,59 @@ const DenunciasManagement = () => {
   };
 
   const handleResolveClick = (denunciaId: number) => {
-    alert(`Resolver denúncia ${denunciaId} - Implementar popup aqui`);
-  };
+  const denuncia = denuncias.find(d => d.id === denunciaId);
+  if (denuncia) {
+    setDenunciaParaResolver(denuncia);
+    setIsResolverModalOpen(true);
+  }
+};
 
   const handleArchiveClick = (denunciaId: number) => {
     alert(`Arquivar denúncia ${denunciaId} - Implementar popup aqui`);
   };
+
+const handleConfirmResolve = async (resolucao: string) => {
+  if (!denunciaParaResolver) return;
+
+  try {
+    setIsResolvingDenuncia(true);
+
+    await apiClient.put(`/denuncia/${denunciaParaResolver.id}/resolver`, {
+      status: "FINALIZADO",
+      resolucao: resolucao
+    });
+
+    // Atualiza a lista removendo a denúncia resolvida das pendentes
+    const updatedDenuncias = denuncias.filter(d => d.id !== denunciaParaResolver.id);
+    setDenuncias(updatedDenuncias);
+    setFilteredDenuncias(updatedDenuncias);
+
+    // Atualiza os contadores
+    setCounts(prev => ({
+      ...prev,
+      PENDENTE: prev.PENDENTE - 1,
+      FINALIZADO: prev.FINALIZADO + 1
+    }));
+
+    // Fecha o modal
+    setIsResolverModalOpen(false);
+    setDenunciaParaResolver(null);
+
+    // Opcional: mostrar mensagem de sucesso
+    alert("Denúncia resolvida com sucesso!");
+
+  } catch (error) {
+    console.error("Erro ao resolver denúncia:", error);
+    alert("Erro ao resolver denúncia. Tente novamente.");
+  } finally {
+    setIsResolvingDenuncia(false);
+  }
+};
+
+const handleCloseResolverModal = () => {
+  setIsResolverModalOpen(false);
+  setDenunciaParaResolver(null);
+};
 
   const handleFilter = (query: string, tipo: string) => {
     const filtered = denuncias.filter((denuncia) => {
@@ -456,18 +583,18 @@ const DenunciasManagement = () => {
           title: "Nenhuma denúncia pendente",
           description: "Ótimo! Não há denúncias aguardando análise no momento."
         };
-      case "RESOLVIDA":
+      case "FINALIZADO":
         return {
           icon: <CheckCircle className="h-12 w-12 text-blue-600" />,
-          title: "Nenhuma denúncia resolvida",
-          description: "Não há histórico de denúncias resolvidas ainda."
+          title: "Nenhuma denúncia FINALIZADA",
+          description: "Não há histórico de denúncias FINALIZADOS ainda."
         };
-      case "ARQUIVADA":
-        return {
-          icon: <AlertTriangle className="h-12 w-12 text-gray-400" />,
-          title: "Nenhuma denúncia arquivada",
-          description: "Não há denúncias arquivadas no momento."
-        };
+      // case "ARQUIVADA":
+      //   return {
+      //     icon: <AlertTriangle className="h-12 w-12 text-gray-400" />,
+      //     title: "Nenhuma denúncia arquivada",
+      //     description: "Não há denúncias arquivadas no momento."
+      //   };
     }
   };
 
@@ -513,17 +640,17 @@ const DenunciasManagement = () => {
             Pendentes ({counts.PENDENTE})
           </button>
           <button
-            onClick={() => setActiveTab("RESOLVIDA")}
+            onClick={() => setActiveTab("FINALIZADO")}
             className={`flex items-center px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "RESOLVIDA"
+              activeTab === "FINALIZADO"
                 ? "bg-blue-500 text-white shadow-sm"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
             <CheckCircle className="mr-2 h-4 w-4" />
-            Resolvidas ({counts.RESOLVIDA})
+            Finalizadas ({counts.FINALIZADO})
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab("ARQUIVADA")}
             className={`flex items-center px-4 py-3 rounded-md text-sm font-medium transition-colors ${
               activeTab === "ARQUIVADA"
@@ -533,7 +660,7 @@ const DenunciasManagement = () => {
           >
             <AlertTriangle className="mr-2 h-4 w-4" />
             Arquivadas ({counts.ARQUIVADA})
-          </button>
+          </button> */}
         </div>
 
         <FilterBar
@@ -578,6 +705,15 @@ const DenunciasManagement = () => {
           tipoLabel={tipoLabels[selectedDenuncia.tipo]}
         />
       )}
+      {denunciaParaResolver && (
+  <ResolverDenunciaModal
+    denuncia={denunciaParaResolver}
+    isOpen={isResolverModalOpen}
+    onClose={handleCloseResolverModal}
+    onConfirm={handleConfirmResolve}
+    isLoading={isResolvingDenuncia}
+  />
+)}
     </div>
   );
 };

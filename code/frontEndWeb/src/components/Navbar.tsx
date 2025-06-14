@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, Users, CheckSquare, Home, BarChart3, FileText, Car } from "lucide-react";
+import { LogOut, Users, CheckSquare, Home, BarChart3, FileText, Car, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -128,7 +128,7 @@ const Navbar: React.FC = () => {
               }`}
             >
               <div className="flex items-center space-x-1.5">
-                <FileText className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4" />
                 <span>Denúncias</span>
               </div>
             </Link>
