@@ -9,9 +9,7 @@ import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS } from '../../../consta
 const EmptyRidesState = ({ onOfferRide, style }) => {
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.emptyIconContainer}>
-        <Ionicons name="car-outline" size={60} color={COLORS.text.tertiary} />
-      </View>
+      <Ionicons name="car-outline" size={48} color={COLORS.text.secondary} />
       
       <Text style={styles.emptyTitle}>
         Nenhuma carona agendada
@@ -28,7 +26,6 @@ const EmptyRidesState = ({ onOfferRide, style }) => {
           onPress={onOfferRide}
           activeOpacity={0.8}
         >
-          <Ionicons name="add" size={20} color={COLORS.text.light} />
           <Text style={styles.offerRideButtonText}>
             Oferecer Carona
           </Text>
@@ -40,57 +37,40 @@ const EmptyRidesState = ({ onOfferRide, style }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: SPACING.xl,
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: `${COLORS.text.tertiary}10`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.background.main.light,
+    borderRadius: 12,
   },
   emptyTitle: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: FONT_WEIGHT.semiBold,
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
   },
   emptySubtitle: {
     fontSize: FONT_SIZE.md,
     color: COLORS.text.secondary,
     textAlign: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
     lineHeight: 22,
   },
   offerRideButton: {
     backgroundColor: COLORS.primary.main,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: RADIUS.lg,
-    flexDirection: 'row',
+    borderRadius: 8,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: COLORS.primary.main,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   offerRideButtonText: {
     color: COLORS.text.light,
-    fontWeight: FONT_WEIGHT.bold,
     fontSize: FONT_SIZE.md,
-    marginLeft: SPACING.sm,
+    fontWeight: FONT_WEIGHT.medium,
+    textAlign: 'center',
   },
 });
 

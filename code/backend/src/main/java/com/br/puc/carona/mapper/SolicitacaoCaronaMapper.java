@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
-import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.enums.StatusSolicitacaoCarona;
 import com.br.puc.carona.model.Estudante;
 import com.br.puc.carona.model.SolicitacaoCarona;
 
@@ -24,7 +24,7 @@ public class SolicitacaoCaronaMapper {
         solicitacao.setOrigemLatitude(request.getOrigem().getLatitude());
         solicitacao.setOrigemLongitude(request.getOrigem().getLongitude());
         solicitacao.setHorarioChegada(request.getHorarioChegadaPrevisto());
-        solicitacao.setStatus(Status.PENDENTE);
+        solicitacao.setStatus(StatusSolicitacaoCarona.PENDENTE);
 
         return solicitacao;
     }

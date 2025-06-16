@@ -24,6 +24,9 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
     List<Carona> findByMotoristaIdAndStatusAndDataHoraPartidaAfterOrderByDataHoraPartidaAsc(
             Long motoristaId, StatusCarona status, LocalDateTime dataAtual);
 
+    List<Carona> findByMotoristaIdAndStatusOrderByDataHoraPartidaAsc(
+            Long motoristaId, StatusCarona status);
+
     // New method to find active caronas for conflict checking
     List<Carona> findByMotoristaIdAndStatusNotInAndDataHoraChegadaAfter(
             Long motoristaId, List<StatusCarona> statusList, LocalDateTime dataAtual);
@@ -75,6 +78,29 @@ public interface CaronaRepository extends JpaRepository<Carona, Long> {
            "LOWER(c.pontoDestino) LIKE :searchTerm)")
     Page<Carona> findBySearch(@Param("searchTerm") String searchTerm, Pageable pageable);
 
+    // Method to find caronas where a student was a passenger
+    @Query("SELECT c FROM Carona c " +
+           "JOIN c.passageiros p " +
+           "WHERE p.id = :estudanteId " +
+           "ORDER BY c.dataHoraPartida DESC")
+    List<Carona> findByPassageiroIdOrderByDataHoraPartidaDesc(@Param("estudanteId") Long estudanteId);
+
+    // Method to find active caronas where a student is a passenger (with specific status)
+    @Query("SELECT c FROM Carona c " +
+           "JOIN c.passageiros p " +
+           "WHERE p.id = :estudanteId " +
+           "AND c.status = :status " +
+           "ORDER BY c.dataHoraPartida ASC")
+    List<Carona> findByPassageiroIdAndStatusOrderByDataHoraPartidaAsc(@Param("estudanteId") Long estudanteId, @Param("status") StatusCarona status);
+
     // Statistics count methods
     Long countByStatus(StatusCarona status);
+
+    // Method to find finished caronas where a student participated (as driver or passenger)
+    @Query("SELECT c FROM Carona c " +
+           "WHERE c.status = com.br.puc.carona.enums.StatusCarona.FINALIZADA " +
+           "AND (c.motorista.estudante.id = :estudanteId " +
+           "OR EXISTS (SELECT p FROM c.passageiros p WHERE p.id = :estudanteId)) " +
+           "ORDER BY c.dataHoraPartida DESC")
+    List<Carona> findCaronasFinalizadasComParticipacao(@Param("estudanteId") Long estudanteId);
 }

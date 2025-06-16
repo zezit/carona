@@ -104,17 +104,17 @@ public class MapService {
     private JsonNode fetchRouteData(final Double startLat, final Double startLon, final Double endLat,
             final Double endLon, final List<Double[]> waypoints) {
 
-        // Start building the coordinates string with the start point
+        // Build coordinates: Start + All Waypoints + End
         StringBuilder coordinatesBuilder = new StringBuilder();
-        coordinatesBuilder.append(startLon).append(",").append(startLat).append(";");
+        coordinatesBuilder.append(startLon).append(",").append(startLat);
         
-        // Add all waypoints
+        // Add all waypoints (passenger pickup/dropoff points)
         for (Double[] waypoint : waypoints) {
-            coordinatesBuilder.append(waypoint[1]).append(",").append(waypoint[0]).append(";");
+            coordinatesBuilder.append(";").append(waypoint[1]).append(",").append(waypoint[0]);
         }
         
         // Add the end point
-        coordinatesBuilder.append(endLon).append(",").append(endLat);
+        coordinatesBuilder.append(";").append(endLon).append(",").append(endLat);
         
         String coordinates = coordinatesBuilder.toString();
         log.debug("OSRM API request with waypoints path: /route/v1/driving/{}", coordinates);
@@ -122,9 +122,11 @@ public class MapService {
         return osrmWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/route/v1/driving/{coordinates}")
-                        .queryParam("overview", "false")
-                        .queryParam("alternatives", "true")
+                        .queryParam("overview", "full")
+                        .queryParam("alternatives", "false") // No alternatives for complex routes
+                        .queryParam("geometries", "geojson")
                         .queryParam("steps", "true")
+                        .queryParam("annotations", "true")
                         .build(coordinates))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
@@ -144,16 +146,26 @@ public class MapService {
     }
 
     private TrajetoDto createTrajetoFromRoute(final JsonNode route, final int routeIndex) {
-        final TrajetoDto trajetoria = new TrajetoDto();
-
         // Propriedades da rota
         final double distanceMeters = route.get("distance").asDouble();
         final double durationSeconds = route.get("duration").asDouble();
+        final String descricao = routeIndex == 0 ? "Principal" : "Alternativa " + routeIndex;
+        final List<List<Double>> coordinates = extractCoordinates(route.get("geometry"));
 
-        trajetoria.setDistanciaMetros(distanceMeters);
-        trajetoria.setTempoSegundos(durationSeconds);
-        trajetoria.setDescricao(routeIndex == 0 ? "Principal" : "Alternativa " + routeIndex);
-        trajetoria.setCoordenadas(extractCoordinates(route.get("geometry")));
+        // Use builder pattern to ensure proper initialization
+        final TrajetoDto trajetoria = TrajetoDto.builder()
+                .distanciaMetros(distanceMeters)
+                .tempoSegundos(durationSeconds)
+                .descricao(descricao)
+                .coordenadas(coordinates)
+                .build();
+
+        // Debug logging
+        log.debug("DEBUG: Created TrajetoDto: distancia={}, tempo={}, coordenadas size={}, descricao='{}'",
+                trajetoria.getDistanciaMetros(),
+                trajetoria.getTempoSegundos(),
+                trajetoria.getCoordenadas() != null ? trajetoria.getCoordenadas().size() : "null",
+                trajetoria.getDescricao());
 
         return trajetoria;
     }

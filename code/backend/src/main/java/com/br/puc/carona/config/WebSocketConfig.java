@@ -28,5 +28,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         log.info("Registering STOMP endpoints for WebSocket connections");
         registry.addEndpoint("/ws-notificacoes").setAllowedOriginPatterns("*").withSockJS();
         log.info("STOMP endpoint registered: /ws-notificacoes (with SockJS support)");
+        
+        // Add endpoint for location sharing during ongoing rides
+        registry.addEndpoint("/ws-location").setAllowedOriginPatterns("*").withSockJS();
+        log.info("STOMP endpoint registered: /ws-location (for real-time location sharing)");
     }
 }

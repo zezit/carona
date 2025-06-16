@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checando código fonte
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch full history for comparison
 
       - name: Configurando JDK 21
         uses: actions/setup-java@v3
@@ -104,20 +106,119 @@ jobs:
           message: 'doc: Atualiza badges de cobertura de código [skip ci]'
           default_author: github_actions
 
-      - name: Publicar relatório de testes JUnit
-        uses: mikepenz/action-junit-report@v5
-        if: always()
-        with:
-          report_paths: 'code/backend/target/surefire-reports/TEST-*.xml'
-          detailed_summary: true
-          include_passed: true
-          check_name: 'JUnit Test Report'
+      - name: Get main branch coverage for comparison
+        id: main_coverage
+        if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          echo "Getting main branch coverage for comparison..."
+          
+          # Install dependencies
+          if ! command -v xmllint &> /dev/null; then
+            echo "Installing xmllint..."
+            sudo apt-get update -q
+            sudo apt-get install -y libxml2-utils
+          fi
+          
+          # Try to get main branch coverage from recent workflow runs
+          echo "Attempting to get main branch coverage from GitHub API..."
+          
+          # First, try to fetch the main branch coverage from badges if they exist
+          if curl -f -s "https://raw.githubusercontent.com/${{ github.repository }}/main/.github/badges/lines.svg" > /dev/null 2>&1; then
+            echo "Found coverage badges on main branch"
+            
+            # Download the badge and try to extract coverage percentage
+            LINES_BADGE=$(curl -s "https://raw.githubusercontent.com/${{ github.repository }}/main/.github/badges/lines.svg")
+            BRANCHES_BADGE=$(curl -s "https://raw.githubusercontent.com/${{ github.repository }}/main/.github/badges/branches.svg")
+            
+            # Extract coverage percentages from SVG badges (rough parsing)
+            MAIN_LINE_COVERAGE=$(echo "$LINES_BADGE" | grep -oP 'coverage-\K[0-9]+\.?[0-9]*(?=%25)' | head -1)
+            MAIN_BRANCH_COVERAGE=$(echo "$BRANCHES_BADGE" | grep -oP 'coverage-\K[0-9]+\.?[0-9]*(?=%25)' | head -1)
+            
+            if [ ! -z "$MAIN_LINE_COVERAGE" ] && [ ! -z "$MAIN_BRANCH_COVERAGE" ]; then
+              echo "main_line_coverage=$MAIN_LINE_COVERAGE" >> $GITHUB_OUTPUT
+              echo "main_branch_coverage=$MAIN_BRANCH_COVERAGE" >> $GITHUB_OUTPUT
+              echo "comparison_available=true" >> $GITHUB_OUTPUT
+              echo "Main branch coverage from badges - Lines: $MAIN_LINE_COVERAGE%, Branches: $MAIN_BRANCH_COVERAGE%"
+            else
+              echo "Could not extract coverage from badges"
+              echo "comparison_available=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Fallback: Try to checkout main branch approach
+            echo "Badges not found, trying checkout approach..."
+            
+            # Store current branch info
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            CURRENT_COMMIT=$(git rev-parse HEAD)
+            
+            # Try to fetch and checkout main
+            if git fetch origin main:refs/remotes/origin/main 2>/dev/null && git checkout origin/main 2>/dev/null; then
+              echo "Successfully checked out main branch"
+              
+              # Run tests on main branch to get coverage
+              cd ./code/backend
+              if timeout 300 mvn clean test jacoco:report -q -Dmaven.test.failure.ignore=true; then
+                MAIN_REPORT="./target/site/jacoco/jacoco.xml"
+                if [ -f "$MAIN_REPORT" ]; then
+                  # Extract main branch coverage
+                  MAIN_COVERED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@covered)" $MAIN_REPORT)
+                  MAIN_MISSED_LINES=$(xmllint --xpath "string(/report/counter[@type='LINE']/@missed)" $MAIN_REPORT)
+                  MAIN_BRANCH_COVERED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@covered)" $MAIN_REPORT)
+                  MAIN_BRANCH_MISSED=$(xmllint --xpath "string(/report/counter[@type='BRANCH']/@missed)" $MAIN_REPORT)
+                  
+                  # Calculate main branch percentages
+                  MAIN_TOTAL_LINES=$((MAIN_COVERED_LINES + MAIN_MISSED_LINES))
+                  MAIN_TOTAL_BRANCHES=$((MAIN_BRANCH_COVERED + MAIN_BRANCH_MISSED))
+                  
+                  if [ $MAIN_TOTAL_LINES -gt 0 ]; then
+                    MAIN_LINE_COVERAGE=$(echo "scale=2; 100*$MAIN_COVERED_LINES/$MAIN_TOTAL_LINES" | bc)
+                  else
+                    MAIN_LINE_COVERAGE="0"
+                  fi
+                  
+                  if [ $MAIN_TOTAL_BRANCHES -gt 0 ]; then
+                    MAIN_BRANCH_COVERAGE=$(echo "scale=2; 100*$MAIN_BRANCH_COVERED/$MAIN_TOTAL_BRANCHES" | bc)
+                  else
+                    MAIN_BRANCH_COVERAGE="0"
+                  fi
+                  
+                  echo "main_line_coverage=$MAIN_LINE_COVERAGE" >> $GITHUB_OUTPUT
+                  echo "main_branch_coverage=$MAIN_BRANCH_COVERAGE" >> $GITHUB_OUTPUT
+                  echo "comparison_available=true" >> $GITHUB_OUTPUT
+                  echo "Main branch coverage from tests - Lines: $MAIN_LINE_COVERAGE%, Branches: $MAIN_BRANCH_COVERAGE%"
+                else
+                  echo "Main branch jacoco report not found"
+                  echo "comparison_available=false" >> $GITHUB_OUTPUT
+                fi
+              else
+                echo "Failed to run tests on main branch"
+                echo "comparison_available=false" >> $GITHUB_OUTPUT
+              fi
+              
+              # Return to original branch
+              cd ../..
+              git checkout $CURRENT_COMMIT 2>/dev/null || git checkout $CURRENT_BRANCH 2>/dev/null
+            else
+              echo "Could not fetch or checkout main branch"
+              echo "comparison_available=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+          # Set default values if comparison is not available
+          if [ "${{ steps.main_coverage.outputs.comparison_available }}" != "true" ]; then
+            echo "main_line_coverage=0" >> $GITHUB_OUTPUT
+            echo "main_branch_coverage=0" >> $GITHUB_OUTPUT
+            echo "comparison_available=false" >> $GITHUB_OUTPUT
+            echo "Main branch coverage comparison not available"
+          fi
 
       - name: Extraindo e verificando cobertura
         id: extract_coverage
         if: always()
         run: |
           REPORT_FILE="./code/backend/target/site/jacoco/jacoco.xml"
+          
           if [ -f "$REPORT_FILE" ]; then
             echo "report_exists=true" >> $GITHUB_OUTPUT
             
@@ -162,10 +263,74 @@ jobs:
             echo "total_branches=$TOTAL_BRANCHES" >> $GITHUB_OUTPUT
             echo "branch_coverage=$BRANCH_COVERAGE" >> $GITHUB_OUTPUT
             
+            # Prepare comparison data for JUnit report
+            COMPARISON_SUMMARY=""
+            if [ "${{ github.ref }}" != "refs/heads/main" ] && [ "${{ steps.main_coverage.outputs.comparison_available }}" == "true" ]; then
+              MAIN_LINE_COV="${{ steps.main_coverage.outputs.main_line_coverage }}"
+              MAIN_BRANCH_COV="${{ steps.main_coverage.outputs.main_branch_coverage }}"
+              
+              LINE_DIFF=$(echo "scale=2; $LINE_COVERAGE - $MAIN_LINE_COV" | bc)
+              BRANCH_DIFF=$(echo "scale=2; $BRANCH_COVERAGE - $MAIN_BRANCH_COV" | bc)
+              
+              if (( $(echo "$LINE_DIFF >= 0" | bc -l) )); then
+                LINE_TREND="📈 +$LINE_DIFF%"
+              else
+                LINE_TREND="📉 $LINE_DIFF%"
+              fi
+              
+              if (( $(echo "$BRANCH_DIFF >= 0" | bc -l) )); then
+                BRANCH_TREND="📈 +$BRANCH_DIFF%"
+              else
+                BRANCH_TREND="📉 $BRANCH_DIFF%"
+              fi
+              
+              COMPARISON_SUMMARY="
+              
+              🔄 **Comparação com branch main:**
+              - **Linhas:** $LINE_COVERAGE% (main: $MAIN_LINE_COV%) $LINE_TREND
+              - **Branches:** $BRANCH_COVERAGE% (main: $MAIN_BRANCH_COV%) $BRANCH_TREND"
+            fi
+            
             # Create summary report
             echo "## 📊 Relatório de Cobertura de Código" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
+            # Add branch comparison if available
+            if [ "${{ github.ref }}" != "refs/heads/main" ] && [ "${{ steps.main_coverage.outputs.comparison_available }}" == "true" ]; then
+              MAIN_LINE_COV="${{ steps.main_coverage.outputs.main_line_coverage }}"
+              MAIN_BRANCH_COV="${{ steps.main_coverage.outputs.main_branch_coverage }}"
+              
+              LINE_DIFF=$(echo "scale=2; $LINE_COVERAGE - $MAIN_LINE_COV" | bc)
+              BRANCH_DIFF=$(echo "scale=2; $BRANCH_COVERAGE - $MAIN_BRANCH_COV" | bc)
+              
+              echo "### 🔄 Comparação com branch main" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "| Métrica | Branch Atual | Main | Diferença | Tendência |" >> $GITHUB_STEP_SUMMARY
+              echo "| ------- | ------------ | ---- | --------- | --------- |" >> $GITHUB_STEP_SUMMARY
+              
+              if (( $(echo "$LINE_DIFF >= 0" | bc -l) )); then
+                LINE_TREND="📈 +$LINE_DIFF%"
+                LINE_STATUS_EMOJI="✅"
+              else
+                LINE_TREND="📉 $LINE_DIFF%"
+                LINE_STATUS_EMOJI="⚠️"
+              fi
+              
+              if (( $(echo "$BRANCH_DIFF >= 0" | bc -l) )); then
+                BRANCH_TREND="📈 +$BRANCH_DIFF%"
+                BRANCH_STATUS_EMOJI="✅"
+              else
+                BRANCH_TREND="📉 $BRANCH_DIFF%"
+                BRANCH_STATUS_EMOJI="⚠️"
+              fi
+              
+              echo "| Linhas | $LINE_COVERAGE% | $MAIN_LINE_COV% | $LINE_DIFF% | $LINE_TREND |" >> $GITHUB_STEP_SUMMARY
+              echo "| Branches | $BRANCH_COVERAGE% | $MAIN_BRANCH_COV% | $BRANCH_DIFF% | $BRANCH_TREND |" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "### 🎯 Verificação de Limites Mínimos" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Métrica | Atual | Mínimo | Status |" >> $GITHUB_STEP_SUMMARY
             echo "| ------- | ----- | ------ | ------ |" >> $GITHUB_STEP_SUMMARY
             
@@ -188,10 +353,22 @@ jobs:
             fi
             
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Detalhes" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 Detalhes" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- Linhas cobertas: $COVERED_LINES de $TOTAL_LINES" >> $GITHUB_STEP_SUMMARY
-            echo "- Branches cobertos: $BRANCH_COVERED de $TOTAL_BRANCHES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Linhas cobertas:** $COVERED_LINES de $TOTAL_LINES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Branches cobertos:** $BRANCH_COVERED de $TOTAL_BRANCHES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Branch atual:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+            
+            # Set status for JUnit report
+            if [ "$LINE_STATUS" = "fail" ] || [ "$BRANCH_STATUS" = "fail" ]; then
+              echo "coverage_status=❌ COBERTURA INSUFICIENTE" >> $GITHUB_OUTPUT
+            else
+              echo "coverage_status=✅ COBERTURA OK" >> $GITHUB_OUTPUT
+            fi
+            
+            # Create detailed coverage summary for JUnit report
+            echo "coverage_summary=📊 **Cobertura Atual:** Linhas $LINE_COVERAGE% | Branches $BRANCH_COVERAGE%$COMPARISON_SUMMARY" >> $GITHUB_OUTPUT
             
             # Check if thresholds are met and fail if not
             if [ "$LINE_STATUS" = "fail" ] || [ "$BRANCH_STATUS" = "fail" ]; then
@@ -202,16 +379,27 @@ jobs:
             fi
           else
             echo "report_exists=false" >> $GITHUB_OUTPUT
+            echo "coverage_status=❌ RELATÓRIO NÃO ENCONTRADO" >> $GITHUB_OUTPUT
+            echo "coverage_summary=❌ Relatório de cobertura não foi gerado" >> $GITHUB_OUTPUT
             echo "::error::Relatório de cobertura não foi gerado. Verifique se os testes foram executados corretamente."
             exit 1
           fi
 
-      - name: Armazenando artefatos de relatórios
+      - name: Publicar relatório de testes JUnit
+        uses: mikepenz/action-junit-report@v5
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: relatorios-teste-cobertura
-          path: |
-            ./code/backend/target/site/jacoco
-            ./code/backend/target/surefire-reports
-          retention-days: 7
+          report_paths: 'code/backend/target/surefire-reports/TEST-*.xml'
+          detailed_summary: true
+          include_passed: true
+          check_name: 'JUnit Test Report 🧪'
+          summary: |
+            ## 🧪 Relatório de Testes Unitários
+            
+            **Status:** ${{ steps.extract_coverage.outputs.coverage_status }}
+            
+            ${{ steps.extract_coverage.outputs.coverage_summary }}
+            
+            **Limites mínimos:** Linhas ≥ 70% | Branches ≥ 60%
+            
+            ---

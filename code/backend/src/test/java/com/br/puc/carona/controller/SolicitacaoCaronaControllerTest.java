@@ -33,8 +33,10 @@ import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.LocationDTO;
 import com.br.puc.carona.dto.request.SolicitacaoCaronaRequest;
 import com.br.puc.carona.dto.response.SolicitacaoCaronaDto;
-import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.enums.StatusSolicitacaoCarona;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
+import com.br.puc.carona.exception.custom.ErroDeCliente;
+import com.br.puc.carona.exception.custom.ErroDePermissao;
 import com.br.puc.carona.service.SolicitacaoCaronaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -98,7 +100,7 @@ class SolicitacaoCaronaControllerTest {
                 .latitudeDestino(-19.9105219)
                 .longitudeDestino(-43.9477153)
                 .horarioChegada(LocalDateTime.now().plusHours(2))
-                .status(Status.PENDENTE)
+                .status(StatusSolicitacaoCarona.PENDENTE)
                 .build();
     }
 
@@ -165,7 +167,8 @@ class SolicitacaoCaronaControllerTest {
     void deveRetornar404QuandoSolicitacaoNaoEncontrada() throws Exception {
         // Given
         when(solicitacaoService.buscarPorId(solicitacaoId))
-                .thenThrow(new EntidadeNaoEncontrada(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA, solicitacaoId));
+                .thenThrow(
+                        new EntidadeNaoEncontrada(MensagensResposta.SOLICITACAO_CARONA_NAO_ENCONTRADA, solicitacaoId));
 
         // When & Then
         mockMvc.perform(get("/solicitacao_carona/{id}", solicitacaoId))
@@ -237,6 +240,36 @@ class SolicitacaoCaronaControllerTest {
         mockMvc.perform(put("/solicitacao_carona/{id}/cancelar", solicitacaoId))
                 .andDo(print())
                 .andExpect(status().isNotFound());
+
+        verify(solicitacaoService).cancelarSolicitacao(solicitacaoId);
+    }
+
+    @Test
+    @DisplayName("PUT /solicitacao_carona/{id}/cancelar - Deve retornar 403 quando solicitação não pertence ao estudante")
+    void deveRetornar403QuandoSolicitacaoNaoPertenceAoEstudante() throws Exception {
+        // Given
+        doThrow(new ErroDePermissao(MensagensResposta.SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE))
+                .when(solicitacaoService).cancelarSolicitacao(solicitacaoId);
+
+        // When & Then
+        mockMvc.perform(put("/solicitacao_carona/{id}/cancelar", solicitacaoId))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+
+        verify(solicitacaoService).cancelarSolicitacao(solicitacaoId);
+    }
+
+    @Test
+    @DisplayName("PUT /solicitacao_carona/{id}/cancelar - Deve retornar 400 quando solicitação já virou pedido de entrada")
+    void deveRetornar400QuandoSolicitacaoJaVirouPedidoDeEntrada() throws Exception {
+        // Given
+        doThrow(new ErroDeCliente(MensagensResposta.SOLICITACAO_CARONA_JA_VIROU_PEDIDO_ENTRADA))
+                .when(solicitacaoService).cancelarSolicitacao(solicitacaoId);
+
+        // When & Then
+        mockMvc.perform(put("/solicitacao_carona/{id}/cancelar", solicitacaoId))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
 
         verify(solicitacaoService).cancelarSolicitacao(solicitacaoId);
     }

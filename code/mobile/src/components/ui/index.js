@@ -12,3 +12,6 @@ export * from './RegisterRide';
 
 // Bottom Sheet components
 export * from './BottomSheet';
+
+// Rating components
+export * from './Rating';

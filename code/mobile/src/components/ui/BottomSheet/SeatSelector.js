@@ -8,16 +8,17 @@ const SeatSelector = ({
   seats, 
   onSeatsChange, 
   maxSeats = 8, 
-  minSeats = 1 
+  minSeats = 1,
+  readOnly = false 
 }) => {
   const handleDecrease = () => {
-    if (seats > minSeats) {
+    if (!readOnly && seats > minSeats) {
       onSeatsChange(seats - 1);
     }
   };
 
   const handleIncrease = () => {
-    if (seats < maxSeats) {
+    if (!readOnly && seats < maxSeats) {
       onSeatsChange(seats + 1);
     }
   };

@@ -27,6 +27,11 @@ export const COLORS = {
     dark: '#D32F2F',
     light: '#FFEBEE',
   },
+  info: {
+    main: '#00ACC1',
+    dark: '#00838F',
+    light: '#E0F7FA',
+  },
   warning: {
     main: '#FBBC05',
     dark: '#F57F17',

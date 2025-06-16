@@ -27,8 +27,16 @@ const RideModeSelectionPage = ({ navigation, route }) => {
 
   // Memoized API call for driver status check
   const checkDriverStatus = useCallback(async () => {
+    if (!user?.id || !authToken) {
+      console.log('Cannot check driver status: missing user ID or auth token', { userId: user?.id, hasToken: !!authToken });
+      setIsDriver(false);
+      setDriverDetails(null);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await apiClient.get(`/estudante/${user?.id}/motorista`, {
+      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -41,7 +49,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
       if (response.success && response.data) {
         setIsDriver(true);
         setDriverDetails(response.data);
-        
+
         // If the user is a driver, fetch upcoming rides
         fetchUpcomingRides(response.data.id);
       } else {
@@ -60,7 +68,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
     setLoadingRides(true);
     try {
       const response = await getUpcomingRides(driverId, authToken);
-      
+
       if (response.success && response.data) {
         setUpcomingRides(response.data);
         console.debug(`Found ${response.data.length} upcoming rides`);
@@ -97,7 +105,7 @@ const RideModeSelectionPage = ({ navigation, route }) => {
   const handleStartDrive = useCallback(() => {
     // Log the driver details to verify the property name
     console.debug('Driver car details:', driverDetails?.carro);
-    
+
     navigation.navigate('RegisterRide', {
       carAvailableSeats: driverDetails?.carro?.capacidadePassageiros,
     });
@@ -105,30 +113,30 @@ const RideModeSelectionPage = ({ navigation, route }) => {
 
   const handleManageScheduledRides = useCallback(() => {
     if (upcomingRides.length > 0) {
-      navigation.navigate('ScheduledRides', { 
+      navigation.navigate('ScheduledRides', {
         rides: upcomingRides,
-        driverDetails: driverDetails 
+        driverDetails: driverDetails
       });
     } else {
       Alert.alert(
-        'Nenhuma carona agendada', 
+        'Nenhuma carona agendada',
         'Você não possui caronas agendadas para o futuro. Que tal oferecer uma nova carona?'
       );
     }
   }, [navigation, upcomingRides, driverDetails]);
 
   const handleHistoryRide = useCallback((mode) => {
-      navigation.navigate('MyDrives', { mode });
+    navigation.navigate('MyDrives', { mode });
     // Alert.alert('Em breve!', 'Essa funcionalidade ainda está em desenvolvimento.');
   }, [navigation]);
 
   const handleSearchRide = useCallback(() => {
-     navigation.navigate('FindRides', { mode: 'available-rides' });
-   
+    navigation.navigate('FindRides', { mode: 'available-rides' });
+
   }, [navigation]);
   const handleMyRequests = useCallback(() => {
-     navigation.navigate('MyRequests');
-   
+    navigation.navigate('MyRequests');
+
   }, [navigation]);
 
   if (loading) {
@@ -187,8 +195,8 @@ const RideModeSelectionPage = ({ navigation, route }) => {
               ) : (
                 <OptionButton
                   title={`Caronas Agendadas ${upcomingRides.length > 0 ? `(${upcomingRides.length})` : ''}`}
-                  description={upcomingRides.length > 0 
-                    ? "Gerencie suas próximas caronas agendadas" 
+                  description={upcomingRides.length > 0
+                    ? "Gerencie suas próximas caronas agendadas"
                     : "Você não tem caronas agendadas"}
                   icon="calendar"
                   color={COLORS.secondary.main}
@@ -196,14 +204,6 @@ const RideModeSelectionPage = ({ navigation, route }) => {
                   badge={upcomingRides.length > 0 ? upcomingRides.length.toString() : null}
                 />
               )}
-
-              <OptionButton
-                title="Minhas Caronas"
-                description="Visualize seu histórico de caronas"
-                icon="list"
-                color={COLORS.secondary.main}
-                onPress={() => handleHistoryRide('my-rides')}
-              />
             </View>
           )}
 
@@ -214,12 +214,19 @@ const RideModeSelectionPage = ({ navigation, route }) => {
             color={COLORS.success.main}
             onPress={handleSearchRide}
           />
-           <OptionButton
+          <OptionButton
             title="Minhas Solicitações"
             description="Vizualize suas solicitações de carona"
             icon="hand-right-outline"
             color={COLORS.success.main}
             onPress={handleMyRequests}
+          />
+          <OptionButton
+            title="Minhas Caronas"
+            description="Visualize seu histórico de caronas"
+            icon="list"
+            color={COLORS.secondary.main}
+            onPress={() => handleHistoryRide('my-rides')}
           />
         </View>
       </Animated.ScrollView>

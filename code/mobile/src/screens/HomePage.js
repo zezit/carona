@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuthContext } from '../contexts/AuthContext';
 import { COLORS, SPACING, FONT_SIZE } from '../constants';
 import { LinearGradient } from 'expo-linear-gradient';
-import { apiClient, getUpcomingRides } from '../services/api/apiClient';
+import { apiClient, getUpcomingRides, getActiveDriverRides, getActivePassengerRides } from '../services/api/apiClient';
 import { LoadingIndicator } from '../components/ui';
 
 const HomePage = ({ navigation }) => {
@@ -30,8 +30,17 @@ const HomePage = ({ navigation }) => {
 
   // Check if user is a driver and get driver details
   const checkDriverStatus = useCallback(async () => {
+    if (!user?.id || !authToken) {
+      console.log('Cannot check driver status: missing user ID or auth token', { userId: user?.id, hasToken: !!authToken });
+      setIsDriver(false);
+      setDriverDetails(null);
+      setNextRide(null);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await apiClient.get(`/estudante/${user?.id}/motorista`, {
+      const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -45,31 +54,42 @@ const HomePage = ({ navigation }) => {
         await fetchUpcomingRides(response.data.id);
       } else {
         setIsDriver(false);
-        setNextRide(null);
+        setDriverDetails(null);
+        // If user is not a driver, check for passenger active rides
+        await fetchActivePassengerRides(user.id);
       }
     } catch (error) {
       console.error('Error checking driver status:', error);
       setIsDriver(false);
-      setNextRide(null);
+      setDriverDetails(null);
+      // Even if driver check fails, still check for passenger active rides
+      await fetchActivePassengerRides(user.id);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, authToken]);
-
-  // Fetch upcoming rides and find the next one
+  }, [user?.id, authToken, fetchActivePassengerRides, fetchUpcomingRides]);  // Fetch upcoming rides and find the next one (prioritizing ongoing rides)
   const fetchUpcomingRides = useCallback(async (driverId) => {
     try {
-      const response = await getUpcomingRides(driverId, authToken);
+      // Fetch both active ongoing rides and scheduled rides
+      const [activeRidesResponse, scheduledRidesResponse] = await Promise.all([
+        getActiveDriverRides(driverId, authToken),
+        getUpcomingRides(driverId, authToken)
+      ]);
       
-      if (response.success && response.data && response.data.length > 0) {
-        const now = new Date();
-        console.log('Current time:', now.toISOString());
-        console.log('Current local time:', now.toLocaleString('pt-BR'));
-        console.log('Available rides:', response.data.length);
+      let allRides = [];
+      
+      // Add active rides first (highest priority)
+      if (activeRidesResponse.success && activeRidesResponse.data && activeRidesResponse.data.length > 0) {
+        console.log('Active rides found:', activeRidesResponse.data.length);
+        allRides = [...activeRidesResponse.data];
+      }
+      
+      // Add scheduled rides second (lower priority)
+      if (scheduledRidesResponse.success && scheduledRidesResponse.data && scheduledRidesResponse.data.length > 0) {
+        console.log('Scheduled rides found:', scheduledRidesResponse.data.length);
         
-        // Find scheduled rides (removed 30-minute restriction)
-        const scheduledRides = response.data.filter(ride => {
-          // Debug logging
+        // Filter scheduled rides to only include AGENDADA status (as before)
+        const scheduledRides = scheduledRidesResponse.data.filter(ride => {
           console.log(`Ride ${ride.id}:`);
           console.log(`  - Original time string: ${ride.dataHoraPartida}`);
           console.log(`  - Status: ${ride.status}`);
@@ -82,29 +102,68 @@ const HomePage = ({ navigation }) => {
           
           return isScheduled;
         });
+        
+        allRides = [...allRides, ...scheduledRides];
+      }
 
-        console.log('Scheduled rides found:', scheduledRides.length);
+      console.log('Total rides found (active + scheduled):', allRides.length);
 
-        if (scheduledRides.length > 0) {
-          // Get the earliest scheduled ride
-          const earliestRide = scheduledRides.reduce((earliest, current) => {
-            const earliestTime = new Date(earliest.dataHoraPartida);
-            const currentTime = new Date(current.dataHoraPartida);
-            return currentTime < earliestTime ? current : earliest;
-          });
+      if (allRides.length > 0) {
+        // Sort by priority: EM_ANDAMENTO first, then AGENDADA by departure time
+        const sortedRides = allRides.sort((a, b) => {
+          // If one is EM_ANDAMENTO and the other is not, prioritize EM_ANDAMENTO
+          if (a.status === 'EM_ANDAMENTO' && b.status !== 'EM_ANDAMENTO') {
+            return -1;
+          }
+          if (b.status === 'EM_ANDAMENTO' && a.status !== 'EM_ANDAMENTO') {
+            return 1;
+          }
           
-          console.log('Selected earliest ride:', earliestRide.id, earliestRide.dataHoraPartida);
-          setNextRide(earliestRide);
-        } else {
-          console.log('No scheduled rides found');
-          setNextRide(null);
-        }
+          // If both have the same status, sort by departure time
+          const timeA = new Date(a.dataHoraPartida);
+          const timeB = new Date(b.dataHoraPartida);
+          return timeA - timeB;
+        });
+
+        const nextRide = sortedRides[0];
+        console.log('Selected next ride:', nextRide.id, nextRide.status, nextRide.dataHoraPartida);
+        setNextRide(nextRide);
       } else {
-        console.log('No rides in response or response failed');
+        console.log('No active or scheduled rides found');
         setNextRide(null);
       }
     } catch (error) {
       console.error('Error fetching upcoming rides:', error);
+      setNextRide(null);
+    }
+  }, [authToken]);
+
+  // Fetch active rides for passengers
+  const fetchActivePassengerRides = useCallback(async (estudanteId) => {
+    try {
+      console.log('Checking for active passenger rides for student ID:', estudanteId);
+      
+      const activeRidesResponse = await getActivePassengerRides(estudanteId, authToken);
+      
+      if (activeRidesResponse.success && activeRidesResponse.data && activeRidesResponse.data.length > 0) {
+        console.log('Active passenger rides found:', activeRidesResponse.data.length);
+        
+        // Sort by departure time and take the first one
+        const sortedRides = activeRidesResponse.data.sort((a, b) => {
+          const timeA = new Date(a.dataHoraPartida);
+          const timeB = new Date(b.dataHoraPartida);
+          return timeA - timeB;
+        });
+
+        const nextRide = sortedRides[0];
+        console.log('Selected next passenger ride:', nextRide.id, nextRide.status, nextRide.dataHoraPartida);
+        setNextRide(nextRide);
+      } else {
+        console.log('No active passenger rides found');
+        setNextRide(null);
+      }
+    } catch (error) {
+      console.error('Error fetching active passenger rides:', error);
       setNextRide(null);
     }
   }, [authToken]);
@@ -153,8 +212,8 @@ const HomePage = ({ navigation }) => {
   //   }
   // };
 
-  // Inicia a carona localmente, sem fazer requisição ao backend, usando os dados já disponíveis da carona
-  const handleStartRide = (carona) => {
+  // Visualiza os detalhes da carona usando os dados já disponíveis da carona
+  const handleViewRideDetails = (carona) => {
     navigation.navigate('CaronaDetailsScreen', {
       carona, // envia os dados já disponíveis da carona para a próxima tela
     });
@@ -277,18 +336,32 @@ const HomePage = ({ navigation }) => {
         </View>
 
         {/* Loading state */}
-        {loading && isDriver && (
+        {loading && (
           <View style={styles.loadingCard}>
             <LoadingIndicator size="small" text="Verificando próximas caronas..." />
           </View>
         )}
 
-        {/* Next ride card - only show if user is driver and has upcoming ride */}
-        {!loading && isDriver && nextRide && (
+        {/* Next ride card - show for both drivers and passengers when they have active rides */}
+        {!loading && nextRide && (
           <View style={styles.rideCard}>
             <View style={styles.rideHeader}>
               <Ionicons name="time" size={20} color={COLORS.primary.main} />
-              <Text style={styles.rideTitle}>Carona Agendada</Text>
+              <Text style={styles.rideTitle}>
+                {nextRide.status === 'EM_ANDAMENTO' 
+                  ? (isDriver ? 'Carona em Andamento' : 'Carona Ativa')
+                  : (isDriver ? 'Próxima Carona' : 'Sua Carona')
+                }
+              </Text>
+            </View>
+            
+            {/* Status indicator */}
+            <View style={[styles.statusBadge, { 
+              backgroundColor: nextRide.status === 'EM_ANDAMENTO' ? '#4CAF50' : '#FF9800'
+            }]}>
+              <Text style={styles.statusText}>
+                {nextRide.status === 'EM_ANDAMENTO' ? 'EM ANDAMENTO' : 'AGENDADA'}
+              </Text>
             </View>
             
             <Text style={styles.rideInfo}>
@@ -327,17 +400,19 @@ const HomePage = ({ navigation }) => {
 
             <View style={styles.rideTimeInfo}>
               <Text style={styles.rideTimeText}>
-                Próxima carona agendada
+                {nextRide.status === 'EM_ANDAMENTO' 
+                  ? (isDriver ? 'Carona em andamento' : 'Você está em uma carona')
+                  : (isDriver ? 'Próxima carona agendada' : 'Próxima carona confirmada')
+                }
               </Text>
             </View>
 
             <TouchableOpacity
                 style={styles.startRideButton}
-                // onPress={() => handleStartRide(nextRide.id)}
-                onPress={() => handleStartRide(nextRide)}
+                onPress={() => handleViewRideDetails(nextRide)}
               >
-              <Ionicons name="play" size={18} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.startRideButtonText}>Iniciar Carona</Text>
+              <Ionicons name="eye" size={18} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.startRideButtonText}>Ver Detalhes</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -353,13 +428,13 @@ const HomePage = ({ navigation }) => {
           </View>
         )}
 
-        {/* Message for non-drivers */}
-        {!loading && !isDriver && (
+        {/* Message for non-drivers with no active rides */}
+        {!loading && !isDriver && !nextRide && (
           <View style={styles.noRideCard}>
             <Ionicons name="car-outline" size={32} color={COLORS.text.secondary} />
             <Text style={styles.noRideTitle}>Modo Passageiro</Text>
             <Text style={styles.noRideText}>
-              Você pode buscar caronas disponíveis na seção de caronas.
+              Você não tem caronas ativas no momento. Busque caronas disponíveis na seção de caronas.
             </Text>
           </View>
         )}
@@ -554,6 +629,18 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: SPACING.md,
+  },
+  statusText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
 

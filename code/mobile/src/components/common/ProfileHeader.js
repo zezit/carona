@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZE } from '../../constants';
 import UserAvatar from '../common/UserAvatar';
+import StarRating from '../common/StarRating';
 
 /**
  * A reusable profile header component that displays user information and optional edit button
@@ -80,6 +81,17 @@ const ProfileHeader = ({
         {user.curso && (
           <Text style={styles.detailText}>Curso: {user.curso}</Text>
         )}
+
+        {/* Display user rating */}
+        {user.avaliacaoMedia !== undefined && user.avaliacaoMedia !== null && (
+          <View style={styles.ratingContainer}>
+            <StarRating 
+              rating={user.avaliacaoMedia} 
+              size={16} 
+              showValue={true} 
+            />
+          </View>
+        )}
         
         {user.statusCadastro && (
           <View style={styles.statusContainer}>
@@ -134,6 +146,9 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.sm,
     color: COLORS.text.secondary,
     marginTop: 2,
+  },
+  ratingContainer: {
+    marginTop: 6,
   },
   statusContainer: {
     flexDirection: 'row',

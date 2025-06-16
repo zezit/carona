@@ -10,6 +10,7 @@ import com.br.puc.carona.enums.NotificationType;
 import com.google.firebase.internal.NonNull;
 
 import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -42,6 +43,7 @@ public class Notification extends AbstractEntity {
     private Estudante recipient;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 100) // Ensure sufficient length for all NotificationType enum values
     private NotificationType type;
 
     @Lob @Basic(fetch = FetchType.EAGER)
@@ -50,6 +52,7 @@ public class Notification extends AbstractEntity {
     private boolean requiresResponse;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 100) // Ensure sufficient length for all NotificationStatus enum values  
     private NotificationStatus status;
 
     private int retryCount;

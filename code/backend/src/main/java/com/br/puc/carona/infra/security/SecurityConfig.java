@@ -66,10 +66,22 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuario/estudante").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario/admin").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/validate").permitAll()
                         .requestMatchers("/swagger/**", "/docs/**", "/health/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers(HttpMethod.POST, "/denuncia/carona/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/denuncia/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/denuncia/realizadas/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/denuncia/recebidas/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/denuncia/{id}/descricao").hasRole("USER")
+
+                        .requestMatchers(HttpMethod.DELETE, "/denuncia/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/denuncia/carona/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/denuncia/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/denuncia/{id}/resolver").hasRole("ADMIN")
+
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

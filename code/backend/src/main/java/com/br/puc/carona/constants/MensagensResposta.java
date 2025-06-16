@@ -51,7 +51,11 @@ public final class MensagensResposta {
     public static final String CARONA_NAO_PERMITE_ADICIONAR_PASSAGEIRO = "carona.nao_permite_adicionar_passageiro";
     public static final String CARONA_STATUS_INVALIDO = "carona.status.invalido";
     public static final String CARONA_HORARIO_FORA_DA_JANELA = "carona.horario.fora_janela";
-
+    public static final String SOLICITACAO_CARONA_NAO_PERTENCE_ESTUDANTE = "carona.solicitacao.nao_pertence_estudante";
+    public static final String SOLICITACAO_CARONA_JA_VIROU_PEDIDO_ENTRADA = "carona.solicitacao.ja_virou_pedido_entrada";
+    public static final String PEDIDO_ENTRADA_NAO_ENCONTRADO = "carona.pedido_entrada.nao_encontrado";
+    public static final String ALTERACAO_DE_STATUS_DO_PEDIDO_ENTRADA_NAO_AUTORIZADO = "carona.pedido_entrada.alteracao_status_nao_autorizada";
+    
     public static final String QUANTIDADE_VAGAS_INVALIDAS = "carona.quantidade_vagas.invalida";
     public static final String PASSAGEIRO_JA_EM_CARONA = "carona.estudante.ja_em_carona";
 
@@ -100,6 +104,19 @@ public final class MensagensResposta {
     public static final String AVALIACAO_JA_REALIZADA = "avaliacao.ja.realizada";
     public static final String NOTA_INVALIDA = "avaliacao.nota.invalida";
     public static final String NAO_E_AVALIADOR = "avaliacao.usuario.nao.avaliador";
+
+    // Mensagens para denúncia
+    public static final String DENUNCIA_NAO_ENCONTRADA = "denuncia.nao.encontrada";
+    public static final String DENUNCIADO_NAO_PARTICIPOU_DA_CARONA = "denuncia.denunciado.nao.participou";
+    public static final String DENUNCIA_JA_REALIZADA = "denuncia.ja.realizada";
+    public static final String NAO_PODE_DENUNCIAR_A_SI_MESMO = "denuncia.nao.pode.denunciar.si.mesmo";
+    public static final String DENUNCIA_JA_RESOLVIDA = "denuncia.ja.resolvida";
+    public static final String STATUS_RESOLUCAO_INVALIDO = "denuncia.status.resolucao.invalido";
+    public static final String NAO_E_DENUNCIANTE = "denuncia.usuario.nao.denunciante";
+    public static final String DESCRICAO_OBRIGATORIA = "denuncia.descricao.obrigatoria";
+    public static final String DESCRICAO_MUITO_LONGA = "denuncia.descricao.muito.longa";
+    public static final String RESOLUCAO_OBRIGATORIA = "denuncia.resolucao.obrigatoria";
+    public static final String RESOLUCAO_MUITO_LONGA = "denuncia.resolucao.muito.longa";
 
     private MensagensResposta() {
         throw new IllegalStateException("Utility class");

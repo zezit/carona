@@ -1,7 +1,10 @@
 package com.br.puc.carona.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,16 +15,28 @@ import com.br.puc.carona.constants.MensagensResposta;
 import com.br.puc.carona.dto.TrajetoDto;
 import com.br.puc.carona.dto.request.CaronaRequest;
 import com.br.puc.carona.dto.response.CaronaDto;
+import com.br.puc.carona.dto.response.CompleteRouteDto;
+import com.br.puc.carona.dto.response.PassengerWaypointDto;
 import com.br.puc.carona.enums.StatusCarona;
+import com.br.puc.carona.enums.Status;
+import com.br.puc.carona.enums.NotificationType;
 import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
 import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
 import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
 import com.br.puc.carona.exception.custom.ErroDeCliente;
 import com.br.puc.carona.mapper.CaronaMapper;
+import com.br.puc.carona.utils.RouteOptimizer;
+import com.br.puc.carona.utils.RouteOptimizer.Waypoint;
 import com.br.puc.carona.mapper.TrajetoMapper;
+import com.br.puc.carona.messaging.MensagemProducer;
+import com.br.puc.carona.messaging.contract.RideCancellationMessageDTO;
+import com.br.puc.carona.messaging.contract.RideStartedMessageDTO;
+import com.br.puc.carona.messaging.contract.RideFinishedMessageDTO;
 import com.br.puc.carona.model.Carona;
 import com.br.puc.carona.model.Estudante;
+import com.br.puc.carona.model.PedidoDeEntrada;
 import com.br.puc.carona.model.PerfilMotorista;
+import com.br.puc.carona.model.SolicitacaoCarona;
 import com.br.puc.carona.model.Trajeto;
 import com.br.puc.carona.repository.CaronaRepository;
 import com.br.puc.carona.repository.PerfilMotoristaRepository;
@@ -46,6 +61,7 @@ public class CaronaService {
     private final MapService mapService;
 
     private final WebsocketService webSocketService;
+    private final MensagemProducer mensagemProducer;
 
     @Transactional
     public CaronaDto criarCarona(final CaronaRequest request) {
@@ -151,12 +167,18 @@ public class CaronaService {
 
         // Alterar o status da carona
         carona.setStatus(status);
+        log.info("Status da carona alterado para: {}", status);
+
+        // Se a carona está sendo cancelada, notificar todos os passageiros confirmados
+        if (status == StatusCarona.CANCELADA) {
+            log.info("Carona está sendo cancelada, iniciando notificação aos passageiros...");
+            notificarPassageirosRideCancelada(carona, motorista.getEstudante().getId());
+            log.info("Processo de notificação aos passageiros concluído.");
+        }
 
         // Persistir a atualização
         caronaRepository.save(carona);
         log.info("Status da carona alterado com sucesso. ID: {}", carona.getId());
-
-        // TODO: Publicar evento de status alterado (para notificações)
 
         return caronaMapper.toDto(carona);
     }
@@ -200,6 +222,58 @@ public class CaronaService {
                         StatusCarona.AGENDADA,
                         LocalDateTime.now());
 
+        return caronas.stream()
+                .map(caronaMapper::toDto)
+                .toList();
+    }
+
+    // Método para buscar caronas ativas de um motorista (em andamento)
+    public List<CaronaDto> buscarCaronasAtivasDoMotorista(final Long motoristaId) {
+        log.info("Buscando caronas ativas do motorista ID: {}", motoristaId);
+
+        // Verificar se o motorista existe
+        if (!perfilMotoristaRepository.existsById(motoristaId)) {
+            throw new EntidadeNaoEncontrada(MensagensResposta.ESTUDANTE_NAO_E_MOTORISTA, motoristaId);
+        }
+
+        // Buscar caronas com status EM_ANDAMENTO
+        final List<Carona> caronasAtivas = caronaRepository
+                .findByMotoristaIdAndStatusOrderByDataHoraPartidaAsc(
+                        motoristaId,
+                        StatusCarona.EM_ANDAMENTO);
+
+        log.info("Encontradas {} caronas ativas para o motorista ID: {}", caronasAtivas.size(), motoristaId);
+
+        return caronasAtivas.stream()
+                .map(caronaMapper::toDto)
+                .toList();
+    }
+
+    // Método para buscar caronas ativas de um passageiro (em andamento)
+    public List<CaronaDto> buscarCaronasAtivasDoPassageiro(final Long estudanteId) {
+        log.info("Buscando caronas ativas do passageiro ID: {}", estudanteId);
+
+        // Buscar caronas onde o estudante é passageiro e estão com status EM_ANDAMENTO
+        final List<Carona> caronasAtivas = caronaRepository
+                .findByPassageiroIdAndStatusOrderByDataHoraPartidaAsc(estudanteId, StatusCarona.EM_ANDAMENTO);
+
+        log.info("Encontradas {} caronas ativas para o passageiro ID: {}", caronasAtivas.size(), estudanteId);
+        
+        return caronasAtivas.stream()
+                .map(caronaMapper::toDto)
+                .toList();
+    }
+
+    // Método para buscar histórico de caronas onde um estudante foi passageiro
+    public List<CaronaDto> buscarCaronasDoPassageiro(final Long estudanteId) {
+        log.info("Buscando histórico de caronas do passageiro ID: {}", estudanteId);
+
+        // Buscar caronas onde o estudante foi passageiro
+        final List<Carona> caronas = caronaRepository
+                .findByPassageiroIdOrderByDataHoraPartidaDesc(estudanteId);
+
+        log.info("Encontradas {} caronas para o passageiro ID: {}", caronas.size(), estudanteId);
+        
         return caronas.stream()
                 .map(caronaMapper::toDto)
                 .toList();
@@ -363,18 +437,17 @@ public class CaronaService {
             throw new CaronaStatusInvalido();
         }
 
-
         CaronaDto caronaAtualizada = alterarStatusCarona(idCarona, StatusCarona.EM_ANDAMENTO);
 
-        webSocketService.emitirEventoCaronaAtualizada(caronaAtualizada);
+        // Send ride started notifications to passengers via queue instead of direct WebSocket
+        notificarPassageirosRideIniciada(carona, currentUserService.getCurrentEstudante().getId());
 
         return caronaAtualizada;
-
     }
 
     @Transactional
     public CaronaDto finalizarCarona(Long idCarona) {
-        log.info("Iniciando carona com ID: {}", idCarona);
+        log.info("Finalizando carona com ID: {}", idCarona);
         Carona carona = caronaRepository.findById(idCarona)
                 .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, idCarona));
 
@@ -385,10 +458,13 @@ public class CaronaService {
             throw new CaronaStatusInvalido();
         }
 
-
         CaronaDto caronaAtualizada = alterarStatusCarona(idCarona, StatusCarona.FINALIZADA);
 
+        // Send ride finished notifications to passengers via queue
+        notificarPassageirosRideFinalizada(carona, currentUserService.getCurrentEstudante().getId());
+
         webSocketService.emitirEventoCaronaAtualizada(caronaAtualizada);
+        webSocketService.emitirEventoCaronaFinalizada(carona);
 
         return caronaAtualizada;
 
@@ -435,6 +511,301 @@ public class CaronaService {
         carona.removerPassageiro(idPassageiro);
 
         caronaRepository.save(carona);
-       
+    }
+
+    /**
+     * Calcula a rota completa da carona incluindo todos os pontos de embarque e desembarque
+     * dos passageiros confirmados, ordenados de forma otimizada.
+     * 
+     * @param caronaId ID da carona
+     * @return CompleteRouteDto com a rota completa e pontos dos passageiros
+     */
+    public CompleteRouteDto calcularRotaCompleta(final Long caronaId) {
+        log.info("Calculando rota completa para carona ID: {}", caronaId);
+        
+        final Carona carona = caronaRepository.findById(caronaId)
+                .orElseThrow(() -> new EntidadeNaoEncontrada(MensagensResposta.CARONA_NAO_ENCONTRADA, caronaId));
+
+        // Obter todos os pedidos aprovados da carona
+        final List<PedidoDeEntrada> pedidosAprovados = carona.getPedidosEntrada().stream()
+                .filter(pedido -> pedido.getStatus() == Status.APROVADO)
+                .collect(Collectors.toList());
+
+        if (pedidosAprovados.isEmpty()) {
+            log.info("Nenhum passageiro confirmado encontrado para carona ID: {}", caronaId);
+            
+            // Retornar apenas a rota original sem passageiros
+            final Trajeto rotaOriginal = carona.getTrajetos().stream()
+                    .filter(Trajeto::getPrincipal)
+                    .findFirst()
+                    .orElse(carona.getTrajetos().isEmpty() ? null : carona.getTrajetos().get(0));
+
+            if (rotaOriginal != null) {
+                return CompleteRouteDto.builder()
+                        .caronaId(caronaId)
+                        .rotaCompleta(trajetoMapper.toDto(rotaOriginal))
+                        .pontosPassageiros(new ArrayList<>())
+                        .distanciaTotalMetros(rotaOriginal.getDistanciaMetros())
+                        .tempoTotalSegundos(rotaOriginal.getTempoSegundos())
+                        .build();
+            }
+        }
+
+        // Criar lista de waypoints dos passageiros para otimização
+        final List<Waypoint> passengerWaypoints = new ArrayList<>();
+        
+        for (final PedidoDeEntrada pedido : pedidosAprovados) {
+            final SolicitacaoCarona solicitacao = pedido.getSolicitacao();
+            final Estudante estudante = solicitacao.getEstudante();
+            
+            // Adicionar ponto de embarque
+            if (solicitacao.getOrigemLatitude() != null && solicitacao.getOrigemLongitude() != null) {
+                passengerWaypoints.add(new Waypoint(
+                    solicitacao.getOrigemLatitude(),
+                    solicitacao.getOrigemLongitude(),
+                    "pickup",
+                    estudante.getId(),
+                    estudante.getNome(),
+                    solicitacao.getOrigem(),
+                    pedido.getId()
+                ));
+            }
+            
+            // Adicionar ponto de desembarque
+            if (solicitacao.getDestinoLatitude() != null && solicitacao.getDestinoLongitude() != null) {
+                passengerWaypoints.add(new Waypoint(
+                    solicitacao.getDestinoLatitude(),
+                    solicitacao.getDestinoLongitude(),
+                    "dropoff",
+                    estudante.getId(),
+                    estudante.getNome(),
+                    solicitacao.getDestino(),
+                    pedido.getId()
+                ));
+            }
+        }
+
+        // Otimizar a ordem dos waypoints
+        final List<Waypoint> optimizedWaypoints = RouteOptimizer.optimizeRoute(
+            carona.getLatitudePartida(), carona.getLongitudePartida(),
+            carona.getLatitudeDestino(), carona.getLongitudeDestino(),
+            passengerWaypoints
+        );
+
+        // Converter waypoints otimizados para coordenadas e DTOs
+        final List<Double[]> waypoints = RouteOptimizer.waypointsToCoordinates(optimizedWaypoints);
+        final List<PassengerWaypointDto> pontosPassageiros = new ArrayList<>();
+        
+        int ordem = 1;
+        for (final Waypoint waypoint : optimizedWaypoints) {
+            pontosPassageiros.add(PassengerWaypointDto.builder()
+                    .pedidoId(waypoint.getPedidoId())
+                    .passageiroId(waypoint.getPassengerId())
+                    .nomePassageiro(waypoint.getPassengerName())
+                    .tipo(waypoint.isPickup() ? PassengerWaypointDto.TipoWaypoint.EMBARQUE : PassengerWaypointDto.TipoWaypoint.DESEMBARQUE)
+                    .latitude(waypoint.getLatitude())
+                    .longitude(waypoint.getLongitude())
+                    .endereco(waypoint.getAddress())
+                    .ordem(ordem++)
+                    .build());
+        }
+
+        try {
+            // Calcular a rota completa com todos os waypoints
+            final List<TrajetoDto> rotasCompletas = mapService.calculateTrajectories(
+                    carona.getLatitudePartida(), carona.getLongitudePartida(),
+                    carona.getLatitudeDestino(), carona.getLongitudeDestino(),
+                    waypoints);
+
+            if (!rotasCompletas.isEmpty()) {
+                final TrajetoDto rotaCompleta = rotasCompletas.get(0);
+                
+                log.info("Rota completa calculada: {}km, {}min para carona ID: {}",
+                        rotaCompleta.getDistanciaMetros() / 1000.0,
+                        rotaCompleta.getTempoSegundos() / 60.0,
+                        caronaId);
+
+                // Debug: Log the rotaCompleta object details
+                log.debug("DEBUG: rotaCompleta object: distancia={}, tempo={}, coordenadas size={}, descricao='{}'",
+                        rotaCompleta.getDistanciaMetros(),
+                        rotaCompleta.getTempoSegundos(),
+                        rotaCompleta.getCoordenadas() != null ? rotaCompleta.getCoordenadas().size() : "null",
+                        rotaCompleta.getDescricao());
+
+                final CompleteRouteDto result = CompleteRouteDto.builder()
+                        .caronaId(caronaId)
+                        .rotaCompleta(rotaCompleta)
+                        .pontosPassageiros(pontosPassageiros)
+                        .distanciaTotalMetros(rotaCompleta.getDistanciaMetros())
+                        .tempoTotalSegundos(rotaCompleta.getTempoSegundos())
+                        .build();
+
+                // Debug: Log the final result structure
+                log.debug("DEBUG: Returning CompleteRouteDto with caronaId={}, rotaCompleta is null={}, pontosPassageiros size={}",
+                        result.getCaronaId(),
+                        result.getRotaCompleta() == null,
+                        result.getPontosPassageiros() != null ? result.getPontosPassageiros().size() : "null");
+
+                return result;
+            }
+        } catch (final Exception e) {
+            log.error("Erro ao calcular rota completa para carona ID: {}", caronaId, e);
+            
+            // Fallback: retornar rota original se o cálculo falhar
+            final Trajeto rotaOriginal = carona.getTrajetos().stream()
+                    .filter(Trajeto::getPrincipal)
+                    .findFirst()
+                    .orElse(carona.getTrajetos().isEmpty() ? null : carona.getTrajetos().get(0));
+
+            if (rotaOriginal != null) {
+                return CompleteRouteDto.builder()
+                        .caronaId(caronaId)
+                        .rotaCompleta(trajetoMapper.toDto(rotaOriginal))
+                        .pontosPassageiros(pontosPassageiros)
+                        .distanciaTotalMetros(rotaOriginal.getDistanciaMetros())
+                        .tempoTotalSegundos(rotaOriginal.getTempoSegundos())
+                        .build();
+            }
+        }
+
+        throw new ErroDeCliente("Não foi possível calcular a rota completa da carona");
+    }
+
+    /**
+     * Notifica todos os passageiros confirmados sobre o cancelamento completo da carona
+     * 
+     * @param carona A carona que foi cancelada
+     * @param driverId ID do motorista que cancelou a carona
+     */
+    private void notificarPassageirosRideCancelada(final Carona carona, final Long driverId) {
+        log.info("Notificando passageiros sobre cancelamento da carona ID: {}", carona.getId());
+        log.debug("Total de pedidos de entrada na carona: {}", carona.getPedidosEntrada().size());
+        
+        // Obter todos os passageiros confirmados
+        final List<PedidoDeEntrada> passageirosConfirmados = carona.getPedidosEntrada().stream()
+                .filter(pedido -> {
+                    log.debug("Pedido ID: {}, Status: {}", pedido.getId(), pedido.getStatus());
+                    return pedido.getStatus() == Status.APROVADO;
+                })
+                .collect(Collectors.toList());
+        
+        log.info("Encontrados {} passageiros confirmados para notificar", passageirosConfirmados.size());
+        
+        if (passageirosConfirmados.isEmpty()) {
+            log.info("Nenhum passageiro confirmado encontrado para carona ID: {}", carona.getId());
+            return;
+        }
+        
+        log.info("Enviando notificações de cancelamento para {} passageiros confirmados", passageirosConfirmados.size());
+        
+        // Enviar notificação para cada passageiro confirmado
+        for (final PedidoDeEntrada pedido : passageirosConfirmados) {
+            final Long passageiroId = pedido.getSolicitacao().getEstudante().getId();
+            
+            log.info("Enviando notificação de cancelamento para passageiro ID: {}", passageiroId);
+            
+            final RideCancellationMessageDTO cancellationMessage = RideCancellationMessageDTO.builder()
+                    .pedidoId(pedido.getId())
+                    .caronaId(carona.getId())
+                    .cancelledByUserId(driverId)
+                    .affectedUserId(passageiroId)
+                    .cancellationType(RideCancellationMessageDTO.RideCancellationTypeEnum.DRIVER_CANCELLED)
+                    .notificationType(NotificationType.RIDE_CANCELLED)
+                    .message("A carona foi cancelada pelo motorista")
+                    .build();
+            
+            try {
+                mensagemProducer.enviarMensagemCancelamentoCarona(cancellationMessage);
+                log.info("Notificação de cancelamento enviada com sucesso para passageiro ID: {}", passageiroId);
+            } catch (Exception e) {
+                log.error("Erro ao enviar notificação de cancelamento para passageiro ID: {}", passageiroId, e);
+            }
+        }
+    }
+
+    /**
+     * Notifica todos os passageiros confirmados sobre o início da carona
+     * 
+     * @param carona A carona que foi iniciada
+     * @param driverId ID do motorista que iniciou a carona
+     */
+    private void notificarPassageirosRideIniciada(final Carona carona, final Long driverId) {
+        log.info("Enviando notificações de carona iniciada para a carona ID: {}", carona.getId());
+        
+        // Get all confirmed passengers for this ride
+        final Set<Estudante> passageiros = carona.getPassageiros();
+        
+        if (passageiros == null || passageiros.isEmpty()) {
+            log.info("Nenhum passageiro confirmado encontrado para a carona ID: {}", carona.getId());
+            return;
+        }
+        
+        for (final Estudante passageiro : passageiros) {
+            final Long passageiroId = passageiro.getId();
+            
+            log.info("Enviando notificação de carona iniciada para passageiro ID: {}", passageiroId);
+            
+            final RideStartedMessageDTO startedMessage = RideStartedMessageDTO.builder()
+                    .caronaId(carona.getId())
+                    .driverId(driverId)
+                    .startedByUserId(driverId)
+                    .affectedUserId(passageiroId) // Set the passenger as affected user
+                    .notificationType(NotificationType.RIDE_STARTED)
+                    .message("A carona foi iniciada pelo motorista")
+                    .build();
+            
+            try {
+                mensagemProducer.enviarMensagemCaronaIniciada(startedMessage);
+                log.info("Notificação de carona iniciada enviada com sucesso para passageiro ID: {}", passageiroId);
+            } catch (Exception e) {
+                log.error("Erro ao enviar notificação de carona iniciada para passageiro ID: {}: {}", 
+                         passageiroId, e.getMessage(), e);
+            }
+        }
+        
+        log.info("Processamento de notificações de carona iniciada concluído para carona ID: {}", carona.getId());
+    }
+
+    /**
+     * Notifica todos os passageiros confirmados sobre a finalização da carona
+     * 
+     * @param carona A carona que foi finalizada
+     * @param driverId ID do motorista que finalizou a carona
+     */
+    private void notificarPassageirosRideFinalizada(final Carona carona, final Long driverId) {
+        log.info("Enviando notificações de carona finalizada para a carona ID: {}", carona.getId());
+        
+        // Get all confirmed passengers for this ride
+        final Set<Estudante> passageiros = carona.getPassageiros();
+        
+        if (passageiros == null || passageiros.isEmpty()) {
+            log.info("Nenhum passageiro confirmado encontrado para a carona ID: {}", carona.getId());
+            return;
+        }
+        
+        for (final Estudante passageiro : passageiros) {
+            final Long passageiroId = passageiro.getId();
+            
+            log.info("Enviando notificação de carona finalizada para passageiro ID: {}", passageiroId);
+            
+            final RideFinishedMessageDTO finishedMessage = RideFinishedMessageDTO.builder()
+                    .caronaId(carona.getId())
+                    .driverId(driverId)
+                    .finishedByUserId(driverId)
+                    .affectedUserId(passageiroId) // Set the passenger as affected user
+                    .notificationType(NotificationType.RIDE_FINISHED)
+                    .message("A carona foi finalizada pelo motorista")
+                    .build();
+            
+            try {
+                mensagemProducer.enviarMensagemCaronaFinalizada(finishedMessage);
+                log.info("Notificação de carona finalizada enviada com sucesso para passageiro ID: {}", passageiroId);
+            } catch (Exception e) {
+                log.error("Erro ao enviar notificação de carona finalizada para passageiro ID: {}: {}", 
+                         passageiroId, e.getMessage(), e);
+            }
+        }
+        
+        log.info("Processamento de notificações de carona finalizada concluído para carona ID: {}", carona.getId());
     }
 }

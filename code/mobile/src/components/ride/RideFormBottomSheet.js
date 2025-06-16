@@ -38,7 +38,13 @@ const RideFormBottomSheet = forwardRef(({
     formatDuration,
     formatDistance,
     initialCarAvailableSeats,
-    isEditMode = false
+    isEditMode = false,
+    hasConfirmedPassengers = false,
+    confirmedPassengersCount = 0,
+    checkingPassengers = false,
+    navigation,
+    // Accept isViewOnly as a prop
+    isViewOnly = false,
 }, ref) => {
     const snapPoints = useMemo(() => ['25%', '50%', '80%'], []);
     const scrollViewRef = useRef(null);
@@ -131,15 +137,26 @@ const RideFormBottomSheet = forwardRef(({
                         style={styles.content}
                         keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 0}
                     >
+                        {/* View Mode Warning */}
+                        {isViewOnly && (
+                            <View style={styles.viewModeWarning}>
+                                <Ionicons name="lock-closed" size={16} color={COLORS.warning.main} />
+                                <Text style={styles.viewModeWarningText}>
+                                    Carona em modo de visualização - {confirmedPassengersCount} passageiro(s) confirmado(s)
+                                </Text>
+                            </View>
+                        )}
+
                         {/* Route Info Section */}
                         {hasValidRoute && selectedRoute && (
                             <FormSection title="Rota" icon="map-outline">
                                 <RouteInfo
                                     selectedRoute={selectedRoute}
                                     routes={routes}
-                                    onSelectRoute={onSelectRoute}
+                                    onSelectRoute={hasConfirmedPassengers ? null : onSelectRoute}
                                     formatDuration={formatDuration}
                                     formatDistance={formatDistance}
+                                    readOnly={hasConfirmedPassengers}
                                 />
                             </FormSection>
                         )}
@@ -149,19 +166,29 @@ const RideFormBottomSheet = forwardRef(({
                             <View style={styles.timeTabsContainer}>
                                 <TouchableOpacity 
                                     style={[styles.timeTab, activeTimeMode === 'departure' && styles.timeTabActive]} 
-                                    onPress={() => handleTimeModeSwitch('departure')}
-                                    activeOpacity={0.7}
+                                    onPress={hasConfirmedPassengers ? null : () => handleTimeModeSwitch('departure')}
+                                    activeOpacity={hasConfirmedPassengers ? 1 : 0.7}
+                                    disabled={hasConfirmedPassengers}
                                 >
-                                    <Text style={[styles.timeTabText, activeTimeMode === 'departure' && styles.timeTabTextActive]}>
+                                    <Text style={[
+                                        styles.timeTabText, 
+                                        activeTimeMode === 'departure' && styles.timeTabTextActive,
+                                        hasConfirmedPassengers && styles.disabledText
+                                    ]}>
                                         Hora de Partida
                                     </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity 
                                     style={[styles.timeTab, activeTimeMode === 'arrival' && styles.timeTabActive]} 
-                                    onPress={() => handleTimeModeSwitch('arrival')}
-                                    activeOpacity={0.7}
+                                    onPress={hasConfirmedPassengers ? null : () => handleTimeModeSwitch('arrival')}
+                                    activeOpacity={hasConfirmedPassengers ? 1 : 0.7}
+                                    disabled={hasConfirmedPassengers}
                                 >
-                                    <Text style={[styles.timeTabText, activeTimeMode === 'arrival' && styles.timeTabTextActive]}>
+                                    <Text style={[
+                                        styles.timeTabText, 
+                                        activeTimeMode === 'arrival' && styles.timeTabTextActive,
+                                        hasConfirmedPassengers && styles.disabledText
+                                    ]}>
                                         Hora de Chegada
                                     </Text>
                                 </TouchableOpacity>
@@ -170,10 +197,12 @@ const RideFormBottomSheet = forwardRef(({
                             <RideDateTimePicker
                                 departureDate={departureDate}
                                 arrivalDate={getArrivalTime()}
-                                onDateChange={onDateChange}
+                                onDateChange={hasConfirmedPassengers ? null : onDateChange}
                                 activeMode={activeTimeMode}
                                 duration={duration}
                                 testID="date-picker"
+                                readOnly={hasConfirmedPassengers}
+
                             />
                         </FormSection>
 
@@ -181,10 +210,12 @@ const RideFormBottomSheet = forwardRef(({
                         <FormSection title="Vagas" icon="people-outline">
                             <SeatSelector
                                 seats={parseInt(seats, 10)}
-                                onSeatsChange={(newSeats) => onSeatsChange(newSeats.toString())}
+                                onSeatsChange={hasConfirmedPassengers ? null : (newSeats) => onSeatsChange(newSeats.toString())}
                                 maxSeats={initialCarAvailableSeats || 8}
                                 minSeats={1}
                                 testID="seats-input"
+                                readOnly={hasConfirmedPassengers}
+
                             />
                         </FormSection>
 
@@ -192,22 +223,26 @@ const RideFormBottomSheet = forwardRef(({
                         <FormSection title="Observações" icon="chatbubble-outline">
                             <ObservationsInput
                                 value={observations}
-                                onChangeText={onObservationsChange}
+                                onChangeText={hasConfirmedPassengers ? null : onObservationsChange}
                                 placeholder="Informações adicionais para os passageiros"
-                                testID="observations-input"
+                               testID="observations-input"
+                               readOnly={hasConfirmedPassengers}
+
                             />
                         </FormSection>
                     </KeyboardAvoidingView>
                 </BottomSheetScrollView>
-
                 <SubmitButton
-                    onPress={onSubmit}
+                    onPress={isViewOnly ? () => navigation?.goBack() : onSubmit}
                     loading={loading}
-                    disabled={!hasValidRoute}
-                    title="Registrar Carona"
-                    icon="car-outline"
-                    isEditMode={isEditMode}
+
+                    disabled={isViewOnly ? false : !hasValidRoute}
+                    title={isViewOnly ? "Voltar" : "Salvar Carona"}
+                    icon={isViewOnly ? "arrow-back" : "car-outline"}
+                    isEditMode={!isViewOnly}
+                    isViewOnly={isViewOnly}
                     testID="submit-ride-button"
+
                 />
             </View>
         </BottomSheet>
@@ -271,6 +306,26 @@ const styles = StyleSheet.create({
     timeTabTextActive: {
         fontWeight: typography.fontWeights.semibold,
         color: COLORS.primary.main,
+    },
+    viewModeWarning: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF3CD',
+        borderColor: '#FFEAA7',
+        borderWidth: 1,
+        borderRadius: radius.md,
+        padding: spacing.md,
+        marginBottom: spacing.lg,
+        gap: spacing.sm,
+    },
+    viewModeWarningText: {
+        flex: 1,
+        fontSize: typography.fontSizes.sm,
+        color: '#856404',
+        fontWeight: typography.fontWeights.medium,
+    },
+    disabledText: {
+        color: colors.gray[400],
     },
 });
 
