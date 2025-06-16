@@ -2,6 +2,7 @@ package com.br.puc.carona.exception;
 
 import java.time.LocalDateTime;
 
+import com.br.puc.carona.exception.custom.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,14 +15,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import com.br.puc.carona.constants.MensagensResposta;
-import com.br.puc.carona.exception.custom.CaronaForaDoHorarioPermitido;
-import com.br.puc.carona.exception.custom.CaronaStatusInvalido;
-import com.br.puc.carona.exception.custom.EntidadeNaoEncontrada;
-import com.br.puc.carona.exception.custom.ErroDeCliente;
-import com.br.puc.carona.exception.custom.ErroDePermissao;
-import com.br.puc.carona.exception.custom.ErroUploadImage;
-import com.br.puc.carona.exception.custom.ImagemInvalidaException;
-import com.br.puc.carona.exception.custom.UnauthenticatedUserException;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
@@ -102,18 +95,6 @@ public class GlobalExceptionHandler {
                 "login ou senha invalido",
                 MensagensResposta.LOGIN_INVALIDO);
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-    }
-
-    @ExceptionHandler(InternalAuthenticationServiceException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ErrorResponse> handleBadCredentialsException(InternalAuthenticationServiceException ex,
-            WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                LocalDateTime.now(),
-                "Erro interno de autenticação",
-                MensagensResposta.INTERNAL_AUTH_ERROR);
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(UnauthenticatedUserException.class)
@@ -197,4 +178,45 @@ public class GlobalExceptionHandler {
                 ex.getLocalizedMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(UsuarioBanidoException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleUsuarioBanido(UsuarioBanidoException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                LocalDateTime.now(),
+                request.getDescription(false),
+                MensagensResposta.USUARIO_BANIDO,
+                ex.getLocalizedMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleInternalAuthenticationServiceException(
+            InternalAuthenticationServiceException ex, WebRequest request) {
+
+        // Verifica se a causa raiz é UsuarioBanidoException
+        if (ex.getCause() instanceof UsuarioBanidoException) {
+            UsuarioBanidoException usuarioBanidoEx = (UsuarioBanidoException) ex.getCause();
+            log.warn("Usuário banido tentou fazer login: {}", usuarioBanidoEx.getMessage());
+
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.FORBIDDEN.value(),
+                    LocalDateTime.now(),
+                    "Acesso negado - usuário banido",
+                    MensagensResposta.USUARIO_BANIDO);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        }
+
+        // Para outros erros de autenticação interna
+        log.error("Erro interno de autenticação", ex);
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                LocalDateTime.now(),
+                "Erro interno de autenticação",
+                MensagensResposta.INTERNAL_AUTH_ERROR);
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }

@@ -2,6 +2,9 @@ package com.br.puc.carona.service;
 
 import java.time.LocalDateTime;
 
+import com.br.puc.carona.enums.TipoUsuario;
+import com.br.puc.carona.model.Usuario;
+import com.br.puc.carona.repository.UsuarioRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,7 @@ public class DenunciaService {
     private final DenunciaRepository denunciaRepository;
     private final CaronaRepository caronaRepository;
     private final EstudanteRepository estudanteRepository;
+    private final UsuarioRepository usuarioRepository;
 
     private final DenunciaMapper denunciaMapper;
     private final CurrentUserService currentUserService;
@@ -194,7 +198,8 @@ public class DenunciaService {
      * @return DTO da denúncia atualizada
      */
     @Transactional
-    public DenunciaDto resolverDenuncia(final Long denunciaId, final Status status, final String resolucao) {
+    public DenunciaDto resolverDenuncia(final Long denunciaId, final Status status,
+                                        final String resolucao, final Boolean banirUsuario) {
         log.info("Resolvendo denúncia ID: {} com status: {}", denunciaId, status);
 
         final Denuncia denuncia = denunciaRepository.findById(denunciaId)
@@ -214,12 +219,39 @@ public class DenunciaService {
         denuncia.setResolucao(resolucao);
         denuncia.setDataHoraResolucao(LocalDateTime.now());
 
+        // Se a denúncia foi procedente e foi solicitado o banimento
+        if (Status.APROVADO.equals(status) && Boolean.TRUE.equals(banirUsuario)) {
+            banirUsuario(denuncia.getDenunciado());
+            log.info("Usuário banido: ID {}, Nome: {}",
+                    denuncia.getDenunciado().getId(),
+                    denuncia.getDenunciado().getNome());
+        }
+
         denunciaRepository.save(denuncia);
 
         log.info("Denúncia resolvida com sucesso. ID: {}, Status: {}", denunciaId, status);
 
         return denunciaMapper.toDto(denuncia);
     }
+
+    private void banirUsuario(final Usuario usuario) {
+
+        if (TipoUsuario.BANIDO.equals(usuario.getTipoUsuario())) {
+            log.warn("Usuário já está banido: ID {}", usuario.getId());
+            return;
+        }
+
+        usuario.setTipoUsuario(TipoUsuario.BANIDO);
+        usuarioRepository.save(usuario);
+
+        log.info("Usuário banido com sucesso: ID {}, Email: {}",
+                usuario.getId(), usuario.getEmail());
+
+        // TODO: Invalidar tokens JWT ativos deste usuário
+        // TODO: Notificar o usuário sobre o banimento
+        // TODO: Registrar log de auditoria
+    }
+
 
     /**
      * Atualiza a descrição de uma denúncia (apenas o denunciante pode fazer isso)

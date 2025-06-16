@@ -2,6 +2,7 @@ package com.br.puc.carona.controller;
 
 import com.br.puc.carona.config.MockMvcSecurityConfig;
 import com.br.puc.carona.dto.request.AvaliacaoRequest;
+import com.br.puc.carona.dto.response.AvaliacaoAnonimaDto;
 import com.br.puc.carona.dto.response.AvaliacaoDto;
 import com.br.puc.carona.dto.response.EstudanteResumoDto;
 import com.br.puc.carona.service.AvaliacaoService;
@@ -200,14 +201,11 @@ class AvaliacaoControllerTest {
     void deveListarAvaliacoesRecebidasPorEstudanteComSucesso() throws Exception {
         // Given
         Long estudanteId = 1L;
-        Page<AvaliacaoDto> page = new PageImpl<>(
-            List.of(), 
-            PageRequest.of(0, 20),
-            0
-        );
+        Page<AvaliacaoAnonimaDto> page = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
 
         Mockito.when(avaliacaoService.buscarAvaliacoesRecebidas(eq(estudanteId), any(Pageable.class)))
                 .thenReturn(page);
+
 
         // When & Then
         mockMvc.perform(get("/avaliacao/recebidas/{estudanteId}", estudanteId)
