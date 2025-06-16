@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import DriveCard from '../components/ride/DriveCard';
 import {
   View,
   Text,
@@ -367,59 +368,11 @@ export default function MyDrivesScreen() {
               </View>
             ) : (
               drives.map((drive) => (
-                <TouchableOpacity
-                  key={drive.id}
-                  style={styles.driveCard}
-                  onPress={() => navigation.navigate('DriveDetails', { drive })}
-                >
-                  <View style={styles.cardHeader}>
-                    <View style={[styles.statusBadge, { 
-                      backgroundColor: drive.status === 'AGENDADA' ? COLORS.success.main : 
-                                     drive.status === 'FINALIZADA' ? COLORS.primary.main :
-                                     COLORS.text.secondary 
-                    }]}>
-                      <Text style={styles.statusText}>
-                        {drive.status === 'AGENDADA' ? 'Agendada' : 
-                         drive.status === 'FINALIZADA' ? 'Finalizada' : 
-                         drive.status}
-                      </Text>
-                    </View>
-                    <Text style={styles.dateText}>
-                      {format(new Date(drive.dataHoraPartida), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.routeContainer}>
-                    <View style={styles.locationRow}>
-                      <Ionicons name="location" size={20} color={COLORS.primary.main} />
-                      <Text style={styles.locationText}>
-                        {drive.pontoOrigem || drive.pontoPartida || 'Origem não especificada'}
-                      </Text>
-                    </View>
-                    <View style={styles.verticalLine} />
-                    <View style={styles.locationRow}>
-                      <Ionicons name="location" size={20} color={COLORS.secondary.main} />
-                      <Text style={styles.locationText}>
-                        {drive.pontoDestino || 'Destino não especificado'}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.driveInfo}>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="people-outline" size={16} color={COLORS.text.secondary} />
-                      <Text style={styles.infoText}>
-                        {drive.vagasDisponiveis}/{drive.vagas} vagas disponíveis
-                      </Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="car-outline" size={16} color={COLORS.text.secondary} />
-                      <Text style={styles.infoText}>
-                        {drive.veiculo?.modelo || 'Veículo não especificado'}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+              <DriveCard 
+  drive={drive} 
+  navigation={navigation} 
+  apiClient={apiClient} 
+/>
               ))
             )
           )}
