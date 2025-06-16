@@ -19,8 +19,12 @@ const MapOverlay = ({
   animatedStyle 
 }) => {
   return (
-    <Reanimated.View style={[styles.container, animatedStyle]}>
+    <Reanimated.View 
+      testID="map-overlay"
+      style={[styles.container, animatedStyle]}
+    >
       <LocationSelector
+        testID="location-selector"
         departure={departure}
         arrival={arrival}
         onPress={onPress}

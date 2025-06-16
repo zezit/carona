@@ -153,6 +153,7 @@ const RegisterPage = ({ navigation }) => {
                 autoCapitalize="words"
                 icon="person"
                 error={errors.nome}
+                testID="register-name-input"
               />
 
               <FormInput
@@ -164,6 +165,7 @@ const RegisterPage = ({ navigation }) => {
                 autoCapitalize="none"
                 icon="mail"
                 error={errors.email}
+                testID="register-email-input"
               />
 
               <FormInput
@@ -174,6 +176,7 @@ const RegisterPage = ({ navigation }) => {
                 secureTextEntry
                 icon="lock-closed"
                 error={errors.password}
+                testID="register-password-input"
               />
 
               <FormInput
@@ -184,12 +187,14 @@ const RegisterPage = ({ navigation }) => {
                 secureTextEntry
                 icon="shield-checkmark"
                 error={errors.confirmPassword}
+                testID="register-confirm-password-input"
               />
             </View>
 
             <TouchableOpacity
               style={styles.continueButton}
               onPress={handleNext}
+              testID="register-button"
             >
               <Text style={styles.continueButtonText}>Continuar</Text>
             </TouchableOpacity>

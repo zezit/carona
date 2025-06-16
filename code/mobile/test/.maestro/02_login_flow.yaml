@@ -1,0 +1,75 @@
+appId: host.exp.exponent
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: "Carona?"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 
+        id: "start-page"
+    timeout: 10000
+
+- runFlow:
+    when:
+      visible: 
+        text: "Perfil"
+        index: 0
+    commands:
+      # Login only if not already logged in
+      - tapOn:
+         point: "76%,9%"
+      - tapOn: SIM, SAIR
+
+# Test valid login
+- tapOn:
+    id: "email-input"
+- inputText: "newuser@pucminas.br"
+- tapOn:
+    id: "password-input"
+- inputText: "newpassword123"
+
+- tapOn:
+    id: login-button
+- tapOn:
+    id: login-button
+- waitForAnimationToEnd
+
+- assertVisible:
+   text: "Perfil"
+   index: 0
+
+
+
+# Test invalid login
+- launchApp
+- waitForAnimationToEnd
+- tapOn: "Carona?"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 
+        id: "start-page"
+    timeout: 10000
+
+- runFlow:
+    when:
+      visible: 
+        text: "Perfil"
+        index: 0
+    commands:
+      # Login only if not already logged in
+      - tapOn:
+         point: "76%,9%"
+      - tapOn: SIM, SAIR
+
+- tapOn:
+    id: "email-input"
+- inputText: "invalid@email.com"
+- tapOn:
+    id: "password-input"
+- inputText: "wrongpassword"
+- tapOn:
+    id: login-button
+- tapOn:
+    id: login-button
+- waitForAnimationToEnd
+- assertVisible: "erro de login"

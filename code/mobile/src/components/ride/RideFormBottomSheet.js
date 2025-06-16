@@ -200,7 +200,9 @@ const RideFormBottomSheet = forwardRef(({
                                 onDateChange={hasConfirmedPassengers ? null : onDateChange}
                                 activeMode={activeTimeMode}
                                 duration={duration}
+                                testID="date-picker"
                                 readOnly={hasConfirmedPassengers}
+
                             />
                         </FormSection>
 
@@ -211,7 +213,9 @@ const RideFormBottomSheet = forwardRef(({
                                 onSeatsChange={hasConfirmedPassengers ? null : (newSeats) => onSeatsChange(newSeats.toString())}
                                 maxSeats={initialCarAvailableSeats || 8}
                                 minSeats={1}
+                                testID="seats-input"
                                 readOnly={hasConfirmedPassengers}
+
                             />
                         </FormSection>
 
@@ -221,7 +225,9 @@ const RideFormBottomSheet = forwardRef(({
                                 value={observations}
                                 onChangeText={hasConfirmedPassengers ? null : onObservationsChange}
                                 placeholder="Informações adicionais para os passageiros"
-                                readOnly={hasConfirmedPassengers}
+                               testID="observations-input"
+                               readOnly={hasConfirmedPassengers}
+
                             />
                         </FormSection>
                     </KeyboardAvoidingView>
@@ -229,11 +235,14 @@ const RideFormBottomSheet = forwardRef(({
                 <SubmitButton
                     onPress={isViewOnly ? () => navigation?.goBack() : onSubmit}
                     loading={loading}
+
                     disabled={isViewOnly ? false : !hasValidRoute}
                     title={isViewOnly ? "Voltar" : "Salvar Carona"}
                     icon={isViewOnly ? "arrow-back" : "car-outline"}
                     isEditMode={!isViewOnly}
                     isViewOnly={isViewOnly}
+                    testID="submit-ride-button"
+
                 />
             </View>
         </BottomSheet>

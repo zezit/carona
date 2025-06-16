@@ -162,7 +162,7 @@ public class DenunciaController {
             @PathVariable final Long id,
             @Valid @RequestBody final ResolverDenunciaRequest request) {
         log.info("Resolvendo denúncia ID: {} com status: {}", id, request.getStatus());
-        final DenunciaDto denunciaResolvida = denunciaService.resolverDenuncia(id, request.getStatus(), request.getResolucao());
+        final DenunciaDto denunciaResolvida = denunciaService.resolverDenuncia(id, request.getStatus(), request.getResolucao(), request.getBanir());
         log.info("Denúncia ID {} resolvida com sucesso", id);
         return ResponseEntity.ok(denunciaResolvida);
     }

@@ -19,20 +19,21 @@ const RouteLoadingOverlay = ({ visible }) => {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
+    <View testID="route-loading-overlay" style={styles.container}>
+      <View testID="route-loading-content" style={styles.content}>
+        <View testID="route-loading-icon" style={styles.iconContainer}>
           <Ionicons name="map-outline" size={32} color={COLORS.primary.main} />
         </View>
         
         <ActivityIndicator 
+          testID="route-loading-spinner"
           size="large" 
           color={COLORS.primary.main} 
           style={styles.spinner}
         />
         
-        <Text style={styles.title}>Calculando rotas</Text>
-        <Text style={styles.subtitle}>
+        <Text testID="route-loading-title" style={styles.title}>Calculando rotas</Text>
+        <Text testID="route-loading-subtitle" style={styles.subtitle}>
           Encontrando as melhores opções para sua viagem...
         </Text>
       </View>

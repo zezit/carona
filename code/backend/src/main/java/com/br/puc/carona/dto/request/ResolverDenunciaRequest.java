@@ -14,4 +14,6 @@ public class ResolverDenunciaRequest {
     private Status status;
 
     private String resolucao;
+
+    private Boolean banir = false;
 }

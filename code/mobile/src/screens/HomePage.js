@@ -328,7 +328,9 @@ const HomePage = ({ navigation }) => {
               <View style={[styles.actionIconContainer, { backgroundColor: `${COLORS.secondary.main}20` }]}>
                 <Ionicons name="person" size={28} color={COLORS.secondary.main} />
               </View>
-              <Text style={styles.actionButtonText}>Perfil</Text>
+              <Text testID="start-page" style={styles.actionButtonText}>Perfil
+                
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

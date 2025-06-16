@@ -2,6 +2,7 @@ package com.br.puc.carona.controller;
 
 import com.br.puc.carona.config.MockMvcSecurityConfig;
 import com.br.puc.carona.dto.request.AvaliacaoRequest;
+import com.br.puc.carona.dto.response.AvaliacaoAnonimaDto;
 import com.br.puc.carona.dto.response.AvaliacaoDto;
 import com.br.puc.carona.dto.response.EstudanteResumoDto;
 import com.br.puc.carona.service.AvaliacaoService;
@@ -195,6 +196,7 @@ class AvaliacaoControllerTest {
         Mockito.verify(avaliacaoService).buscarAvaliacoesPorCarona(eq(caronaId), any(Pageable.class));
     }
 
+
 //     @Test
 //     @DisplayName("Deve listar avaliações recebidas por estudante com sucesso")
 //     void deveListarAvaliacoesRecebidasPorEstudanteComSucesso() throws Exception {
@@ -219,6 +221,7 @@ class AvaliacaoControllerTest {
 
 //         Mockito.verify(avaliacaoService).buscarAvaliacoesRecebidas(eq(estudanteId), any(Pageable.class));
 //     }
+
 
     @Test
     @DisplayName("Deve listar avaliações realizadas por estudante com sucesso")

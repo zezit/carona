@@ -8,6 +8,6 @@ import com.br.puc.carona.model.Usuario;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    UserDetails findByEmail(String email);
+    Usuario findByEmail(String email);
     Boolean existsByEmail(String email);
 }

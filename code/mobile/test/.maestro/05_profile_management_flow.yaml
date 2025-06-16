@@ -1,0 +1,68 @@
+appId: host.exp.exponent
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: "Carona?"
+- extendedWaitUntil:
+    visible: 
+        id: "start-page"
+    timeout: 10000
+# Test 4: Profile Management Flow
+- runFlow:
+    when:
+      visible: 
+        text: "Perfil"
+        index: 0
+    commands:
+      # Login only if not already logged in
+      - tapOn:
+         point: "76%,9%"
+      - tapOn: SIM, SAIR
+       
+- runFlow:
+    when:
+      true: true
+    commands:
+        # Login only if not already logged in
+      - tapOn:
+          id: "email-input"
+      - inputText: "newuser@pucminas.br"
+      - tapOn:
+          id: "password-input"
+      - inputText: "newpassword123"
+      - tapOn:
+          id: "login-button"
+      - tapOn:
+          id: "login-button"
+
+      # Navigate to Profile
+      - tapOn: "Perfil"
+      - assertVisible:
+          text: "Perfil"
+          index: 0
+      
+      # Update profile information
+      - tapOn: "Atualize seu nome, matrícula e curso"
+      - assertVisible: "Editar Perfil"
+      
+      - tapOn: "Seu nome completo"
+      - eraseText
+      - inputText: "updatedUser"
+
+      - tapOn: "Número de matrícula"
+      - eraseText
+      - inputText: "806578"
+      
+      - tapOn: "Seu curso"
+      - eraseText
+      - inputText: "Engehnharia de Soft"
+      
+      - tapOn: "Salvar Alterações"
+      - tapOn: "Salvar Alterações"
+      - assertVisible: "Perfil atualizado com sucesso!"
+
+      
+      
+      # Verify changes
+      - tapOn: "OK"
+      - assertVisible: "updatedUser"

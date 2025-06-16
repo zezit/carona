@@ -57,10 +57,21 @@ public class Usuario extends AbstractEntity implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.tipoUsuario != null && "ADMINISTRADOR".equals(this.tipoUsuario.name())) {
-            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (this.tipoUsuario == null) {
+            return List.of();
         }
-        return List.of(new SimpleGrantedAuthority("ROLE_PASSAGEIRO"));
+
+        return switch (this.tipoUsuario) {
+            case ADMINISTRADOR -> List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            case ESTUDANTE -> List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            case BANIDO -> List.of();
+        };
+    }
+
+
+    @Override
+    public boolean isEnabled() {
+        return !TipoUsuario.BANIDO.equals(this.tipoUsuario);
     }
 
     @Override
@@ -84,8 +95,4 @@ public class Usuario extends AbstractEntity implements UserDetails {
         return true;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
 }
