@@ -70,7 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/auth/validate").permitAll()
                         .requestMatchers("/swagger/**", "/docs/**", "/health/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/denuncia/carona/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/denuncia/carona/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/denuncia/{id}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/denuncia/realizadas/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/denuncia/recebidas/**").hasAnyRole("USER", "ADMIN")
