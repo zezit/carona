@@ -17,33 +17,36 @@ const LocationSelector = ({
   arrival,
   onPress,
   style,
-  compact = false
+  compact = false,
+  testID
 }) => {
   return (
     <TouchableOpacity
+      testID={testID}
       activeOpacity={0.7}
       onPress={onPress}
       style={[styles.container, style]}
     >
       <View style={styles.content}>
-        <View style={styles.locationIcons}>
-          <View style={[styles.locationIcon, styles.departureIcon]}>
+        <View testID="departure-arrival-icons" style={styles.locationIcons}>
+          <View testID="departure-icon" style={[styles.locationIcon, styles.departureIcon]}>
             <Ionicons name="location" size={14} color="#FFFFFF" />
           </View>
           <View style={styles.locationConnector} />
-          <View style={[styles.locationIcon, styles.arrivalIcon]}>
+          <View testID="arrival-icon" style={[styles.locationIcon, styles.arrivalIcon]}>
             <Ionicons name="navigate" size={14} color="#FFFFFF" />
           </View>
         </View>
-        <View style={styles.locationTexts}>
-          <Text numberOfLines={1} style={styles.locationText}>
+
+        <View testID="location-texts" style={styles.locationTexts}>
+          <Text testID="departure-text" numberOfLines={1} style={styles.locationText}>
             {departure || 'Selecionar partida'}
           </Text>
-          <Text numberOfLines={1} style={styles.locationText}>
+          <Text testID="arrival-text" numberOfLines={1} style={styles.locationText}>
             {arrival || 'Selecionar destino'}
           </Text>
         </View>
-        <View style={styles.editIcon}>
+        <View testID="edit-icon" style={styles.editIcon}>
           <Ionicons name="pencil" size={16} color={COLORS.primary.main} />
         </View>
       </View>

@@ -127,7 +127,7 @@ const LoginPage = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <ScrollView
+        <ScrollView testID="start-page"
           style={styles.formScrollView}
           contentContainerStyle={styles.formScrollContent}
           showsVerticalScrollIndicator={false}
@@ -150,6 +150,7 @@ const LoginPage = ({ navigation }) => {
                 autoCapitalize="none"
                 icon="mail"
                 error={errors.email}
+                testID="email-input"
               />
 
               <FormInput
@@ -160,6 +161,7 @@ const LoginPage = ({ navigation }) => {
                 secureTextEntry
                 icon="lock-closed"
                 error={errors.password}
+                testID="password-input"
               />
 
               <TouchableOpacity
@@ -174,6 +176,7 @@ const LoginPage = ({ navigation }) => {
               <TouchableOpacity
                 style={styles.loginButton}
                 onPress={handleLogin}
+                testID="login-button"
               >
                 <Text style={styles.loginButtonText}>Entrar</Text>
               </TouchableOpacity>
