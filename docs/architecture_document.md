@@ -198,23 +198,23 @@ A seguir serão apresentados os requisitos funcionais e não funcionais que guia
 | RF02   | Passageiro realiza cadastro                | Alta           | Baixa            | Mobile         |     ✅      |
 | RF03   | Passageiro se registra em carona existente | Alta           | Média            | Mobile         |     ✅      |
 | RF04   | Passageiro vê caronas existentes próximas  | Média          | Alta             | Mobile         |     ❌      |
-| RF05   | Passageiro cancela registro de carona      | Média          | Baixa            | Mobile         |     ❌      |
+| RF05   | Passageiro cancela registro de carona      | Média          | Baixa            | Mobile         |     ✅      |
 | RF06   | Passageiro ativa notificações              | Baixa          | Média            | Mobile         |     ❌      |
-| RF07   | Passageiro avalia motorista                | Média          | Baixa            | Mobile         |     ❌      |
-| RF08   | Passageiro visualiza histórico de viagens  | Média          | Baixa            | Mobile         |     ❌      |
+| RF07   | Passageiro avalia motorista                | Média          | Baixa            | Mobile         |     ✅      |
+| RF08   | Passageiro visualiza histórico de viagens  | Média          | Baixa            | Mobile         |     ✅      |
 | RF09   | Motorista gerencia viagens                 | Alta           | Média            | Mobile         |     ✅      |
 | RF10   | Motorista gerencia passageiros da viagem   | Alta           | Baixa            | Mobile         |     ✅      |
 | RF11   | Motorista realiza cadastro                 | Alta           | Baixa            | Mobile         |     ✅      |
 | RF12   | Motorista realiza login                    | Alta           | Baixa            | Mobile         |     ✅      |
 | RF13   | Motorista gerencia perfil                  | Alta           | Média            | Mobile         |     ✅      |
 | RF14   | Motorista visualiza mapa                   | Média          | Média            | Mobile         |     ✅      |
-| RF15   | Motorista vê histórico de viagem           | Baixa          | Baixa            | Mobile         |     ❌      |
-| RF16   | Motorista avalia passageiro                | Média          | Baixa            | Mobile         |     ❌      |
-| RF17   | Usuário denuncia outro usuário             | Média          | Baixa            | Mobile         |     ❌      |
+| RF15   | Motorista vê histórico de viagem           | Baixa          | Baixa            | Mobile         |     ✅      |
+| RF16   | Motorista avalia passageiro                | Média          | Baixa            | Mobile         |     ✅      |
+| RF17   | Usuário denuncia outro usuário             | Média          | Baixa            | Mobile         |     ✅      |
 | RF18   | Administrador aprova novos usuários        | Média          | Baixa            | Web            |     ✅      |
 | RF19   | Administrador visualiza todas as viagens   | Alta           | Média            | Web            |     ✅      |
 | RF20   | Administrador gerencia usuários            | Alta           | Baixa            | Web            |     ✅      |
-| RF21   | Administrador gerencia denúncias           | Média          | Baixa            | Web            |     ❌      |
+| RF21   | Administrador gerencia denúncias           | Média          | Baixa            | Web            |     ✅      |
 
 ## 3.2. Requisitos Não-Funcionais
 
