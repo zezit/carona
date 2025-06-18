@@ -223,6 +223,66 @@ O administrador pode listar, buscar, aprovar, rejeitar, suspender ou reativar us
 - Funcionalidade de busca por nome, e-mail ou matrícula funcionando corretamente
 
 ---
+##  Escopo dos Testes
+
+### Backend
+Testes unitários e de serviço para:
+- **Criação de carona**: Sucesso, motorista não aprovado, datas inválidas, vagas inválidas, quantidade acima da capacidade do carro.
+- **Busca de carona**: Por ID, por motorista, tratamento de carona inexistente.
+- **Alteração de status da carona**: Sucesso, carona não pertence ao motorista, status inválido, carona já cancelada.
+- **Atualização de carona**: Sucesso, carona inexistente, carona de outro motorista, datas inconsistentes.
+
+### Mobile
+Testes de fluxo automatizados (Maestro) para:
+- **Cadastro de usuário**: Preenchimento de dados, validação de sucesso.
+- **Login**: Autenticação com credenciais válidas.
+- **Busca de carona**: Login e navegação até tela de busca.
+- **Criação de motorista**: Login e fluxo de cadastro de motorista.
+- **Gerenciamento de perfil**: Login, navegação e validação de informações do perfil.
+
+### Frontend Web
+Testes E2E (Cypress) para:
+- **Login**: Autenticação com credenciais válidas.
+- **Dashboard**: Exibição correta das informações principais após login.
+- **Gerenciamento de usuários**: Navegação, exibição e validação de dados de usuários.
+- **Aprovação de usuários**: Navegação, exibição e validação de solicitações pendentes.
+- **Relatórios/Métricas**: Acesso e validação de dados de métricas e relatórios.
+
+##  Ambiente e Ferramentas
+
+| Ferramenta           | Time            | Descrição                                                      |
+|----------------------|-----------------|----------------------------------------------------------------|
+| Insomnia/Swagger     | Qualidade       | Ferramenta para realização de testes de API                    |
+| Jest                 | Desenvolvimento | Framework utilizada para testes unitários                      |
+| Cypress              | Qualidade       | Ferramenta para testes end-to-end                              |
+| Lighthouse           | Desenvolvimento | Avaliação de performance e acessibilidade da aplicação         |
+| Gravador de Passos   | Desenvolvimento | Prover evidências dos testes                                   |
+
+##  Critérios de Aceite
+- Todas as funcionalidades críticas devem possuir testes automatizados cobrindo cenários de sucesso e falha.
+- Os testes devem ser executados sem falhas antes de cada entrega.
+
+## Classificação de Bugs
+
+| ID | Nível de Severidade | Descrição |
+|----|---------------------|-----------|
+| 1  | Blocker             | ● Bug que bloqueia o teste de uma função ou feature, causa crash na aplicação.\n● Botão não funciona impedindo o uso completo da funcionalidade.\n● Bloqueia a entrega. |
+| 2  | Grave               | ● Funcionalidade não funciona como o esperado.\n● Input incomum causa efeitos irreversíveis. |
+| 3  | Moderada            | ● Funcionalidade não atinge certos critérios de aceitação, mas sua funcionalidade em geral não é afetada.\n● Mensagem de erro ou sucesso não é exibida. |
+| 4  | Pequena             | ● Quase nenhum impacto na funcionalidade, porém atrapalha a experiência.\n● Erro ortográfico.\n● Pequenos erros de UI. |
+
+##  Definição de Pronto
+Uma funcionalidade será considerada Pronta quando:
+- Todos os testes definidos forem realizados e aprovados;
+- Nenhum bug classificado como Blocker ou Grave permanecer aberto;
+- A validação de negócio for concluída pelo time de produto.
+
+## Evidências
+Os scripts de teste e resultados estão disponíveis nos diretórios:
+- `code/backend/src/test/java/com/br/puc/carona/service/`
+- `code/mobile/test/.maestro/`
+- `code/frontEndWeb/cypress/e2e/`
+
 
 ## Estratégia de Teste Recomendada
 

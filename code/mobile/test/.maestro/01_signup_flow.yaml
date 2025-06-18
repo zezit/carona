@@ -21,9 +21,10 @@ appId: host.exp.exponent
 # Second registration page
 - tapOn: "Selecione sua data de nascimento, "
 - waitForAnimationToEnd
-# Select a valid date (example: 10/06/2000)
-- tapOn: "10"
-- tapOn: "Junho"
+# Select a valid date (example: 2/02/2000)
+- tapOn: "02"
+- tapOn: "Fevereiro"
+
 - tapOn: "2000"
 - tapOn: "Confirmar"
 - waitForAnimationToEnd
