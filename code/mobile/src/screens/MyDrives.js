@@ -41,7 +41,7 @@ export default function MyDrivesScreen() {
   useEffect(() => {
     // Always fetch passenger rides
     fetchPassengerRides();
-    
+
     // If user is driver and viewing driver mode, fetch driver rides
     if (isDriver && driverDetails && viewMode === 'driver') {
       fetchDrives();
@@ -59,7 +59,7 @@ export default function MyDrivesScreen() {
       setLoading(false);
       return;
     }
-    
+
     try {
       console.log('Checking driver status for user:', user.id);
       const response = await apiClient.get(`/estudante/${user.id}/motorista`, {
@@ -108,7 +108,7 @@ export default function MyDrivesScreen() {
         size: 10,
         sort: []
       });
-      
+
       if (response.success && response.data) {
         setDrives(response.data.content || []);
       } else {
@@ -179,11 +179,11 @@ export default function MyDrivesScreen() {
         style={{ height: 150, paddingTop: SPACING.lg }}
       >
         <View style={{ paddingHorizontal: SPACING.lg, flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons 
-            name="arrow-back" 
-            size={24} 
-            color={COLORS.text.light} 
-            style={{ marginRight: SPACING.md }} 
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={COLORS.text.light}
+            style={{ marginRight: SPACING.md }}
             onPress={() => navigation.goBack()}
           />
           <Text style={{ fontSize: 28, fontWeight: 'bold', color: COLORS.text.light }}>
@@ -195,21 +195,21 @@ export default function MyDrivesScreen() {
       <ScrollView
         style={{ flex: 1, marginTop: -50 }}
         contentContainerStyle={{ paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => {
-                setRefreshing(true);
-                if (viewMode === 'driver' && isDriver && driverDetails) {
-                  fetchDrives();
-                } else {
-                  fetchPassengerRides();
-                }
-              }}
-              colors={[COLORS.primary.main]}
-              tintColor={COLORS.primary.main}
-            />
-          }
+        showsVerticalScrollIndicator={false} refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              if (viewMode === 'driver' && isDriver && driverDetails) {
+                fetchDrives();
+              } else {
+                fetchPassengerRides();
+              }
+            }}
+            colors={[COLORS.primary.main]}
+            tintColor={COLORS.primary.main}
+          />
+        }
       >
         {/* Header Card */}
         <View style={[commonStyles.profileCard, {
@@ -222,16 +222,16 @@ export default function MyDrivesScreen() {
             {viewMode === 'passenger' ? 'Suas Caronas como Passageiro' : 'Suas Caronas como Motorista'}
           </Text>
           <Text style={styles.subtitle}>
-            {viewMode === 'passenger' 
-              ? (passengerRides.length > 0 
-                  ? `Você participou de ${passengerRides.length} carona(s)` 
-                  : 'Você ainda não participou de nenhuma carona')
-              : (drives.length > 0 
-                  ? `Você criou ${drives.filter(d => d.status === 'AGENDADA').length} carona(s) agendada(s)` 
-                  : 'Você ainda não criou nenhuma carona')
+            {viewMode === 'passenger'
+              ? (passengerRides.length > 0
+                ? `Você participou de ${passengerRides.length} carona(s)`
+                : 'Você ainda não participou de nenhuma carona')
+              : (drives.length > 0
+                ? `Você criou ${drives.filter(d => d.status === 'AGENDADA').length} carona(s) agendada(s)`
+                : 'Você ainda não criou nenhuma carona')
             }
           </Text>
-          
+
           {/* Toggle buttons for switching between passenger and driver views */}
           {isDriver && (
             <View style={styles.toggleContainer}>
@@ -242,10 +242,10 @@ export default function MyDrivesScreen() {
                 ]}
                 onPress={() => setViewMode('passenger')}
               >
-                <Ionicons 
-                  name="person-outline" 
-                  size={16} 
-                  color={viewMode === 'passenger' ? COLORS.text.light : COLORS.text.secondary} 
+                <Ionicons
+                  name="person-outline"
+                  size={16}
+                  color={viewMode === 'passenger' ? COLORS.text.light : COLORS.text.secondary}
                 />
                 <Text style={[
                   styles.toggleButtonText,
@@ -254,7 +254,7 @@ export default function MyDrivesScreen() {
                   Como Passageiro
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[
                   styles.toggleButton,
@@ -262,10 +262,10 @@ export default function MyDrivesScreen() {
                 ]}
                 onPress={() => setViewMode('driver')}
               >
-                <Ionicons 
-                  name="car-outline" 
-                  size={16} 
-                  color={viewMode === 'driver' ? COLORS.text.light : COLORS.text.secondary} 
+                <Ionicons
+                  name="car-outline"
+                  size={16}
+                  color={viewMode === 'driver' ? COLORS.text.light : COLORS.text.secondary}
                 />
                 <Text style={[
                   styles.toggleButtonText,
@@ -302,22 +302,22 @@ export default function MyDrivesScreen() {
                   onPress={() => navigation.navigate('RideDetails', { ride })}
                 >
                   <View style={styles.cardHeader}>
-                    <View style={[styles.statusBadge, { 
-                      backgroundColor: ride.status === 'AGENDADA' ? COLORS.success.main : 
-                                     ride.status === 'FINALIZADA' ? COLORS.primary.main :
-                                     COLORS.text.secondary 
+                    <View style={[styles.statusBadge, {
+                      backgroundColor: ride.status === 'AGENDADA' ? COLORS.success.main :
+                        ride.status === 'FINALIZADA' ? COLORS.primary.main :
+                          COLORS.text.secondary
                     }]}>
                       <Text style={styles.statusText}>
-                        {ride.status === 'AGENDADA' ? 'Agendada' : 
-                         ride.status === 'FINALIZADA' ? 'Finalizada' : 
-                         ride.status}
+                        {ride.status === 'AGENDADA' ? 'Agendada' :
+                          ride.status === 'FINALIZADA' ? 'Finalizada' :
+                            ride.status}
                       </Text>
                     </View>
                     <Text style={styles.dateText}>
                       {format(new Date(ride.dataHoraPartida), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                     </Text>
                   </View>
-                  
+
                   <View style={styles.routeContainer}>
                     <View style={styles.locationRow}>
                       <Ionicons name="location" size={20} color={COLORS.primary.main} />
@@ -333,7 +333,7 @@ export default function MyDrivesScreen() {
                       </Text>
                     </View>
                   </View>
-                  
+
                   <View style={styles.driveInfo}>
                     <View style={styles.infoRow}>
                       <Ionicons name="person-outline" size={16} color={COLORS.text.secondary} />
@@ -368,11 +368,11 @@ export default function MyDrivesScreen() {
               </View>
             ) : (
               drives.map((drive) => (
-              <DriveCard 
-  drive={drive} 
-  navigation={navigation} 
-  apiClient={apiClient} 
-/>
+                <DriveCard
+                  drive={drive}
+                  navigation={navigation}
+                  apiClient={apiClient}
+                />
               ))
             )
           )}

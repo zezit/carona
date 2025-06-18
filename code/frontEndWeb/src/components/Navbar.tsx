@@ -92,7 +92,7 @@ const Navbar: React.FC = () => {
                 <span>Viagens</span>
               </div>
             </Link>
-            <Link 
+            {/* <Link 
               to="/report-test" 
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive("/report-test") 
@@ -104,7 +104,7 @@ const Navbar: React.FC = () => {
                 <FileText className="w-4 h-4" />
                 <span>Relatórios</span>
               </div>
-            </Link>
+            </Link> */}
 
             <Link 
               to="/report" 

@@ -403,7 +403,7 @@ const formatDate = (dateString) => {
       <TouchableOpacity
         key={drive.id}
         style={styles.driveCard}
-        onPress={() => navigation.navigate('DriveDetails', { drive })}
+        onPress={() => navigation.navigate('CaronaDetailsScreen', { carona: drive })}
       >
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
@@ -423,14 +423,15 @@ const formatDate = (dateString) => {
             </Text>}
           </View>
           
-        { drive.passageiros.length> 0 && <TouchableOpacity
+        { drive.passageiros.length > 0 && drive.status === 'FINALIZADA' && (
+          <TouchableOpacity
             style={styles.reportButton}
             onPress={() => setModalVisible(true)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            
             <Ionicons name="flag-outline" size={20} color={COLORS.text.secondary} />
-          </TouchableOpacity >}
+          </TouchableOpacity>
+        )}
         </View>
         
         <View style={styles.routeContainer}>
